@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initDatabase } from '@/lib/db';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // This endpoint initializes the database schema
 // Call this once after deploying to Vercel
 export async function GET(request: NextRequest) {
