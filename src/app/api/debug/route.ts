@@ -22,6 +22,11 @@ function getUserIdFromToken(request: NextRequest): number | null {
 }
 
 export async function GET(request: NextRequest) {
+  // Set proper headers for JSON response
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
   try {
     const userId = getUserIdFromToken(request);
     
@@ -96,12 +101,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       diagnostics
-    });
+    }, { headers });
   } catch (error: any) {
     return NextResponse.json({
       success: false,
-      error: error.message
-    }, { status: 500 });
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { 
+      status: 500,
+      headers 
+    });
   }
 }
+
 
