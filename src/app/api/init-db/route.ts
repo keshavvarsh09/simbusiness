@@ -6,8 +6,14 @@ import { initDatabase } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     // Optional: Add a secret key check for security
-    const secret = request.headers.get('x-init-secret');
-    if (secret !== process.env.INIT_DB_SECRET) {
+    // Check both header and query parameter for flexibility
+    const secret = request.headers.get('x-init-secret') || 
+                   new URL(request.url).searchParams.get('secret');
+    
+    if (!process.env.INIT_DB_SECRET) {
+      // If no secret is set, allow initialization (for development)
+      console.warn('INIT_DB_SECRET not set, allowing initialization');
+    } else if (secret !== process.env.INIT_DB_SECRET) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
