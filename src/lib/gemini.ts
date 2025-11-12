@@ -208,6 +208,11 @@ Format as JSON array:
  */
 export async function chatWithGemini(message: string, userContext?: any) {
   try {
+    // Check if API key is set
+    if (!apiKey || apiKey === '') {
+      throw new Error('GEMINI_API_KEY is not set or is empty');
+    }
+
     const contextPrompt = userContext ? `
 User Context:
 - Budget: ${userContext.budget || 'Not set'}
@@ -228,9 +233,25 @@ Provide helpful, actionable advice. Be concise but thorough. Consider the user's
 
     const result = await geminiPro.generateContent(prompt);
     const response = await result.response;
-    return response.text();
-  } catch (error) {
+    const text = response.text();
+    
+    if (!text || text.trim() === '') {
+      throw new Error('Empty response from Gemini API');
+    }
+    
+    return text;
+  } catch (error: any) {
     console.error('Error in chatbot:', error);
+    
+    // Provide more specific error messages
+    if (error?.message?.includes('API_KEY')) {
+      throw new Error('GEMINI_API_KEY is invalid or missing');
+    } else if (error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
+      throw new Error('Gemini API quota exceeded. Please try again later.');
+    } else if (error?.message?.includes('permission')) {
+      throw new Error('Gemini API permission denied. Check your API key.');
+    }
+    
     throw error;
   }
 }

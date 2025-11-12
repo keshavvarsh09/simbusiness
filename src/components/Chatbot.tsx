@@ -47,7 +47,13 @@ export default function Chatbot() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to get response');
+        // Use the error message from the API if available
+        const errorMsg = data.error || data.details || 'Failed to get response';
+        throw new Error(errorMsg);
+      }
+
+      if (!data.response) {
+        throw new Error('No response from AI. Please try again.');
       }
 
       const assistantMessage: Message = {
@@ -58,9 +64,11 @@ export default function Chatbot() {
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error: any) {
+      // Show user-friendly error message
+      const errorText = error.message || 'Failed to get response. Please try again.';
       const errorMessage: Message = {
         role: 'assistant',
-        content: `Error: ${error.message || 'Failed to get response. Please try again.'}`,
+        content: `⚠️ ${errorText}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
