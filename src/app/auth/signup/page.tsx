@@ -10,12 +10,16 @@ export default function SignUp() {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: '',
+    budget: '',
+    productGenre: '',
+    productName: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -26,7 +30,7 @@ export default function SignUp() {
     
     // Basic validation
     if (!formData.name || !formData.email || !formData.password) {
-      setError('All fields are required');
+      setError('Name, email, and password are required');
       return;
     }
     
@@ -34,16 +38,40 @@ export default function SignUp() {
       setError('Passwords do not match');
       return;
     }
+
+    if (formData.budget && isNaN(parseFloat(formData.budget))) {
+      setError('Budget must be a valid number');
+      return;
+    }
     
     setLoading(true);
     
     try {
-      // In a real app, you would call an API here
-      // For now, let's simulate success after a short delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone || null,
+          budget: formData.budget ? parseFloat(formData.budget) : null,
+          productGenre: formData.productGenre || null,
+          productName: formData.productName || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to create account');
+        return;
+      }
       
       // Redirect to signin page after successful signup
-      router.push('/auth/signin');
+      router.push('/auth/signin?signup=success');
     } catch (err) {
       setError('Failed to create account. Please try again.');
     } finally {
@@ -53,7 +81,7 @@ export default function SignUp() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-2xl space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
             Create your account
@@ -133,6 +161,77 @@ export default function SignUp() {
                 required
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                 value={formData.confirmPassword}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                Phone Number (Optional)
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="budget" className="block text-sm font-medium text-gray-700">
+                Initial Budget ($)
+              </label>
+              <input
+                id="budget"
+                name="budget"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="e.g., 1000"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                value={formData.budget}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="productGenre" className="block text-sm font-medium text-gray-700">
+                Product Genre/Category
+              </label>
+              <select
+                id="productGenre"
+                name="productGenre"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                value={formData.productGenre}
+                onChange={handleChange}
+              >
+                <option value="">Select a category</option>
+                <option value="electronics">Electronics</option>
+                <option value="fashion">Fashion & Apparel</option>
+                <option value="home">Home & Kitchen</option>
+                <option value="beauty">Beauty & Personal Care</option>
+                <option value="sports">Sports & Outdoors</option>
+                <option value="toys">Toys & Games</option>
+                <option value="books">Books & Media</option>
+                <option value="health">Health & Wellness</option>
+                <option value="automotive">Automotive</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="productName" className="block text-sm font-medium text-gray-700">
+                Product Name/Interest (Optional)
+              </label>
+              <input
+                id="productName"
+                name="productName"
+                type="text"
+                placeholder="e.g., Wireless Earbuds"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                value={formData.productName}
                 onChange={handleChange}
               />
             </div>

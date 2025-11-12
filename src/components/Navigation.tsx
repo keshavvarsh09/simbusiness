@@ -8,7 +8,13 @@ import {
   FiBarChart2, 
   FiPackage, 
   FiSettings,
-  FiShoppingBag
+  FiShoppingBag,
+  FiSearch,
+  FiImage,
+  FiMessageCircle,
+  FiClock,
+  FiAlertTriangle,
+  FiTrendingUp
 } from 'react-icons/fi';
 
 export default function Navigation() {
@@ -55,6 +61,36 @@ export default function Navigation() {
             <li>
               <Link href="/suppliers" className={linkClasses('/suppliers')}>
                 <FiPackage /> Suppliers
+              </Link>
+            </li>
+            <li>
+              <Link href="/products/analyze" className={linkClasses('/products/analyze')}>
+                <FiSearch /> Analyze Product
+              </Link>
+            </li>
+            <li>
+              <Link href="/products/recommendations" className={linkClasses('/products/recommendations')}>
+                <FiTrendingUp /> Recommendations
+              </Link>
+            </li>
+            <li>
+              <Link href="/analytics/meta" className={linkClasses('/analytics/meta')}>
+                <FiImage /> Meta Analytics
+              </Link>
+            </li>
+            <li>
+              <Link href="/chatbot" className={linkClasses('/chatbot')}>
+                <FiMessageCircle /> AI Advisor
+              </Link>
+            </li>
+            <li>
+              <Link href="/missions" className={linkClasses('/missions')}>
+                <FiClock /> Missions
+              </Link>
+            </li>
+            <li>
+              <Link href="/bankruptcy" className={linkClasses('/bankruptcy')}>
+                <FiAlertTriangle /> Risk Check
               </Link>
             </li>
             <li>

@@ -1,0 +1,30 @@
+Copy and paste these into Vercel Environment Variables:
+
+===========================================
+DATABASE_URL
+===========================================
+postgresql://postgres:Simbus@9999@db.njkxojqmqvnejkqnfeyt.supabase.co:5432/postgres
+
+===========================================
+GEMINI_API_KEY
+===========================================
+AIzaSyBLHI3Zzw4BgH8JYMtOobmQ0TmgI-U8BHM
+
+===========================================
+JWT_SECRET
+===========================================
+a7f3e9b2c8d1f4a6e9b3c7d2f5a8e1b4c9d6f2a5e8b1c4d7f3a6e9b2c5d8f1a4e7
+
+===========================================
+INIT_DB_SECRET
+===========================================
+f9e6c3a8d5b2e7f4a1c8d5b2e9f6c3a7d4b1e8f5c2a9d6b3e7f4a1c8d5b2e9f6c3
+
+===========================================
+INSTRUCTIONS:
+1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+2. Add each variable above
+3. Select "Production", "Preview", and "Development" for each
+4. Click Save after each variable
+5. Redeploy your project
+

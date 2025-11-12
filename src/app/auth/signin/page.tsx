@@ -31,15 +31,31 @@ export default function SignIn() {
     setLoading(true);
     
     try {
-      // In a real app, you would call an API here
-      // For now, let's simulate success after a short delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Invalid email or password');
+        return;
+      }
+
+      // Store token in localStorage
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
       
-      // For demo purposes, let's accept any credentials
       // Redirect to dashboard after successful login
       router.push('/dashboard');
     } catch (err) {
-      setError('Invalid email or password');
+      setError('Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }
