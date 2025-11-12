@@ -4,8 +4,9 @@ const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // Initialize Gemini models
-const geminiPro = genAI.getGenerativeModel({ model: 'gemini-pro' });
-const geminiProVision = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+// Note: gemini-pro is deprecated, using gemini-1.5-flash (faster) and gemini-1.5-pro (more capable)
+const geminiPro = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const geminiProVision = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 /**
  * Analyze product from URL (Amazon, Myntra, etc.)
