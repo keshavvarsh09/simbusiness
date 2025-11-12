@@ -14,17 +14,19 @@ export async function GET(request: NextRequest) {
     const secret = request.headers.get('x-init-secret') || 
                    new URL(request.url).searchParams.get('secret');
     
-    if (!process.env.INIT_DB_SECRET) {
-      // If no secret is set, allow initialization (for development)
-      console.warn('INIT_DB_SECRET not set, allowing initialization');
-    } else if (secret !== process.env.INIT_DB_SECRET) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // Only check secret if it's set in environment
+    if (process.env.INIT_DB_SECRET) {
+      if (!secret || secret !== process.env.INIT_DB_SECRET) {
+        return NextResponse.json(
+          { error: 'Unauthorized - Secret required' },
+          { status: 401 }
+        );
+      }
     }
 
+    console.log('Initializing database...');
     await initDatabase();
+    console.log('Database initialized successfully');
     
     return NextResponse.json({
       success: true,
@@ -32,10 +34,19 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Database initialization error:', error);
+    const errorMessage = error?.message || 'Unknown error';
+    const errorStack = error?.stack || '';
+    
     return NextResponse.json(
       { 
         error: 'Failed to initialize database',
-        details: error.message 
+        details: errorMessage,
+        hint: errorMessage.includes('connection') 
+          ? 'Check DATABASE_URL environment variable and database connectivity'
+          : errorMessage.includes('permission')
+          ? 'Check database user permissions'
+          : 'Check Vercel function logs for more details',
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
       },
       { status: 500 }
     );
