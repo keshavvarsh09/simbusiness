@@ -3,10 +3,14 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
+// Model name - can be overridden via environment variable
+// Default to gemini-pro which is the most stable for API v1
+// Try these in order: gemini-pro, gemini-1.5-pro, gemini-1.5-flash
+const MODEL_NAME = process.env.GEMINI_MODEL_NAME || 'gemini-pro';
+
 // Initialize Gemini models
-// Note: gemini-pro is deprecated, using gemini-1.5-flash (faster) and gemini-1.5-pro (more capable)
-const geminiPro = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-const geminiProVision = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const geminiPro = genAI.getGenerativeModel({ model: MODEL_NAME });
+const geminiProVision = genAI.getGenerativeModel({ model: MODEL_NAME });
 
 /**
  * Analyze product from URL (Amazon, Myntra, etc.)
