@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
         hasToken: !!request.headers.get('authorization'),
         userId: userId || null,
         tokenValid: userId !== null,
+        userExists: false as boolean | undefined,
+        userCheckError: undefined as string | undefined,
       },
       database: {
         connectionTest: 'pending',
