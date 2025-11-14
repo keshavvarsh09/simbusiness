@@ -11,7 +11,12 @@
  */
 
 const { Pool } = require('pg');
-require('dotenv').config({ path: '.env.local' });
+// Try to load .env.local if dotenv is available (optional)
+try {
+  require('dotenv').config({ path: '.env.local' });
+} catch (e) {
+  // dotenv not installed, that's okay - we can use environment variables directly
+}
 
 const SQL_SCRIPT = `
 -- Users table
@@ -169,7 +174,7 @@ async function initSupabaseDirect() {
     ssl: databaseUrl.includes('supabase') || databaseUrl.includes('neon')
       ? { rejectUnauthorized: false }
       : false,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 30000, // Increased to 30 seconds
   });
 
   try {
@@ -193,7 +198,7 @@ async function initSupabaseDirect() {
             const match = statement.match(/CREATE (?:TABLE|INDEX).*?(\w+)/i);
             const name = match ? match[1] : 'object';
             console.log(`   ✅ Created ${name}`);
-          } catch (error: any) {
+          } catch (error) {
             // Ignore "already exists" errors
             if (!error.message.includes('already exists') && !error.message.includes('duplicate')) {
               console.warn(`   ⚠️  Warning: ${error.message.split('\n')[0]}`);
@@ -245,7 +250,7 @@ async function initSupabaseDirect() {
     } finally {
       client.release();
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('\n❌ Error:', error.message);
     
     if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {

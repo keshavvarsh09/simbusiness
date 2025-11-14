@@ -1,0 +1,20 @@
+# Your Supabase Connection String
+
+## For Vercel (Connection Pooling - Port 6543)
+postgresql://postgres.njkxojqmqvnejkqnfeyt:Simbus%409999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres
+
+## Notes:
+- Password `Simbus@9999` is URL-encoded as `Simbus%409999` (the @ becomes %40)
+- Port 6543 is for connection pooling (recommended for Vercel)
+- Port 5432 is for direct connection (may timeout from some networks)
+
+## To use:
+1. Copy the connection string above
+2. Go to Vercel → Settings → Environment Variables
+3. Update DATABASE_URL with the connection string
+4. Redeploy
+
+## Alternative: Direct Connection (Port 5432)
+If connection pooling doesn't work, try:
+postgresql://postgres.njkxojqmqvnejkqnfeyt:Simbus%409999@db.njkxojqmqvnejkqnfeyt.supabase.co:5432/postgres
+
