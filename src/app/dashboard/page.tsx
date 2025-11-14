@@ -489,14 +489,23 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Dashboard Content */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
+        <div className="flex justify-between items-center mb-4 sm:mb-6 flex-wrap gap-3">
           <h1 className="text-2xl sm:text-3xl font-bold">Business Dashboard</h1>
-          {saving && (
-            <span className="text-xs text-gray-500 flex items-center gap-1">
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
-              Saving...
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {saving && (
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+                Saving...
+              </span>
+            )}
+            <AddProductForm onSuccess={handleProductAdded} />
+            <button
+              onClick={() => router.push('/products')}
+              className="text-sm bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 flex items-center gap-2"
+            >
+              <FiPackage /> View Products
+            </button>
+          </div>
         </div>
         
         {/* Market Event Alert */}
