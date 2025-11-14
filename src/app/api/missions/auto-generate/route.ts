@@ -38,14 +38,31 @@ export async function POST(request: NextRequest) {
     const { locations } = body;
     const userLocations = locations || ['India', 'Delhi', 'Mumbai', 'Bangalore'];
 
-    // Generate missions from real-world events
-    const eventMissions = await generateMissionsFromEvents(userLocations);
+    // Generate missions from real-world events (with error handling)
+    let eventMissions: any[] = [];
+    try {
+      eventMissions = await generateMissionsFromEvents(userLocations);
+      console.log(`Generated ${eventMissions.length} event-based missions`);
+    } catch (error: any) {
+      console.error('Error generating event missions (will use standard missions):', error.message);
+      // Continue with standard missions if event generation fails
+    }
     
-    // Also get standard missions as fallback
+    // Always get standard missions as fallback
     const standardMissions = getStandardMissionTemplates();
     
-    // Combine and select 1-2 missions to create
+    // Combine missions - prioritize event missions, then standard
     const allMissions = [...eventMissions, ...standardMissions];
+    
+    // If no missions at all, something is wrong
+    if (allMissions.length === 0) {
+      return NextResponse.json(
+        { error: 'No missions available to generate', details: 'Mission generator returned empty array' },
+        { status: 500 }
+      );
+    }
+    
+    // Select 1-2 missions to create (prioritize event missions)
     const missionsToCreate = allMissions.slice(0, Math.min(2, allMissions.length));
     
     const client = await pool.connect();
@@ -53,41 +70,64 @@ export async function POST(request: NextRequest) {
       const createdMissions = [];
       
       for (const template of missionsToCreate) {
-        // Check if similar mission already exists (avoid duplicates)
-        const existing = await client.query(
-          `SELECT id FROM missions 
-           WHERE user_id = $1 AND title = $2 AND status = 'active'`,
-          [userId, template.title]
-        );
-        
-        if (existing.rows.length > 0) {
-          continue; // Skip if already exists
+        try {
+          // Check if similar mission already exists (avoid duplicates)
+          const existing = await client.query(
+            `SELECT id FROM missions 
+             WHERE user_id = $1 AND title = $2 AND status = 'active'`,
+            [userId, template.title]
+          );
+          
+          if (existing.rows.length > 0) {
+            console.log(`Skipping duplicate mission: ${template.title}`);
+            continue; // Skip if already exists
+          }
+          
+          // Calculate deadline
+          const deadline = new Date();
+          deadline.setHours(deadline.getHours() + (template.durationHours || 24));
+          
+          // Ensure all required fields are present
+          if (!template.title || !template.description || !template.type) {
+            console.error('Invalid mission template:', template);
+            continue;
+          }
+          
+          const result = await client.query(
+            `INSERT INTO missions (user_id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, event_source, affected_location, news_url)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             RETURNING id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, event_source, affected_location, news_url, created_at`,
+            [
+              userId,
+              template.title,
+              template.description,
+              template.type,
+              deadline,
+              'active',
+              template.costToSolve || 500,
+              JSON.stringify(template.impact || {}),
+              template.eventSource || null,
+              template.affectedLocation || null,
+              template.newsUrl || null
+            ]
+          );
+          
+          createdMissions.push(result.rows[0]);
+          console.log(`Created mission: ${template.title}`);
+        } catch (insertError: any) {
+          console.error(`Error inserting mission "${template.title}":`, insertError.message);
+          // Continue with next mission instead of failing completely
+          continue;
         }
-        
-        // Calculate deadline
-        const deadline = new Date();
-        deadline.setHours(deadline.getHours() + template.durationHours);
-        
-        const result = await client.query(
-          `INSERT INTO missions (user_id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, event_source, affected_location, news_url)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-           RETURNING id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, event_source, affected_location, news_url, created_at`,
-          [
-            userId,
-            template.title,
-            template.description,
-            template.type,
-            deadline,
-            'active',
-            template.costToSolve,
-            JSON.stringify(template.impact),
-            template.eventSource || null,
-            template.affectedLocation || null,
-            template.newsUrl || null
-          ]
-        );
-        
-        createdMissions.push(result.rows[0]);
+      }
+
+      // If no missions were created (all duplicates or errors), return a helpful message
+      if (createdMissions.length === 0) {
+        return NextResponse.json({
+          success: true,
+          missions: [],
+          message: 'No new missions generated. You may already have active missions with similar titles, or all missions were duplicates.'
+        });
       }
 
       return NextResponse.json({

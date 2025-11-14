@@ -114,12 +114,21 @@ export default function MissionsPanel() {
       const data = await response.json();
       if (data.success) {
         fetchMissions();
-        alert(data.message || 'Missions generated successfully!');
+        // Show message even if no missions were created (might be duplicates)
+        if (data.missions && data.missions.length > 0) {
+          alert(data.message || `Successfully generated ${data.missions.length} new mission(s)!`);
+        } else {
+          alert(data.message || 'No new missions generated. You may already have similar active missions.');
+        }
       } else {
-        alert(data.error || 'Failed to generate missions');
+        const errorMsg = data.details 
+          ? `${data.error}: ${data.details}` 
+          : (data.error || 'Failed to generate missions');
+        alert(errorMsg);
       }
-    } catch (error) {
-      alert('Failed to generate missions. Please try again.');
+    } catch (error: any) {
+      console.error('Auto-generate error:', error);
+      alert(`Failed to generate missions: ${error.message || 'Please try again.'}`);
     } finally {
       setAutoGenerating(false);
     }

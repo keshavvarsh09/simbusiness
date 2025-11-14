@@ -25,29 +25,62 @@ export async function generateMissionsFromEvents(
 ): Promise<MissionTemplate[]> {
   const missions: MissionTemplate[] = [];
 
-  // 1. Fetch news-based missions
+  // 1. Fetch news-based missions (with better error handling)
   try {
     const newsEvents = await fetchRelevantNews(userLocations);
-    for (const event of newsEvents.filter(e => e.relevance === 'high')) {
-      missions.push(createMissionFromNews(event));
+    if (newsEvents && Array.isArray(newsEvents)) {
+      const highRelevanceEvents = newsEvents.filter(e => e && e.relevance === 'high');
+      for (const event of highRelevanceEvents) {
+        try {
+          const mission = createMissionFromNews(event);
+          if (mission && mission.title && mission.description) {
+            missions.push(mission);
+          }
+        } catch (error: any) {
+          console.error('Error creating mission from news event:', error.message);
+          // Continue with next event
+        }
+      }
     }
-  } catch (error) {
-    console.error('Error fetching news for missions:', error);
+  } catch (error: any) {
+    console.error('Error fetching news for missions (continuing with other sources):', error.message);
+    // Don't throw - continue with festivals and system missions
   }
 
-  // 2. Check upcoming festivals
-  const festivals = getUpcomingFestivals();
-  const today = new Date();
-  for (const festival of festivals) {
-    const daysUntil = Math.ceil((festival.date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysUntil <= 7 && daysUntil >= 0) {
-      missions.push(createMissionFromFestival(festival));
+  // 2. Check upcoming festivals (always works, no API needed)
+  try {
+    const festivals = getUpcomingFestivals();
+    const today = new Date();
+    for (const festival of festivals) {
+      if (festival && festival.date) {
+        const daysUntil = Math.ceil((festival.date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysUntil <= 7 && daysUntil >= 0) {
+          try {
+            const mission = createMissionFromFestival(festival);
+            if (mission && mission.title && mission.description) {
+              missions.push(mission);
+            }
+          } catch (error: any) {
+            console.error('Error creating mission from festival:', error.message);
+          }
+        }
+      }
     }
+  } catch (error: any) {
+    console.error('Error processing festivals:', error.message);
   }
 
-  // 3. Add system-generated missions (labour, curfew, etc.)
-  missions.push(...generateSystemMissions(userLocations));
+  // 3. Add system-generated missions (labour, curfew, etc.) - always works
+  try {
+    const systemMissions = generateSystemMissions(userLocations);
+    if (systemMissions && Array.isArray(systemMissions)) {
+      missions.push(...systemMissions.filter(m => m && m.title && m.description));
+    }
+  } catch (error: any) {
+    console.error('Error generating system missions:', error.message);
+  }
 
+  // Always return at least an empty array (never throw)
   return missions;
 }
 
