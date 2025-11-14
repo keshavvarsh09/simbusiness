@@ -560,7 +560,41 @@ export default function Dashboard() {
 
         {/* Business Insights */}
         <BusinessInsights />
+
+        {/* Ad Metrics Checker */}
+        <div className="mt-6">
+          <AdMetricsChecker />
+        </div>
       </main>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmationDialog
+        isOpen={showRestockConfirm}
+        title="Restock Inventory"
+        message={`Are you sure you want to restock 20 units? This will cost $${(20 * 15).toFixed(2)} and will be deducted from your profit.`}
+        confirmText="Restock"
+        cancelText="Cancel"
+        variant="info"
+        onConfirm={() => {
+          restockInventory();
+          setShowRestockConfirm(false);
+        }}
+        onCancel={() => setShowRestockConfirm(false)}
+      />
+
+      <ConfirmationDialog
+        isOpen={showMarketingConfirm}
+        title="Increase Marketing Budget"
+        message="Are you sure you want to increase your marketing budget by $100? This will be deducted from your profit."
+        confirmText="Increase"
+        cancelText="Cancel"
+        variant="info"
+        onConfirm={() => {
+          increaseMarketing();
+          setShowMarketingConfirm(false);
+        }}
+        onCancel={() => setShowMarketingConfirm(false)}
+      />
     </div>
   );
 }
