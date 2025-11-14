@@ -290,17 +290,24 @@ export default function Dashboard() {
     }));
   };
 
-  const increaseMarketing = () => {
-    setBusinessStats(prev => ({
-      ...prev,
-      marketing: prev.marketing + 100,
-      expenses: prev.expenses + 100 // Add marketing cost immediately
-    }));
-  };
-
   const [showRestockConfirm, setShowRestockConfirm] = useState(false);
   const [showBudgetConfirm, setShowBudgetConfirm] = useState(false);
   const [showMarketingConfirm, setShowMarketingConfirm] = useState(false);
+
+  const increaseMarketing = () => {
+    const marketingAmount = 100;
+    
+    if (businessStats.profit < marketingAmount) {
+      alert(`Insufficient funds. You need $${marketingAmount.toFixed(2)} but only have $${businessStats.profit.toFixed(2)}.`);
+      return;
+    }
+    
+    setBusinessStats(prev => ({
+      ...prev,
+      marketing: prev.marketing + marketingAmount,
+      expenses: prev.expenses + marketingAmount // Add marketing cost immediately
+    }));
+  };
 
   const restockInventory = () => {
     const restockAmount = 20;
