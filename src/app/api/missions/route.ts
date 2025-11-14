@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
+import { generateMissionsFromEvents, getStandardMissionTemplates } from '@/lib/mission-generator';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -84,7 +85,8 @@ export async function GET(request: NextRequest) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `SELECT id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, created_at
+        `SELECT id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, 
+                event_source, affected_location, news_url, created_at
          FROM missions
          WHERE user_id = $1
          ORDER BY created_at DESC`,
@@ -107,7 +109,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create a new mission (randomly triggered)
+// POST - Create a new mission (auto-generated from events or manual)
 export async function POST(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
@@ -116,21 +118,39 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { missionType } = body;
-
-    // Select random mission template
-    const template = missionTemplates[Math.floor(Math.random() * missionTemplates.length)];
-    
-    // Calculate deadline
-    const deadline = new Date();
-    deadline.setHours(deadline.getHours() + template.durationHours);
+    const { autoGenerate, locations } = body;
 
     const client = await pool.connect();
     try {
+      let template;
+      
+      // Auto-generate from real-world events if requested
+      if (autoGenerate) {
+        const userLocations = locations || ['India', 'Delhi', 'Mumbai'];
+        const eventMissions = await generateMissionsFromEvents(userLocations);
+        
+        if (eventMissions.length > 0) {
+          // Select a random event-based mission
+          template = eventMissions[Math.floor(Math.random() * eventMissions.length)];
+        } else {
+          // Fallback to standard templates
+          const standardTemplates = getStandardMissionTemplates();
+          template = standardTemplates[Math.floor(Math.random() * standardTemplates.length)];
+        }
+      } else {
+        // Use standard templates
+        const standardTemplates = getStandardMissionTemplates();
+        template = standardTemplates[Math.floor(Math.random() * standardTemplates.length)];
+      }
+      
+      // Calculate deadline
+      const deadline = new Date();
+      deadline.setHours(deadline.getHours() + template.durationHours);
+
       const result = await client.query(
-        `INSERT INTO missions (user_id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         RETURNING id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, created_at`,
+        `INSERT INTO missions (user_id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, event_source, affected_location, news_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         RETURNING id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, event_source, affected_location, news_url, created_at`,
         [
           userId,
           template.title,
@@ -139,7 +159,10 @@ export async function POST(request: NextRequest) {
           deadline,
           'active',
           template.costToSolve,
-          JSON.stringify(template.impact)
+          JSON.stringify(template.impact),
+          template.eventSource || null,
+          template.affectedLocation || null,
+          template.newsUrl || null
         ]
       );
 

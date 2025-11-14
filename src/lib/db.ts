@@ -63,6 +63,9 @@ export async function initDatabase() {
         status VARCHAR(20) DEFAULT 'active',
         cost_to_solve DECIMAL(12, 2),
         impact_on_business JSONB,
+        event_source VARCHAR(50),
+        affected_location VARCHAR(255),
+        news_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

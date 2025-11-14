@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiClock, FiDollarSign, FiAlertTriangle, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiClock, FiDollarSign, FiAlertTriangle, FiCheckCircle, FiXCircle, FiRefreshCw, FiMapPin, FiExternalLink, FiGlobe } from 'react-icons/fi';
 import { getAuthHeaders } from '@/lib/auth';
 
 interface Mission {
@@ -13,6 +13,9 @@ interface Mission {
   status: string;
   cost_to_solve: number;
   impact_on_business: any;
+  event_source?: string;
+  affected_location?: string;
+  news_url?: string;
   created_at: string;
 }
 
@@ -20,16 +23,36 @@ export default function MissionsPanel() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [solving, setSolving] = useState<number | null>(null);
+  const [autoGenerating, setAutoGenerating] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetchMissions();
+    
     // Check for expired missions periodically
-    const interval = setInterval(() => {
+    const fetchInterval = setInterval(() => {
       fetchMissions();
     }, 60000); // Check every minute
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(fetchInterval);
+    };
   }, []);
+
+  // Update countdown every second
+  useEffect(() => {
+    const countdownInterval = setInterval(() => {
+      const newTimeRemaining: Record<number, string> = {};
+      missions.forEach(mission => {
+        if (mission.status === 'active') {
+          newTimeRemaining[mission.id] = getTimeRemaining(mission.deadline);
+        }
+      });
+      setTimeRemaining(newTimeRemaining);
+    }, 1000);
+
+    return () => clearInterval(countdownInterval);
+  }, [missions]);
 
   const fetchMissions = async () => {
     try {
@@ -70,6 +93,29 @@ export default function MissionsPanel() {
     }
   };
 
+  const handleAutoGenerate = async () => {
+    setAutoGenerating(true);
+    try {
+      const response = await fetch('/api/missions/auto-generate', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ locations: ['India', 'Delhi', 'Mumbai', 'Bangalore'] }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchMissions();
+        alert(data.message || 'Missions generated successfully!');
+      } else {
+        alert(data.error || 'Failed to generate missions');
+      }
+    } catch (error) {
+      alert('Failed to generate missions. Please try again.');
+    } finally {
+      setAutoGenerating(false);
+    }
+  };
+
   const getTimeRemaining = (deadline: string) => {
     const now = new Date();
     const deadlineDate = new Date(deadline);
@@ -79,9 +125,11 @@ export default function MissionsPanel() {
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
   };
 
   const getStatusColor = (status: string) => {
@@ -112,12 +160,31 @@ export default function MissionsPanel() {
           <FiClock className="text-orange-500" />
           Time-Bound Missions
         </h2>
-        <button
-          onClick={() => fetch('/api/missions', { method: 'POST', headers: getAuthHeaders() })}
-          className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
-          Trigger Mission
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleAutoGenerate}
+            disabled={autoGenerating}
+            className="text-sm bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            <FiRefreshCw className={autoGenerating ? 'animate-spin' : ''} />
+            {autoGenerating ? 'Generating...' : 'Auto-Generate'}
+          </button>
+          <button
+            onClick={async () => {
+              const response = await fetch('/api/missions', { 
+                method: 'POST', 
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ autoGenerate: false })
+              });
+              if (response.ok) {
+                fetchMissions();
+              }
+            }}
+            className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Manual Mission
+          </button>
+        </div>
       </div>
 
       <p className="text-sm text-gray-600 mb-4">
@@ -131,8 +198,8 @@ export default function MissionsPanel() {
       ) : (
         <div className="space-y-4">
           {missions.map((mission) => {
-            const timeRemaining = getTimeRemaining(mission.deadline);
-            const isExpired = timeRemaining === 'Expired';
+            const currentTimeRemaining = timeRemaining[mission.id] || getTimeRemaining(mission.deadline);
+            const isExpired = currentTimeRemaining === 'Expired';
             const impact = mission.impact_on_business || {};
 
             return (
@@ -147,25 +214,60 @@ export default function MissionsPanel() {
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-semibold text-lg">{mission.title}</h3>
-                    <span
-                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                        mission.status
-                      )}`}
-                    >
-                      {mission.status.toUpperCase()}
-                    </span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-lg">{mission.title}</h3>
+                      {mission.event_source && (
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                          {mission.event_source === 'news' && <FiGlobe className="inline mr-1" />}
+                          {mission.event_source === 'festival' && '🎉'}
+                          {mission.event_source === 'labour' && '👷'}
+                          {mission.event_source === 'curfew' && '🚫'}
+                          {mission.event_source?.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                          mission.status
+                        )}`}
+                      >
+                        {mission.status.toUpperCase()}
+                      </span>
+                      {mission.affected_location && (
+                        <span className="flex items-center gap-1 text-xs text-gray-600">
+                          <FiMapPin />
+                          {mission.affected_location}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-sm font-medium">
+                  <div className="text-right ml-4">
+                    <div className={`flex items-center gap-1 text-sm font-bold ${
+                      isExpired ? 'text-red-600' : 'text-orange-600'
+                    }`}>
                       <FiClock />
-                      {timeRemaining}
+                      {currentTimeRemaining}
                     </div>
                   </div>
                 </div>
 
                 <p className="text-sm text-gray-700 mb-3">{mission.description}</p>
+
+                {mission.news_url && (
+                  <div className="mb-3">
+                    <a
+                      href={mission.news_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    >
+                      <FiExternalLink />
+                      Read related news article
+                    </a>
+                  </div>
+                )}
 
                 {Object.keys(impact).length > 0 && (
                   <div className="mb-3 p-2 bg-white rounded text-sm">
