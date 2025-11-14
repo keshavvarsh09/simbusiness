@@ -15,7 +15,7 @@ const pool = new Pool({
 export async function initDatabase() {
   // Check if DATABASE_URL is configured
   if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not set. Please configure your database connection.');
+    throw new Error('DATABASE_URL environment variable is not set');
   }
   
   const client = await pool.connect();
@@ -200,21 +200,24 @@ export async function initDatabase() {
     console.error('Error message:', error?.message);
     console.error('Error stack:', error?.stack);
     
-    // Provide more helpful error messages
+    // Provide more specific error messages
     if (error?.message?.includes('connection') || error?.message?.includes('timeout') || error?.message?.includes('ECONNREFUSED')) {
-      throw new Error('Could not connect to database. Please check your DATABASE_URL and ensure the database server is running.');
+      throw new Error(`Database connection failed: ${error.message}. Please check your DATABASE_URL and ensure the database server is accessible.`);
     }
     
     if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
-      throw new Error('Database permission denied. The database user does not have permission to create tables.');
+      throw new Error(`Database permission denied: ${error.message}. Please check your database user has CREATE TABLE permissions.`);
     }
     
     if (error?.message?.includes('authentication') || error?.message?.includes('password')) {
-      throw new Error('Database authentication failed. Please check your database credentials.');
+      throw new Error(`Database authentication failed: ${error.message}. Please check your DATABASE_URL credentials.`);
     }
     
-    // Re-throw with original message if no specific error type matched
-    throw error;
+    if (error?.message?.includes('DATABASE_URL')) {
+      throw error; // Already has good message
+    }
+    
+    throw new Error(`Database initialization failed: ${error?.message || 'Unknown error'}`);
   } finally {
     client.release();
   }
