@@ -153,10 +153,28 @@ export async function POST(request: NextRequest) {
             console.log('Successfully added column and updated products');
           } catch (retryError: any) {
             console.error('Failed to add column and retry:', retryError.message);
+            
+            // Check for specific error types
+            let errorMessage = 'Database schema error';
+            let errorDetails = 'Could not add required column.';
+            let hint = 'Please run database migration at /api/migrate or contact support.';
+            
+            if (retryError.message?.includes('permission') || retryError.message?.includes('denied')) {
+              errorMessage = 'Database permission error';
+              errorDetails = 'The database user does not have permission to alter the products table.';
+              hint = 'Please contact your database administrator to add the active_in_dashboard column manually, or run the migration with a database admin account.';
+            } else if (retryError.message?.includes('relation') || retryError.message?.includes('does not exist')) {
+              errorMessage = 'Table does not exist';
+              errorDetails = 'The products table does not exist.';
+              hint = 'Please run /api/init-db first to create the database schema.';
+            }
+            
             return NextResponse.json({
-              error: 'Database schema error',
-              details: 'Could not add required column. Please run database migration or contact support.',
-              migrationEndpoint: '/api/migrate'
+              error: errorMessage,
+              details: errorDetails,
+              hint: hint,
+              migrationEndpoint: '/api/migrate',
+              retryError: process.env.NODE_ENV === 'development' ? retryError.message : undefined
             }, { status: 500 });
           }
         } else {

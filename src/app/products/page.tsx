@@ -187,11 +187,44 @@ export default function ProductsPage() {
       const data = await response.json();
       
       if (!response.ok) {
+        // Check if it's a schema error and offer to run migration
+        if (data.error?.includes('schema') || data.error?.includes('column') || data.migrationEndpoint) {
+          const shouldMigrate = confirm(
+            `${data.error}: ${data.details || ''}\n\n${data.hint || 'Would you like to run the database migration now?'}`
+          );
+          
+          if (shouldMigrate) {
+            try {
+              const migrateResponse = await fetch('/api/migrate', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+              });
+              
+              const migrateData = await migrateResponse.json();
+              
+              if (migrateData.success) {
+                alert('Migration successful! Please try adding products to dashboard again.');
+                // Retry the original operation
+                return handleAddToDashboard();
+              } else {
+                alert(`Migration failed: ${migrateData.error || migrateData.details || 'Unknown error'}`);
+              }
+            } catch (migrateError: any) {
+              alert(`Failed to run migration: ${migrateError.message}`);
+            }
+          }
+          return;
+        }
+        
         // Show detailed error message if available
         const errorMsg = data.details 
           ? `${data.error}: ${data.details}` 
           : (data.error || 'Failed to add products to dashboard');
-        alert(errorMsg);
+        if (data.hint) {
+          alert(`${errorMsg}\n\n${data.hint}`);
+        } else {
+          alert(errorMsg);
+        }
         return;
       }
       
@@ -236,11 +269,44 @@ export default function ProductsPage() {
       const data = await response.json();
       
       if (!response.ok) {
+        // Check if it's a schema error and offer to run migration
+        if (data.error?.includes('schema') || data.error?.includes('column') || data.migrationEndpoint) {
+          const shouldMigrate = confirm(
+            `${data.error}: ${data.details || ''}\n\n${data.hint || 'Would you like to run the database migration now?'}`
+          );
+          
+          if (shouldMigrate) {
+            try {
+              const migrateResponse = await fetch('/api/migrate', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+              });
+              
+              const migrateData = await migrateResponse.json();
+              
+              if (migrateData.success) {
+                alert('Migration successful! Please try removing products from dashboard again.');
+                // Retry the original operation
+                return handleRemoveFromDashboard();
+              } else {
+                alert(`Migration failed: ${migrateData.error || migrateData.details || 'Unknown error'}`);
+              }
+            } catch (migrateError: any) {
+              alert(`Failed to run migration: ${migrateError.message}`);
+            }
+          }
+          return;
+        }
+        
         // Show detailed error message if available
         const errorMsg = data.details 
           ? `${data.error}: ${data.details}` 
           : (data.error || 'Failed to remove products from dashboard');
-        alert(errorMsg);
+        if (data.hint) {
+          alert(`${errorMsg}\n\n${data.hint}`);
+        } else {
+          alert(errorMsg);
+        }
         return;
       }
       
