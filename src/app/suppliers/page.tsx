@@ -5,6 +5,8 @@ import { Supplier } from '@/types';
 import { FiInfo, FiStar, FiClock, FiDollarSign, FiPackage, FiAlertTriangle, FiBarChart, FiGlobe, FiSearch, FiFilter, FiPlus, FiRefreshCw } from 'react-icons/fi';
 import { getAuthHeaders, isAuthenticated } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import { TableSkeleton } from '@/components/SkeletonLoader';
 
 // Expanded supplier risk factors
 const supplierRiskFactors = {
@@ -185,6 +187,7 @@ export default function Suppliers() {
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        <Breadcrumbs />
         <h1 className="text-3xl font-bold mb-6">Supplier Management</h1>
         
         {/* Educational Section - Risk Factors */}

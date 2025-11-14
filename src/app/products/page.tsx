@@ -6,6 +6,8 @@ import { Product } from '@/types';
 import { getAuthHeaders } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import { ProductCardSkeleton } from '@/components/SkeletonLoader';
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -70,6 +72,7 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8">
+        <Breadcrumbs />
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-gray-800">Product Catalog</h1>
           <button
@@ -131,12 +134,14 @@ export default function ProductsPage() {
           </div>
         )}
         
-        {/* Loading and error states */}
-        {isLoading && (
-          <div className="text-center py-10">
-            <div className="animate-pulse text-blue-600">Loading products...</div>
-          </div>
-        )}
+            {/* Loading and error states */}
+            {isLoading && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
+              </div>
+            )}
         
         {error && (
           <div className="text-center py-10">

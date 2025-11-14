@@ -28,6 +28,8 @@ import {
 } from 'chart.js';
 import BusinessInsights from '@/components/BusinessInsights';
 import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
+import AdMetricsChecker from '@/components/AdMetricsChecker';
 
 ChartJS.register(
   CategoryScale,
@@ -296,9 +298,19 @@ export default function Dashboard() {
     }));
   };
 
+  const [showRestockConfirm, setShowRestockConfirm] = useState(false);
+  const [showBudgetConfirm, setShowBudgetConfirm] = useState(false);
+  const [showMarketingConfirm, setShowMarketingConfirm] = useState(false);
+
   const restockInventory = () => {
     const restockAmount = 20;
     const restockCost = restockAmount * 15; // Average cost per item
+    
+    if (businessStats.profit < restockCost) {
+      alert(`Insufficient funds. You need $${restockCost.toFixed(2)} but only have $${businessStats.profit.toFixed(2)}.`);
+      return;
+    }
+    
     setBusinessStats(prev => ({
       ...prev,
       inventory: prev.inventory + restockAmount,
@@ -468,7 +480,7 @@ export default function Dashboard() {
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiPackage /> Inventory Management</h2>
             <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">Current Stock: <span className="font-bold text-base sm:text-lg">{businessStats.inventory}</span> units</p>
             <button 
-              onClick={restockInventory}
+              onClick={() => setShowRestockConfirm(true)}
               className="btn btn-secondary w-full flex items-center justify-center gap-2 text-sm sm:text-base"
               disabled={businessStats.inventory > 50}
             >
@@ -480,7 +492,7 @@ export default function Dashboard() {
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiTarget /> Marketing</h2>
             <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">Current Budget: <span className="font-bold text-base sm:text-lg">${businessStats.marketing.toFixed(2)}</span></p>
             <button 
-              onClick={increaseMarketing}
+              onClick={() => setShowMarketingConfirm(true)}
               className="btn btn-secondary w-full flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <FiPlus /> <span className="hidden sm:inline">Increase Budget ($100)</span><span className="sm:hidden">+$100</span>
