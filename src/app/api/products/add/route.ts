@@ -56,6 +56,16 @@ export async function POST(request: NextRequest) {
 
     const client = await pool.connect();
     try {
+      // Ensure active_in_dashboard column exists
+      try {
+        await client.query(`
+          ALTER TABLE products 
+          ADD COLUMN IF NOT EXISTS active_in_dashboard BOOLEAN DEFAULT true
+        `);
+      } catch (e) {
+        // Column might already exist, ignore
+      }
+
       // Calculate profit margin if not provided
       const cost = parseFloat(estimatedCost || 0);
       const price = parseFloat(sellingPrice || 0);
@@ -73,8 +83,8 @@ export async function POST(request: NextRequest) {
       const result = await client.query(
         `INSERT INTO products (
           user_id, name, category, source_url, cost, selling_price, moq,
-          vendor_name, vendor_platform, gemini_analysis
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          vendor_name, vendor_platform, gemini_analysis, active_in_dashboard
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id`,
         [
           userId,
@@ -90,7 +100,8 @@ export async function POST(request: NextRequest) {
             vendorLinks,
             addedFrom: 'recommendations',
             profitMargin
-          })
+          }),
+          true // active_in_dashboard - new products are active by default
         ]
       );
 
