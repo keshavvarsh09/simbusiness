@@ -273,15 +273,26 @@ export default function Dashboard() {
     const availableInventory = businessStats.inventory;
     const actualOrders = Math.min(potentialOrders, availableInventory);
     
-    // Calculate revenue based on order value (with variation)
-    const orderValueVariation = 0.2; // 20% variation in order value
-    const baseOrderValue = metrics.averageOrderValue;
-    const actualOrderValue = baseOrderValue * (1 - orderValueVariation/2 + Math.random() * orderValueVariation);
+    // Calculate revenue and costs based on actual products
+    let actualOrderValue: number;
+    let costPerOrder: number;
+    
+    if (userProducts.length > 0) {
+      // Use actual product data - randomly select a product for each order
+      const selectedProduct = userProducts[Math.floor(Math.random() * userProducts.length)];
+      actualOrderValue = selectedProduct.sellingPrice;
+      costPerOrder = selectedProduct.cost;
+    } else {
+      // Fallback to metrics if no products loaded
+      const orderValueVariation = 0.2; // 20% variation in order value
+      const baseOrderValue = metrics.averageOrderValue;
+      actualOrderValue = baseOrderValue * (1 - orderValueVariation/2 + Math.random() * orderValueVariation);
+      costPerOrder = actualOrderValue * 0.4; // 40% COGS fallback
+    }
     
     const newRevenue = actualOrders * actualOrderValue;
     
     // Calculate costs (product cost, shipping, returns handling)
-    const costPerOrder = actualOrderValue * 0.4; // 40% COGS
     const shippingPerOrder = 5;
     const returnCost = newRevenue * (metrics.returnRate / 100) * 0.5; // 50% of returned revenue is lost
     
