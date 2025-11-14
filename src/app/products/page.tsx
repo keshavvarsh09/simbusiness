@@ -85,6 +85,160 @@ export default function ProductsPage() {
     setSelectedCategory(category);
   };
 
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllProducts = () => {
+    if (selectedProducts.size === products.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(products.map(p => p.id)));
+    }
+  };
+
+  const handleSimulateProducts = async () => {
+    if (selectedProducts.size === 0) {
+      alert('Please select at least one product to simulate');
+      return;
+    }
+
+    setSimulating(true);
+    try {
+      const response = await fetch('/api/products/simulate', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          productIds: Array.from(selectedProducts).map(id => id.replace('P', '')),
+          days: 30,
+          marketingBudget: 0
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSimulationResults(data);
+      } else {
+        alert(data.error || 'Failed to simulate products');
+      }
+    } catch (error: any) {
+      alert('Failed to simulate products: ' + error.message);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const loadProductPerformance = async (productId: string) => {
+    if (productPerformances[productId]) return; // Already loaded
+
+    setLoadingPerformance(prev => new Set(prev).add(productId));
+    try {
+      const response = await fetch('/api/products/performance', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          productIds: [productId.replace('P', '')]
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.analyses.length > 0) {
+        setProductPerformances(prev => ({
+          ...prev,
+          [productId]: data.analyses[0]
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load product performance:', error);
+    } finally {
+      setLoadingPerformance(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleAddToDashboard = async () => {
+    if (selectedProducts.size === 0) {
+      alert('Please select at least one product to add to dashboard');
+      return;
+    }
+
+    setAddingToDashboard(true);
+    try {
+      const response = await fetch('/api/products/toggle-dashboard', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          productIds: Array.from(selectedProducts),
+          active: true
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Update active products set
+        setActiveProducts(prev => {
+          const newSet = new Set(prev);
+          selectedProducts.forEach(id => newSet.add(id));
+          return newSet;
+        });
+        alert(`${data.updated} product(s) added to dashboard! They will now be used in revenue calculations.`);
+      } else {
+        alert(data.error || 'Failed to add products to dashboard');
+      }
+    } catch (error: any) {
+      alert('Failed to add products to dashboard: ' + error.message);
+    } finally {
+      setAddingToDashboard(false);
+    }
+  };
+
+  const handleRemoveFromDashboard = async () => {
+    if (selectedProducts.size === 0) {
+      alert('Please select at least one product to remove from dashboard');
+      return;
+    }
+
+    setAddingToDashboard(true);
+    try {
+      const response = await fetch('/api/products/toggle-dashboard', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          productIds: Array.from(selectedProducts),
+          active: false
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Update active products set
+        setActiveProducts(prev => {
+          const newSet = new Set(prev);
+          selectedProducts.forEach(id => newSet.delete(id));
+          return newSet;
+        });
+        alert(`${data.updated} product(s) removed from dashboard.`);
+      } else {
+        alert(data.error || 'Failed to remove products from dashboard');
+      }
+    } catch (error: any) {
+      alert('Failed to remove products from dashboard: ' + error.message);
+    } finally {
+      setAddingToDashboard(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8">
