@@ -257,26 +257,26 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Dashboard Content */}
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Business Dashboard</h1>
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Business Dashboard</h1>
         
         {/* Market Event Alert */}
         {currentEvent && (
-          <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-4">
-            <div className="text-yellow-500 mt-1">
+          <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+            <div className="text-yellow-500 mt-1 flex-shrink-0">
               <FiAlertCircle size={24} />
             </div>
-            <div>
-              <h3 className="font-bold text-lg text-yellow-700">{currentEvent.title}</h3>
-              <p className="text-yellow-600">{currentEvent.description}</p>
-              <div className="mt-2 flex gap-4">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-base sm:text-lg text-yellow-700">{currentEvent.title}</h3>
+              <p className="text-sm sm:text-base text-yellow-600">{currentEvent.description}</p>
+              <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4">
                 {currentEvent.impact.sales !== 0 && (
-                  <span className={`text-sm font-medium ${currentEvent.impact.sales > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-xs sm:text-sm font-medium ${currentEvent.impact.sales > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     Sales: {currentEvent.impact.sales > 0 ? '+' : ''}{currentEvent.impact.sales}%
                   </span>
                 )}
                 {currentEvent.impact.expenses !== 0 && (
-                  <span className={`text-sm font-medium ${currentEvent.impact.expenses < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-xs sm:text-sm font-medium ${currentEvent.impact.expenses < 0 ? 'text-green-600' : 'text-red-600'}`}>
                     Expenses: {currentEvent.impact.expenses > 0 ? '+' : ''}{currentEvent.impact.expenses}%
                   </span>
                 )}
@@ -286,7 +286,7 @@ export default function Dashboard() {
         )}
         
         {/* Business Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatCard title="Total Revenue" value={`$${businessStats.revenue.toFixed(2)}`} icon={<FiDollarSign className="text-green-500" />} />
           <StatCard title="Total Expenses" value={`$${businessStats.expenses.toFixed(2)}`} icon={<FiDollarSign className="text-red-500" />} />
           <StatCard title="Total Profit" value={`$${businessStats.profit.toFixed(2)}`} icon={<FiTrendingUp className="text-blue-500" />} />
@@ -294,11 +294,11 @@ export default function Dashboard() {
         </div>
 
         {/* Business Metrics */}
-        <div className="card bg-white mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="card bg-white mb-6 sm:mb-8 p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2">
             <FiActivity className="text-indigo-500" /> Real-World Metrics
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-center">
             <div className="p-3">
               <h3 className="text-gray-600 text-sm">Conversion Rate</h3>
               <p className="text-2xl font-bold">{metrics.conversionRate.toFixed(1)}%</p>
@@ -323,36 +323,36 @@ export default function Dashboard() {
         </div>
 
         {/* Actions Panel */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card bg-white">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><FiPackage /> Inventory Management</h2>
-            <p className="mb-4 text-gray-600">Current Stock: <span className="font-bold text-lg">{businessStats.inventory}</span> units</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="card bg-white p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiPackage /> Inventory Management</h2>
+            <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">Current Stock: <span className="font-bold text-base sm:text-lg">{businessStats.inventory}</span> units</p>
             <button 
               onClick={restockInventory}
-              className="btn btn-secondary w-full flex items-center justify-center gap-2"
-              disabled={businessStats.inventory > 50} // Example disable condition
+              className="btn btn-secondary w-full flex items-center justify-center gap-2 text-sm sm:text-base"
+              disabled={businessStats.inventory > 50}
             >
-              <FiRefreshCw /> Restock (20 units)
+              <FiRefreshCw /> <span className="hidden sm:inline">Restock (20 units)</span><span className="sm:hidden">Restock</span>
             </button>
           </div>
 
-          <div className="card bg-white">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><FiTarget /> Marketing</h2>
-            <p className="mb-4 text-gray-600">Current Budget: <span className="font-bold text-lg">${businessStats.marketing.toFixed(2)}</span></p>
+          <div className="card bg-white p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiTarget /> Marketing</h2>
+            <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">Current Budget: <span className="font-bold text-base sm:text-lg">${businessStats.marketing.toFixed(2)}</span></p>
             <button 
               onClick={increaseMarketing}
-              className="btn btn-secondary w-full flex items-center justify-center gap-2"
+              className="btn btn-secondary w-full flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <FiPlus /> Increase Budget ($100)
+              <FiPlus /> <span className="hidden sm:inline">Increase Budget ($100)</span><span className="sm:hidden">+$100</span>
             </button>
           </div>
 
-          <div className="card bg-white">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><FiPlay /> Simulation Control</h2>
-            <p className="mb-2 text-gray-600">Current Day: <span className="font-bold text-lg">{day}</span></p>
+          <div className="card bg-white p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiPlay /> Simulation Control</h2>
+            <p className="mb-2 text-sm sm:text-base text-gray-600">Current Day: <span className="font-bold text-base sm:text-lg">{day}</span></p>
             
-            <div className="flex mb-4">
-              <span className="text-sm text-gray-600 mr-2">Speed:</span>
+            <div className="flex items-center mb-3 sm:mb-4">
+              <span className="text-xs sm:text-sm text-gray-600 mr-2">Speed:</span>
               <div className="flex gap-1">
                 {simulationSpeeds.map((speed) => (
                   <button
@@ -373,15 +373,15 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-2">
               <button 
                 onClick={simulateDay}
-                className="btn btn-accent flex items-center justify-center gap-2"
-                disabled={businessStats.inventory <= 0 || autoSimulate} // Disable if no inventory or auto running
+                className="btn btn-accent flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
+                disabled={businessStats.inventory <= 0 || autoSimulate}
               >
-                <FiPlay /> Next Day
+                <FiPlay /> <span className="hidden sm:inline">Next Day</span><span className="sm:hidden">Next</span>
               </button>
               <button 
                 onClick={toggleAutoSimulation}
-                className={`btn ${autoSimulate ? 'btn-secondary' : 'btn-primary'} flex items-center justify-center gap-2`}
-                disabled={businessStats.inventory <= 0} // Disable if no inventory
+                className={`btn ${autoSimulate ? 'btn-secondary' : 'btn-primary'} flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base`}
+                disabled={businessStats.inventory <= 0}
               >
                 {autoSimulate ? 'Pause' : 'Auto-Run'}
               </button>
@@ -391,9 +391,11 @@ export default function Dashboard() {
 
         {/* Profit Chart */}
         {simulationHistory.profit.length > 0 && (
-          <div className="card bg-white mb-8">
-            <h2 className="text-xl font-semibold mb-4">Profit Trend</h2>
-            <Line options={chartOptions} data={chartData} />
+          <div className="card bg-white mb-6 sm:mb-8 p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Profit Trend</h2>
+            <div className="overflow-x-auto">
+              <Line options={chartOptions} data={chartData} />
+            </div>
           </div>
         )}
 

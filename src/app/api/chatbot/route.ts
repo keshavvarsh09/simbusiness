@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chatWithGemini } from '@/lib/gemini';
+import { chatWithGemini } from '@/lib/gemini-optimized';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
