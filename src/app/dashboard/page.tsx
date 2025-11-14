@@ -167,13 +167,15 @@ export default function Dashboard() {
     if (saving) return;
     setSaving(true);
     try {
+      // Always calculate profit correctly before saving
+      const calculatedProfit = businessStats.revenue - businessStats.expenses;
       await fetch('/api/dashboard/state', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
           revenue: businessStats.revenue,
           expenses: businessStats.expenses,
-          profit: businessStats.profit,
+          profit: calculatedProfit, // Always save calculated profit
           orders: businessStats.orders,
           inventory: businessStats.inventory,
           marketing: businessStats.marketing,
