@@ -281,7 +281,7 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
   };
 
   return (
-    <div className={`card bg-white overflow-hidden shadow-sm hover:shadow-md transition-all relative ${isSelected ? 'ring-2 ring-indigo-500' : ''}`}>
+    <div className={`card bg-white overflow-hidden shadow-sm hover:shadow-md transition-all relative ${isSelected ? 'ring-2 ring-indigo-500' : ''} ${isActiveInDashboard ? 'border-l-4 border-l-green-500' : ''}`}>
       {/* Selection Checkbox */}
       {onSelect && (
         <div className="absolute top-2 right-2 z-10">
@@ -295,6 +295,15 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
           >
             {isSelected && <FiCheck size={14} />}
           </button>
+        </div>
+      )}
+      
+      {/* Active in Dashboard Badge */}
+      {isActiveInDashboard && (
+        <div className="absolute top-2 left-2 z-10">
+          <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-medium">
+            Active in Dashboard
+          </span>
         </div>
       )}
 
