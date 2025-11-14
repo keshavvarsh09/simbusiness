@@ -205,17 +205,36 @@ export default function ProductsPage() {
   );
 }
 
-function ProductCard({ product }: { product: Product & { moq?: number; vendorName?: string; vendorPlatform?: string; sourceUrl?: string } }) {
+interface ProductCardProps {
+  product: Product & { moq?: number; vendorName?: string; vendorPlatform?: string; sourceUrl?: string };
+  isSelected?: boolean;
+  onSelect?: () => void;
+  performance?: any;
+  loadingPerformance?: boolean;
+  onLoadPerformance?: () => void;
+}
+
+function ProductCard({ product, isSelected = false, onSelect, performance, loadingPerformance, onLoadPerformance }: ProductCardProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(product.imageUrl || null);
   const [imageLoading, setImageLoading] = useState(!product.imageUrl && !!product.sourceUrl);
+  const [showImageLinks, setShowImageLinks] = useState(false);
 
   useEffect(() => {
-    // Fetch image from source URL if not already loaded
+    // Try to fetch image from source URL
     if (!imageUrl && product.sourceUrl) {
+      // For Alibaba/AliExpress/IndiaMart, show link button instead of fetching
+      if (product.sourceUrl.includes('alibaba.com') || 
+          product.sourceUrl.includes('aliexpress.com') || 
+          product.sourceUrl.includes('indiamart.com')) {
+        setImageLoading(false);
+        return;
+      }
+      
+      // Try fetching via API for other URLs
       fetch(`/api/products/fetch-image?url=${encodeURIComponent(product.sourceUrl)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.imageUrl) {
+          if (data.imageUrl && !data.imageUrl.includes('placeholder')) {
             setImageUrl(data.imageUrl);
           }
         })
@@ -225,6 +244,8 @@ function ProductCard({ product }: { product: Product & { moq?: number; vendorNam
         .finally(() => {
           setImageLoading(false);
         });
+    } else if (!product.sourceUrl) {
+      setImageLoading(false);
     }
   }, [product.sourceUrl, imageUrl]);
 
@@ -232,8 +253,34 @@ function ProductCard({ product }: { product: Product & { moq?: number; vendorNam
     ? (((product.potentialPrice - product.cost) / product.potentialPrice) * 100).toFixed(0)
     : '0';
 
+  const getPerformanceColor = (perf?: string) => {
+    switch (perf) {
+      case 'excellent': return 'text-green-600 bg-green-50';
+      case 'good': return 'text-blue-600 bg-blue-50';
+      case 'moderate': return 'text-yellow-600 bg-yellow-50';
+      case 'poor': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
   return (
-    <div className="card bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
+    <div className={`card bg-white overflow-hidden shadow-sm hover:shadow-md transition-all relative ${isSelected ? 'ring-2 ring-indigo-500' : ''}`}>
+      {/* Selection Checkbox */}
+      {onSelect && (
+        <div className="absolute top-2 right-2 z-10">
+          <button
+            onClick={onSelect}
+            className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+              isSelected 
+                ? 'bg-indigo-600 border-indigo-600 text-white' 
+                : 'bg-white border-gray-300 hover:border-indigo-500'
+            }`}
+          >
+            {isSelected && <FiCheck size={14} />}
+          </button>
+        </div>
+      )}
+
       <div className="bg-gray-100 h-40 flex items-center justify-center relative">
         {imageLoading ? (
           <div className="animate-pulse flex items-center justify-center">
@@ -250,7 +297,59 @@ function ProductCard({ product }: { product: Product & { moq?: number; vendorNam
             }}
           />
         ) : (
-          <FiBox size={48} className="text-gray-400" />
+          <div className="flex flex-col items-center gap-2">
+            <FiBox size={48} className="text-gray-400" />
+            {product.sourceUrl && (
+              <button
+                onClick={() => setShowImageLinks(!showImageLinks)}
+                className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+              >
+                <FiImage size={12} />
+                View Images
+              </button>
+            )}
+          </div>
+        )}
+        
+        {/* Image Links Dropdown */}
+        {showImageLinks && product.sourceUrl && (
+          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-2">
+            <div className="flex flex-wrap gap-1 justify-center">
+              {product.sourceUrl.includes('alibaba') && (
+                <a
+                  href={product.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs px-2 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FiExternalLink size={10} /> Alibaba
+                </a>
+              )}
+              {product.sourceUrl.includes('aliexpress') && (
+                <a
+                  href={product.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FiExternalLink size={10} /> AliExpress
+                </a>
+              )}
+              {product.sourceUrl.includes('indiamart') && (
+                <a
+                  href={product.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FiExternalLink size={10} /> IndiaMart
+                </a>
+              )}
+            </div>
+          </div>
         )}
       </div>
       <div className="p-4">
@@ -290,11 +389,61 @@ function ProductCard({ product }: { product: Product & { moq?: number; vendorNam
             href={product.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-600 hover:underline block mb-2"
+            className="text-xs text-blue-600 hover:underline block mb-2 flex items-center gap-1"
           >
-            View Original Product →
+            <FiExternalLink size={12} /> View Original Product
           </a>
         )}
+
+        {/* AI Performance Analysis */}
+        <div className="mt-3 pt-3 border-t">
+          {performance ? (
+            <div className="space-y-2">
+              <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${getPerformanceColor(performance.performance)}`}>
+                {performance.performance?.toUpperCase() || 'MODERATE'}
+              </div>
+              <p className="text-xs text-gray-600">{performance.description}</p>
+              {performance.strengths && performance.strengths.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-green-700 mb-1">Strengths:</p>
+                  <ul className="text-xs text-gray-600 list-disc list-inside">
+                    {performance.strengths.map((s: string, i: number) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {performance.risks && performance.risks.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-red-700 mb-1">Risks:</p>
+                  <ul className="text-xs text-gray-600 list-disc list-inside">
+                    {performance.risks.map((r: string, i: number) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : onLoadPerformance ? (
+            <button
+              onClick={onLoadPerformance}
+              disabled={loadingPerformance}
+              className="w-full text-xs px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loadingPerformance ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <FiBarChart size={12} />
+                  Get AI Performance Analysis
+                </>
+              )}
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
