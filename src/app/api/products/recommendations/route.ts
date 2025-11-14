@@ -30,6 +30,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get optional query parameters for custom genre/budget
+    const { searchParams } = new URL(request.url);
+    const customGenre = searchParams.get('genre');
+    const customBudget = searchParams.get('budget');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
     const client = await pool.connect();
     try {
       const userResult = await client.query(
@@ -38,16 +45,20 @@ export async function GET(request: NextRequest) {
       );
       const user = userResult.rows[0];
 
-      if (!user?.budget || !user?.product_genre) {
+      // Use custom values if provided, otherwise use user's saved values
+      const budget = customBudget ? parseFloat(customBudget) : parseFloat(user?.budget || '0');
+      const genre = customGenre || user?.product_genre || 'general';
+
+      if (!budget || budget <= 0) {
         return NextResponse.json(
-          { error: 'User budget and product genre must be set' },
+          { error: 'Budget must be set. Please set your budget in settings or provide it as a query parameter.' },
           { status: 400 }
         );
       }
 
       let recommendations = await generateProductRecommendations(
-        parseFloat(user.budget),
-        user.product_genre
+        budget,
+        genre
       );
 
       // Convert to array if needed
@@ -55,8 +66,12 @@ export async function GET(request: NextRequest) {
         ? recommendations 
         : (recommendations.recommendations || []);
 
+      // Apply pagination
+      const paginatedRecs = recsArray.slice(offset, offset + limit);
+      const hasMore = offset + limit < recsArray.length;
+
       // Add search links, image links, prices, and supplier details for each product
-      const recommendationsWithLinks = recsArray.map((rec: any) => {
+      const recommendationsWithLinks = paginatedRecs.map((rec: any) => {
         const searchTerms = rec.searchTerms || rec.name || '';
         const links = generateProductSearchLinks(searchTerms, rec.category);
         
@@ -112,7 +127,13 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        recommendations: recommendationsWithLinks
+        recommendations: recommendationsWithLinks,
+        pagination: {
+          total: recsArray.length,
+          limit,
+          offset,
+          hasMore
+        }
       });
     } finally {
       client.release();

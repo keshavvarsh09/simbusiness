@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiTrendingUp, FiDollarSign, FiPackage, FiExternalLink, FiPlus, FiCheck, FiStar, FiUsers, FiShield } from 'react-icons/fi';
+import { FiTrendingUp, FiDollarSign, FiPackage, FiExternalLink, FiPlus, FiCheck, FiStar, FiUsers, FiShield, FiSettings, FiChevronDown } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
 
@@ -12,21 +12,55 @@ export default function ProductRecommendationsPage() {
   const [error, setError] = useState('');
   const [addingProducts, setAddingProducts] = useState<Set<number>>(new Set());
   const [addedProducts, setAddedProducts] = useState<Set<number>>(new Set());
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ budget?: number; productGenre?: string } | null>(null);
+  const [showGenreModal, setShowGenreModal] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState('');
+  const [customBudget, setCustomBudget] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push('/auth/signin');
       return;
     }
+    loadUserProfile();
     fetchRecommendations();
   }, [router]);
 
-  const fetchRecommendations = async () => {
-    setLoading(true);
+  const loadUserProfile = async () => {
+    try {
+      const response = await fetch('/api/user/profile', {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUserProfile({
+            budget: parseFloat(data.budget || 0),
+            productGenre: data.product_genre || data.productGenre
+          });
+          setSelectedGenre(data.product_genre || data.productGenre || '');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+    }
+  };
+
+  const fetchRecommendations = async (reset: boolean = false) => {
+    if (reset) {
+      setLoading(true);
+      setOffset(0);
+    } else {
+      setLoadingMore(true);
+    }
     setError('');
 
     try {
-      const response = await fetch('/api/products/recommendations', {
+      const currentOffset = reset ? 0 : offset;
+      const response = await fetch(`/api/products/recommendations?limit=10&offset=${currentOffset}`, {
         headers: getAuthHeaders(),
       });
 
@@ -41,11 +75,65 @@ export default function ProductRecommendationsPage() {
         ? data.recommendations 
         : (data.recommendations?.recommendations || []);
       
-      setRecommendations(recs);
+      if (reset) {
+        setRecommendations(recs);
+      } else {
+        setRecommendations(prev => [...prev, ...recs]);
+      }
+      
+      setHasMore(data.pagination?.hasMore || false);
+      setOffset(currentOffset + recs.length);
     } catch (err) {
       setError('Failed to fetch recommendations. Please try again.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleSeeMore = () => {
+    fetchRecommendations(false);
+  };
+
+  const handleUpdateGenre = async () => {
+    if (!selectedGenre) {
+      alert('Please select a product genre');
+      return;
+    }
+
+    try {
+      const updateData: any = { productGenre: selectedGenre };
+      if (customBudget) {
+        updateData.budget = parseFloat(customBudget);
+      }
+
+      const response = await fetch('/api/user/update-interests', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updateData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update interests');
+      }
+
+      // Update local state
+      setUserProfile(prev => ({
+        ...prev,
+        productGenre: selectedGenre,
+        budget: customBudget ? parseFloat(customBudget) : prev?.budget
+      }));
+
+      setShowGenreModal(false);
+      
+      // Refresh recommendations with new genre
+      fetchRecommendations(true);
+      
+      alert('Product genre updated! Loading new recommendations...');
+    } catch (err: any) {
+      alert(err.message || 'Failed to update product genre');
     }
   };
 
@@ -98,10 +186,26 @@ export default function ProductRecommendationsPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-3xl font-bold mb-4 flex items-center gap-2">
-            <FiTrendingUp className="text-green-500" />
-            Product Recommendations
-          </h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <FiTrendingUp className="text-green-500" />
+              Product Recommendations
+            </h1>
+            <div className="flex items-center gap-3">
+              {userProfile && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Genre:</span> {userProfile.productGenre || 'Not set'} | 
+                  <span className="font-medium ml-2">Budget:</span> ${userProfile.budget || 0}
+                </div>
+              )}
+              <button
+                onClick={() => setShowGenreModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 text-sm"
+              >
+                <FiSettings /> Change Interest
+              </button>
+            </div>
+          </div>
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
@@ -343,8 +447,99 @@ export default function ProductRecommendationsPage() {
           ) : (
             <p className="text-gray-500">No recommendations available. Please set your budget and product genre in settings.</p>
           )}
+
+          {/* See More Button */}
+          {!loading && recommendations.length > 0 && hasMore && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={handleSeeMore}
+                disabled={loadingMore}
+                className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+              >
+                {loadingMore ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <FiChevronDown /> See More Recommendations
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Change Interest Modal */}
+      {showGenreModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h2 className="text-2xl font-bold mb-4">Change Product Interest</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="productGenre" className="block text-sm font-medium text-gray-700 mb-2">
+                  Product Genre/Category
+                </label>
+                <select
+                  id="productGenre"
+                  value={selectedGenre}
+                  onChange={(e) => setSelectedGenre(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a category</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="fashion">Fashion & Apparel</option>
+                  <option value="home">Home & Kitchen</option>
+                  <option value="beauty">Beauty & Personal Care</option>
+                  <option value="sports">Sports & Outdoors</option>
+                  <option value="toys">Toys & Games</option>
+                  <option value="books">Books & Media</option>
+                  <option value="health">Health & Wellness</option>
+                  <option value="automotive">Automotive</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="customBudget" className="block text-sm font-medium text-gray-700 mb-2">
+                  Budget (Optional - leave empty to keep current)
+                </label>
+                <input
+                  type="number"
+                  id="customBudget"
+                  value={customBudget}
+                  onChange={(e) => setCustomBudget(e.target.value)}
+                  placeholder={userProfile?.budget?.toString() || 'Enter budget'}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleUpdateGenre}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Update & Refresh
+              </button>
+              <button
+                onClick={() => {
+                  setShowGenreModal(false);
+                  setCustomBudget('');
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
