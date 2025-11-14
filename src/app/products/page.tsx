@@ -187,6 +187,39 @@ export default function ProductsPage() {
       const data = await response.json();
       
       if (!response.ok) {
+        // Check if it's a "table does not exist" error and offer to initialize database
+        if (data.error?.includes('Table does not exist') || data.error?.includes('does not exist')) {
+          const shouldInit = confirm(
+            `${data.error}\n\n${data.hint || 'Would you like to initialize the database now? This will create all required tables.'}`
+          );
+          
+          if (shouldInit) {
+            try {
+              setAddingToDashboard(true);
+              const initResponse = await fetch('/api/init-db', {
+                method: 'GET',
+                headers: getAuthHeaders(),
+              });
+              
+              const initData = await initResponse.json();
+              
+              if (initData.success) {
+                alert('Database initialized successfully! Please try adding products to dashboard again.');
+                // Retry the original operation
+                setAddingToDashboard(false);
+                return handleAddToDashboard();
+              } else {
+                alert(`Database initialization failed: ${initData.error || initData.details || 'Unknown error'}`);
+              }
+            } catch (initError: any) {
+              alert(`Failed to initialize database: ${initError.message}`);
+            } finally {
+              setAddingToDashboard(false);
+            }
+          }
+          return;
+        }
+        
         // Check if it's a schema error and offer to run migration
         if (data.error?.includes('schema') || data.error?.includes('column') || data.migrationEndpoint) {
           const shouldMigrate = confirm(
@@ -269,6 +302,39 @@ export default function ProductsPage() {
       const data = await response.json();
       
       if (!response.ok) {
+        // Check if it's a "table does not exist" error and offer to initialize database
+        if (data.error?.includes('Table does not exist') || data.error?.includes('does not exist')) {
+          const shouldInit = confirm(
+            `${data.error}\n\n${data.hint || 'Would you like to initialize the database now? This will create all required tables.'}`
+          );
+          
+          if (shouldInit) {
+            try {
+              setAddingToDashboard(true);
+              const initResponse = await fetch('/api/init-db', {
+                method: 'GET',
+                headers: getAuthHeaders(),
+              });
+              
+              const initData = await initResponse.json();
+              
+              if (initData.success) {
+                alert('Database initialized successfully! Please try removing products from dashboard again.');
+                // Retry the original operation
+                setAddingToDashboard(false);
+                return handleRemoveFromDashboard();
+              } else {
+                alert(`Database initialization failed: ${initData.error || initData.details || 'Unknown error'}`);
+              }
+            } catch (initError: any) {
+              alert(`Failed to initialize database: ${initError.message}`);
+            } finally {
+              setAddingToDashboard(false);
+            }
+          }
+          return;
+        }
+        
         // Check if it's a schema error and offer to run migration
         if (data.error?.includes('schema') || data.error?.includes('column') || data.migrationEndpoint) {
           const shouldMigrate = confirm(
