@@ -17,7 +17,7 @@ const FALLBACK_MODELS = [
 ];
 
 // Helper function to try models with fallback
-async function tryModelsWithFallback(prompt: string, isVision: boolean = false): Promise<string> {
+async function tryModelsWithFallback(prompt: string | any[], isVision: boolean = false): Promise<string> {
   const modelsToTry = [MODEL_NAME, ...FALLBACK_MODELS.filter(m => m !== MODEL_NAME)];
   let lastError: any = null;
 
@@ -124,9 +124,7 @@ Format the response as JSON with the following structure:
   "overallAssessment": "string"
 }`;
 
-    const result = await geminiPro.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await tryModelsWithFallback(prompt, false);
     
     // Try to parse JSON from response
     try {
@@ -206,9 +204,7 @@ Format as JSON:
       }
     };
 
-    const result = await geminiProVision.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const text = response.text();
+    const text = await tryModelsWithFallback([prompt, imagePart], true);
     
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -311,9 +307,7 @@ User message: ${message}
 
 Provide helpful, actionable advice. Be concise but thorough. Consider the user's context when giving recommendations.`;
 
-    const result = await geminiPro.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await tryModelsWithFallback(prompt, false);
     
     if (!text || text.trim() === '') {
       throw new Error('Empty response from Gemini API');

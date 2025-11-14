@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chatWithGemini } from '@/lib/gemini-optimized';
+import { generateChatResponse } from '@/lib/ai-router';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
@@ -97,13 +97,13 @@ export async function POST(request: NextRequest) {
         // Continue without history if query fails
       }
 
-      // Check if Gemini API key is set
-      if (!process.env.GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY environment variable is not set');
+      // Check if at least one AI provider is available
+      if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
+        throw new Error('At least one AI API key (GEMINI_API_KEY or GROQ_API_KEY) must be set');
       }
 
-      // Generate response with Gemini
-      const response = await chatWithGemini(message, userContext);
+      // Generate response using AI router (tries Groq first, falls back to Gemini)
+      const response = await generateChatResponse(message, userContext);
 
       // Save conversation to database (don't fail if this fails)
       try {

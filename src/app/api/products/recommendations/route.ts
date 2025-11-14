@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProductRecommendations } from '@/lib/gemini';
+import { generateProductRecommendations } from '@/lib/ai-router';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const recommendations = await getProductRecommendations(
+      const recommendations = await generateProductRecommendations(
         parseFloat(user.budget),
         user.product_genre
       );

@@ -62,6 +62,17 @@ export async function GET(request: NextRequest) {
         apiKeyValid: false,
         error: null as string | null,
         modelName: undefined as string | undefined,
+      },
+      groq: {
+        apiKeyValid: false,
+        error: null as string | null,
+        modelName: undefined as string | undefined,
+      },
+      aiRouter: {
+        availableProviders: {
+          groq: false,
+          gemini: false,
+        }
       }
     };
 
@@ -101,6 +112,25 @@ export async function GET(request: NextRequest) {
       } catch (geminiError: any) {
         diagnostics.gemini.error = geminiError.message;
       }
+    }
+
+    // Test Groq API key
+    if (process.env.GROQ_API_KEY) {
+      try {
+        const { isGroqAvailable } = await import('@/lib/groq');
+        diagnostics.groq.apiKeyValid = isGroqAvailable();
+        diagnostics.groq.modelName = process.env.GROQ_MODEL_NAME || 'llama-3.1-70b-versatile';
+      } catch (groqError: any) {
+        diagnostics.groq.error = groqError.message;
+      }
+    }
+
+    // Get available AI providers
+    try {
+      const { getAvailableProviders } = await import('@/lib/ai-router');
+      diagnostics.aiRouter.availableProviders = getAvailableProviders();
+    } catch (routerError: any) {
+      // Ignore router errors in diagnostics
     }
 
     return NextResponse.json({
