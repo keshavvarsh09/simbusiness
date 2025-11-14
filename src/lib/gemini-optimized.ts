@@ -8,6 +8,13 @@ const genAI = new GoogleGenerativeAI(apiKey);
 // Recommended: models/gemini-2.5-flash (fast, stable)
 const MODEL_NAME = process.env.GEMINI_MODEL_NAME || 'models/gemini-2.5-flash';
 
+// Fallback models in order of preference (if primary model fails)
+const FALLBACK_MODELS = [
+  'models/gemini-2.0-flash',        // Fast and reliable
+  'models/gemini-2.0-flash-001',    // Stable version
+  'models/gemini-2.5-flash-lite',  // Lightweight option
+];
+
 // Rate limiting configuration
 // Gemini Free Tier: 15 requests per minute (RPM)
 // Paid Tier: 60+ RPM depending on plan
@@ -135,39 +142,66 @@ async function callGeminiAPI(
     throw new Error(`Rate limit exceeded. Maximum ${RATE_LIMIT_RPM} requests per minute. Please try again in a moment.`);
   }
 
-  try {
-    const modelInstance = genAI.getGenerativeModel({ model });
-    const result = await modelInstance.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+  // Try primary model first, then fallbacks
+  const modelsToTry = [model, ...FALLBACK_MODELS.filter(m => m !== model)];
+  let lastError: any = null;
 
-    if (!text || text.trim() === '') {
-      throw new Error('Empty response from Gemini API');
+  for (const modelToTry of modelsToTry) {
+    try {
+      const modelInstance = genAI.getGenerativeModel({ model: modelToTry });
+      const result = await modelInstance.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      if (!text || text.trim() === '') {
+        throw new Error('Empty response from Gemini API');
+      }
+
+      // Log if we used a fallback model
+      if (modelToTry !== model) {
+        console.log(`[Gemini] Using fallback model: ${modelToTry} (primary ${model} failed)`);
+      }
+
+      // Cache the response
+      if (useCache) {
+        const cacheKey = generateCacheKey(prompt, context);
+        setCachedResponse(cacheKey, text, cacheTTL);
+      }
+
+      return text;
+    } catch (error: any) {
+      lastError = error;
+      
+      // If it's a 503 (overloaded) or 404 (not found), try next model
+      if (error?.message?.includes('503') || error?.message?.includes('overloaded') || 
+          error?.message?.includes('404') || error?.message?.includes('not found')) {
+        console.log(`[Gemini] Model ${modelToTry} failed, trying next fallback...`);
+        continue; // Try next model
+      }
+      
+      // For other errors (API key, quota, etc.), don't try fallbacks
+      if (error?.message?.includes('API_KEY') || error?.message?.includes('401')) {
+        throw new Error('GEMINI_API_KEY is invalid or missing');
+      } else if (error?.message?.includes('quota') || error?.message?.includes('rate limit') || error?.message?.includes('429')) {
+        throw new Error('Gemini API quota exceeded. Please try again later.');
+      } else if (error?.message?.includes('permission') || error?.message?.includes('403')) {
+        throw new Error('Gemini API permission denied. Check your API key.');
+      }
+      
+      // If we're on the last model, throw the error
+      if (modelToTry === modelsToTry[modelsToTry.length - 1]) {
+        throw error;
+      }
     }
-
-    // Cache the response
-    if (useCache) {
-      const cacheKey = generateCacheKey(prompt, context);
-      setCachedResponse(cacheKey, text, cacheTTL);
-    }
-
-    return text;
-  } catch (error: any) {
-    console.error('Error calling Gemini API:', error);
-
-    // Provide more specific error messages
-    if (error?.message?.includes('API_KEY') || error?.message?.includes('401')) {
-      throw new Error('GEMINI_API_KEY is invalid or missing');
-    } else if (error?.message?.includes('quota') || error?.message?.includes('rate limit') || error?.message?.includes('429')) {
-      throw new Error('Gemini API quota exceeded. Please try again later.');
-    } else if (error?.message?.includes('permission') || error?.message?.includes('403')) {
-      throw new Error('Gemini API permission denied. Check your API key.');
-    } else if (error?.message?.includes('404')) {
-      throw new Error(`Model "${model}" not found. Please check GEMINI_MODEL_NAME environment variable.`);
-    }
-
-    throw error;
   }
+
+  // If all models failed, throw the last error
+  if (lastError) {
+    console.error('Error calling Gemini API (all models failed):', lastError);
+    throw lastError;
+  }
+
+  throw new Error('Failed to call Gemini API');
 }
 
 /**

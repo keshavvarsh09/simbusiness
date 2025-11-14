@@ -9,6 +9,68 @@ const genAI = new GoogleGenerativeAI(apiKey);
 // Alternatives: models/gemini-2.5-pro, models/gemini-2.0-flash
 const MODEL_NAME = process.env.GEMINI_MODEL_NAME || 'models/gemini-2.5-flash';
 
+// Fallback models in order of preference (if primary model fails)
+const FALLBACK_MODELS = [
+  'models/gemini-2.0-flash',        // Fast and reliable
+  'models/gemini-2.0-flash-001',    // Stable version
+  'models/gemini-2.5-flash-lite',  // Lightweight option
+];
+
+// Helper function to try models with fallback
+async function tryModelsWithFallback(prompt: string, isVision: boolean = false): Promise<string> {
+  const modelsToTry = [MODEL_NAME, ...FALLBACK_MODELS.filter(m => m !== MODEL_NAME)];
+  let lastError: any = null;
+
+  for (const modelToTry of modelsToTry) {
+    try {
+      const modelInstance = genAI.getGenerativeModel({ model: modelToTry });
+      const result = await modelInstance.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      if (!text || text.trim() === '') {
+        throw new Error('Empty response from Gemini API');
+      }
+
+      if (modelToTry !== MODEL_NAME) {
+        console.log(`[Gemini] Using fallback model: ${modelToTry} (primary ${MODEL_NAME} failed)`);
+      }
+
+      return text;
+    } catch (error: any) {
+      lastError = error;
+      
+      // If it's a 503 (overloaded) or 404 (not found), try next model
+      if (error?.message?.includes('503') || error?.message?.includes('overloaded') || 
+          error?.message?.includes('404') || error?.message?.includes('not found')) {
+        console.log(`[Gemini] Model ${modelToTry} failed, trying next fallback...`);
+        continue;
+      }
+      
+      // For other errors, don't try fallbacks
+      if (error?.message?.includes('API_KEY') || error?.message?.includes('401')) {
+        throw new Error('GEMINI_API_KEY is invalid or missing');
+      } else if (error?.message?.includes('quota') || error?.message?.includes('rate limit') || error?.message?.includes('429')) {
+        throw new Error('Gemini API quota exceeded. Please try again later.');
+      } else if (error?.message?.includes('permission') || error?.message?.includes('403')) {
+        throw new Error('Gemini API permission denied. Check your API key.');
+      }
+      
+      // If we're on the last model, throw the error
+      if (modelToTry === modelsToTry[modelsToTry.length - 1]) {
+        throw error;
+      }
+    }
+  }
+
+  if (lastError) {
+    console.error('Error calling Gemini API (all models failed):', lastError);
+    throw lastError;
+  }
+
+  throw new Error('Failed to call Gemini API');
+}
+
 // Initialize Gemini models
 const geminiPro = genAI.getGenerativeModel({ model: MODEL_NAME });
 const geminiProVision = genAI.getGenerativeModel({ model: MODEL_NAME });
