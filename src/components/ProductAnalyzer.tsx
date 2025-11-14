@@ -30,13 +30,21 @@ export default function ProductAnalyzer() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Failed to analyze product');
+        const errorMsg = data.details || data.error || 'Failed to analyze product';
+        setError(errorMsg);
+        console.error('Analysis error:', data);
         return;
       }
 
-      setAnalysis(data.analysis);
-    } catch (err) {
-      setError('Failed to analyze product. Please try again.');
+      if (data.analysis) {
+        setAnalysis(data.analysis);
+      } else {
+        setError('Invalid response from server');
+      }
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to analyze product. Please check your connection and try again.';
+      setError(errorMsg);
+      console.error('Analysis error:', err);
     } finally {
       setLoading(false);
     }

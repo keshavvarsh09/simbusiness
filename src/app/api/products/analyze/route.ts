@@ -80,8 +80,31 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: any) {
     console.error('Product analysis error:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to analyze product';
+    let errorDetails = error.message || 'Unknown error';
+    
+    if (error.message?.includes('GEMINI_API_KEY') || error.message?.includes('API_KEY')) {
+      errorMessage = 'Gemini API key is missing or invalid';
+      errorDetails = 'Please check GEMINI_API_KEY environment variable';
+    } else if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+      errorMessage = 'Gemini API quota exceeded';
+      errorDetails = 'Please try again later or check your API quota';
+    } else if (error.message?.includes('404') || error.message?.includes('not found')) {
+      errorMessage = 'Gemini model not found';
+      errorDetails = 'The configured Gemini model is not available. Please check GEMINI_MODEL_NAME';
+    } else if (error.message?.includes('connection') || error.message?.includes('timeout')) {
+      errorMessage = 'Connection error';
+      errorDetails = 'Failed to connect to Gemini API. Please try again';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to analyze product', details: error.message },
+      { 
+        error: errorMessage, 
+        details: errorDetails,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

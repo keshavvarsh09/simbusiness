@@ -80,8 +80,20 @@ Format the response as JSON with the following structure:
       analysis: text,
       rawResponse: text
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing product:', error);
+    
+    // Provide more specific error messages
+    if (error?.message?.includes('API_KEY') || error?.message?.includes('401')) {
+      throw new Error('GEMINI_API_KEY is invalid or missing');
+    } else if (error?.message?.includes('quota') || error?.message?.includes('rate limit') || error?.message?.includes('429')) {
+      throw new Error('Gemini API quota exceeded. Please try again later.');
+    } else if (error?.message?.includes('permission') || error?.message?.includes('403')) {
+      throw new Error('Gemini API permission denied. Check your API key.');
+    } else if (error?.message?.includes('404') || error?.message?.includes('not found')) {
+      throw new Error(`Gemini model "${MODEL_NAME}" not found. Please check GEMINI_MODEL_NAME environment variable.`);
+    }
+    
     throw error;
   }
 }
