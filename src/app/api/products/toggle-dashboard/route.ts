@@ -151,9 +151,34 @@ export async function POST(request: NextRequest) {
             } catch (tableCheckError: any) {
               if (tableCheckError.message?.includes('does not exist') || tableCheckError.message?.includes('relation')) {
                 console.log('Products table not found, initializing database...');
-                const { initDatabase } = await import('@/lib/db');
-                await initDatabase();
-                console.log('Database initialized successfully');
+                try {
+                  const { initDatabase } = await import('@/lib/db');
+                  await initDatabase();
+                  console.log('Database initialized successfully');
+                  
+                  // Verify the table was created
+                  await client.query('SELECT 1 FROM products LIMIT 1');
+                  console.log('Verified products table exists');
+                } catch (initError: any) {
+                  console.error('Database initialization failed:', initError.message);
+                  console.error('Init error stack:', initError.stack);
+                  
+                  // Check if it's a connection issue
+                  if (initError.message?.includes('connection') || 
+                      initError.message?.includes('timeout') ||
+                      initError.message?.includes('ECONNREFUSED') ||
+                      !process.env.DATABASE_URL) {
+                    throw new Error('Database connection failed. Please check your DATABASE_URL environment variable.');
+                  }
+                  
+                  // Check if it's a permission issue
+                  if (initError.message?.includes('permission') || initError.message?.includes('denied')) {
+                    throw new Error('Database permission denied. Please check your database user permissions.');
+                  }
+                  
+                  // Re-throw with more context
+                  throw new Error(`Database initialization failed: ${initError.message}`);
+                }
               }
             }
             
@@ -260,12 +285,32 @@ export async function POST(request: NextRequest) {
       
       // Try to auto-initialize if we haven't already
       try {
-        const { initDatabase } = await import('@/lib/db');
-        await initDatabase();
-        errorDetails = 'Database has been automatically initialized. Please try your operation again.';
-        errorMessage = 'Database initialized';
+        // Check if DATABASE_URL is configured
+        if (!process.env.DATABASE_URL) {
+          errorDetails = 'DATABASE_URL environment variable is not set. Please configure your database connection in Vercel.';
+          errorMessage = 'Database not configured';
+        } else {
+          const { initDatabase } = await import('@/lib/db');
+          await initDatabase();
+          errorDetails = 'Database has been automatically initialized. Please try your operation again.';
+          errorMessage = 'Database initialized';
+        }
       } catch (initError: any) {
-        errorDetails = 'Could not automatically initialize database. Please run /api/init-db manually.';
+        console.error('Auto-initialization failed in catch block:', initError.message);
+        
+        // Provide specific error details
+        if (initError.message?.includes('DATABASE_URL')) {
+          errorDetails = 'Database connection not configured. Please set DATABASE_URL in your environment variables.';
+          errorMessage = 'Database not configured';
+        } else if (initError.message?.includes('connection') || initError.message?.includes('timeout')) {
+          errorDetails = 'Could not connect to database. Please check your DATABASE_URL and ensure the database server is accessible.';
+          errorMessage = 'Database connection failed';
+        } else if (initError.message?.includes('permission')) {
+          errorDetails = 'Database permission denied. Please check your database user has CREATE TABLE permissions.';
+          errorMessage = 'Database permission error';
+        } else {
+          errorDetails = `Could not automatically initialize database: ${initError.message}`;
+        }
       }
     } else if (error.message?.includes('Invalid product ID')) {
       errorMessage = 'Invalid product ID';

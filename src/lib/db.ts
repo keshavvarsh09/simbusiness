@@ -13,8 +13,16 @@ const pool = new Pool({
 
 // Initialize database schema
 export async function initDatabase() {
+  // Check if DATABASE_URL is configured
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is not set. Please configure your database connection.');
+  }
+  
   const client = await pool.connect();
   try {
+    // Test connection first
+    await client.query('SELECT NOW()');
+    console.log('Database connection verified');
     // Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -187,8 +195,25 @@ export async function initDatabase() {
     await client.query(`CREATE INDEX IF NOT EXISTS idx_business_data_user_id ON business_data(user_id)`);
 
     console.log('Database initialized successfully');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error initializing database:', error);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack);
+    
+    // Provide more helpful error messages
+    if (error?.message?.includes('connection') || error?.message?.includes('timeout') || error?.message?.includes('ECONNREFUSED')) {
+      throw new Error('Could not connect to database. Please check your DATABASE_URL and ensure the database server is running.');
+    }
+    
+    if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
+      throw new Error('Database permission denied. The database user does not have permission to create tables.');
+    }
+    
+    if (error?.message?.includes('authentication') || error?.message?.includes('password')) {
+      throw new Error('Database authentication failed. Please check your database credentials.');
+    }
+    
+    // Re-throw with original message if no specific error type matched
     throw error;
   } finally {
     client.release();
