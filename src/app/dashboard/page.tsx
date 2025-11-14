@@ -296,33 +296,47 @@ export default function Dashboard() {
 
   const increaseMarketing = () => {
     const marketingAmount = 100;
+    const currentProfit = businessStats.revenue - businessStats.expenses;
     
-    if (businessStats.profit < marketingAmount) {
-      alert(`Insufficient funds. You need $${marketingAmount.toFixed(2)} but only have $${businessStats.profit.toFixed(2)}.`);
+    if (currentProfit < marketingAmount) {
+      alert(`Insufficient funds. You need $${marketingAmount.toFixed(2)} but only have $${currentProfit.toFixed(2)}.`);
       return;
     }
     
-    setBusinessStats(prev => ({
-      ...prev,
-      marketing: prev.marketing + marketingAmount,
-      expenses: prev.expenses + marketingAmount // Add marketing cost immediately
-    }));
+    setBusinessStats(prev => {
+      const newExpenses = prev.expenses + marketingAmount;
+      const newProfit = prev.revenue - newExpenses;
+      
+      return {
+        ...prev,
+        marketing: prev.marketing + marketingAmount,
+        expenses: newExpenses,
+        profit: newProfit // Recalculate profit correctly
+      };
+    });
   };
 
   const restockInventory = () => {
     const restockAmount = 20;
     const restockCost = restockAmount * 15; // Average cost per item
+    const currentProfit = businessStats.revenue - businessStats.expenses;
     
-    if (businessStats.profit < restockCost) {
-      alert(`Insufficient funds. You need $${restockCost.toFixed(2)} but only have $${businessStats.profit.toFixed(2)}.`);
+    if (currentProfit < restockCost) {
+      alert(`Insufficient funds. You need $${restockCost.toFixed(2)} but only have $${currentProfit.toFixed(2)}.`);
       return;
     }
     
-    setBusinessStats(prev => ({
-      ...prev,
-      inventory: prev.inventory + restockAmount,
-      expenses: prev.expenses + restockCost
-    }));
+    setBusinessStats(prev => {
+      const newExpenses = prev.expenses + restockCost;
+      const newProfit = prev.revenue - newExpenses;
+      
+      return {
+        ...prev,
+        inventory: prev.inventory + restockAmount,
+        expenses: newExpenses,
+        profit: newProfit // Recalculate profit correctly
+      };
+    });
   };
 
   const toggleAutoSimulation = () => {
