@@ -111,6 +111,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [hasProducts, setHasProducts] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [userProducts, setUserProducts] = useState<Array<{ cost: number; sellingPrice: number }>>([]);
 
   // Load state on mount
   useEffect(() => {

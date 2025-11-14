@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { ProductCardSkeleton } from '@/components/SkeletonLoader';
+import AddProductForm from '@/components/AddProductForm';
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -73,14 +74,23 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8">
         <Breadcrumbs />
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
           <h1 className="text-3xl font-bold text-gray-800">Product Catalog</h1>
-          <button
-            onClick={() => router.push('/products/analyze')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
-          >
-            <FiPlus /> Analyze Product
-          </button>
+          <div className="flex gap-2">
+            <AddProductForm onSuccess={loadProducts} />
+            <button
+              onClick={() => router.push('/products/analyze')}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+            >
+              <FiPlus /> Analyze Product
+            </button>
+            <button
+              onClick={() => router.push('/products/recommendations')}
+              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center gap-2"
+            >
+              <FiTrendingUp /> Get Recommendations
+            </button>
+          </div>
         </div>
         
         {/* Info banner */}
