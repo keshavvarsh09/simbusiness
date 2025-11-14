@@ -22,6 +22,8 @@ export default function ProductsPage() {
   const [simulationResults, setSimulationResults] = useState<any>(null);
   const [loadingPerformance, setLoadingPerformance] = useState<Set<string>>(new Set());
   const [productPerformances, setProductPerformances] = useState<Record<string, any>>({});
+  const [addingToDashboard, setAddingToDashboard] = useState(false);
+  const [activeProducts, setActiveProducts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -60,6 +62,14 @@ export default function ProductsPage() {
       if (data.success) {
         setProducts(data.products || []);
         setCategories(data.categories || []);
+        
+        // Track which products are active in dashboard
+        const activeSet = new Set(
+          (data.products || [])
+            .filter((p: any) => p.activeInDashboard !== false)
+            .map((p: any) => p.id)
+        );
+        setActiveProducts(activeSet);
       } else {
         throw new Error('Invalid response from server');
       }
@@ -219,7 +229,7 @@ interface ProductCardProps {
   onLoadPerformance?: () => void;
 }
 
-function ProductCard({ product, isSelected = false, onSelect, performance, loadingPerformance, onLoadPerformance }: ProductCardProps) {
+function ProductCard({ product, isSelected = false, onSelect, performance, loadingPerformance, onLoadPerformance, isActiveInDashboard = false }: ProductCardProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(product.imageUrl || null);
   const [imageLoading, setImageLoading] = useState(!product.imageUrl && !!product.sourceUrl);
   const [showImageLinks, setShowImageLinks] = useState(false);

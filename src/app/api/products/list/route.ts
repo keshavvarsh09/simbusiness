@@ -37,6 +37,16 @@ export async function GET(request: NextRequest) {
 
     const client = await pool.connect();
     try {
+          // Ensure active_in_dashboard column exists
+          try {
+            await client.query(`
+              ALTER TABLE products 
+              ADD COLUMN IF NOT EXISTS active_in_dashboard BOOLEAN DEFAULT true
+            `);
+          } catch (e) {
+            // Column might already exist, ignore
+          }
+
           let query = `
             SELECT 
               id,
@@ -49,6 +59,7 @@ export async function GET(request: NextRequest) {
               vendor_platform,
               source_url,
               gemini_analysis,
+              active_in_dashboard,
               created_at
             FROM products
             WHERE user_id = $1
@@ -105,7 +116,8 @@ export async function GET(request: NextRequest) {
                 vendorName: row.vendor_name,
                 vendorPlatform: row.vendor_platform,
                 sourceUrl: row.source_url || imageUrl, // Use source URL or vendor link
-                profitMargin // Add profit margin for filtering
+                profitMargin, // Add profit margin for filtering
+                activeInDashboard: row.active_in_dashboard !== false // Default to true if null
               };
             })
             .filter(product => product.profitMargin > 0); // Filter out negative profit products

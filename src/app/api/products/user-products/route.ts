@@ -34,10 +34,22 @@ export async function GET(request: NextRequest) {
 
     const client = await pool.connect();
     try {
+      // Ensure active_in_dashboard column exists
+      try {
+        await client.query(`
+          ALTER TABLE products 
+          ADD COLUMN IF NOT EXISTS active_in_dashboard BOOLEAN DEFAULT true
+        `);
+      } catch (e) {
+        // Column might already exist, ignore
+      }
+
+      // Get only active products for dashboard (or all if none are marked)
       const result = await client.query(
-        `SELECT id, name, cost, selling_price, moq, category
+        `SELECT id, name, cost, selling_price, moq, category, active_in_dashboard
          FROM products
-         WHERE user_id = $1
+         WHERE user_id = $1 
+           AND (active_in_dashboard = true OR active_in_dashboard IS NULL)
          ORDER BY created_at DESC`,
         [userId]
       );
