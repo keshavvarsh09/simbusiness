@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiTrendingUp, FiDollarSign, FiPackage } from 'react-icons/fi';
+import { FiTrendingUp, FiDollarSign, FiPackage, FiExternalLink, FiPlus, FiCheck } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
 
@@ -10,6 +10,8 @@ export default function ProductRecommendationsPage() {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [addingProducts, setAddingProducts] = useState<Set<number>>(new Set());
+  const [addedProducts, setAddedProducts] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -44,6 +46,47 @@ export default function ProductRecommendationsPage() {
       setError('Failed to fetch recommendations. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddToSimulation = async (product: any, index: number) => {
+    if (addingProducts.has(index) || addedProducts.has(index)) return;
+
+    setAddingProducts(prev => new Set(prev).add(index));
+
+    try {
+      const response = await fetch('/api/products/add', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: product.name,
+          category: product.category,
+          estimatedCost: product.estimatedCost || product.cost,
+          sellingPrice: product.sellingPrice || product.price,
+          moq: product.recommendedMOQ || product.moq || 1,
+          vendorPlatform: 'alibaba',
+          searchTerms: product.searchTerms || product.name,
+          alibabaUrl: product.links?.alibaba,
+          aliexpressUrl: product.links?.aliexpress,
+          indiamartUrl: product.links?.indiamart
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add product');
+      }
+
+      setAddedProducts(prev => new Set(prev).add(index));
+    } catch (err: any) {
+      alert(err.message || 'Failed to add product to simulation');
+    } finally {
+      setAddingProducts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(index);
+        return newSet;
+      });
     }
   };
 
@@ -110,8 +153,74 @@ export default function ProductRecommendationsPage() {
                   </div>
 
                   {rec.reason && (
-                    <p className="text-sm text-gray-600 mt-2">{rec.reason}</p>
+                    <p className="text-sm text-gray-600 mt-2 mb-3">{rec.reason}</p>
                   )}
+
+                  {/* Product Links */}
+                  {rec.links && (
+                    <div className="mb-3 pt-3 border-t">
+                      <p className="text-xs text-gray-500 mb-2">Find on:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {rec.links.alibaba && (
+                          <a
+                            href={rec.links.alibaba}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 flex items-center gap-1"
+                          >
+                            Alibaba <FiExternalLink className="text-xs" />
+                          </a>
+                        )}
+                        {rec.links.aliexpress && (
+                          <a
+                            href={rec.links.aliexpress}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 flex items-center gap-1"
+                          >
+                            AliExpress <FiExternalLink className="text-xs" />
+                          </a>
+                        )}
+                        {rec.links.indiamart && (
+                          <a
+                            href={rec.links.indiamart}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
+                          >
+                            IndiaMart <FiExternalLink className="text-xs" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add to Simulation Button */}
+                  <button
+                    onClick={() => handleAddToSimulation(rec, idx)}
+                    disabled={addingProducts.has(idx) || addedProducts.has(idx)}
+                    className={`w-full py-2 px-4 rounded-md font-medium flex items-center justify-center gap-2 transition-colors ${
+                      addedProducts.has(idx)
+                        ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                        : addingProducts.has(idx)
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    }`}
+                  >
+                    {addedProducts.has(idx) ? (
+                      <>
+                        <FiCheck /> Added to Simulation
+                      </>
+                    ) : addingProducts.has(idx) ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Adding...
+                      </>
+                    ) : (
+                      <>
+                        <FiPlus /> Add to Simulation
+                      </>
+                    )}
+                  </button>
                 </div>
               ))}
             </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateProductRecommendations } from '@/lib/ai-router';
+import { generateProductSearchLinks } from '@/lib/product-search';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
@@ -44,14 +45,37 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const recommendations = await generateProductRecommendations(
+      let recommendations = await generateProductRecommendations(
         parseFloat(user.budget),
         user.product_genre
       );
 
+      // Convert to array if needed
+      const recsArray = Array.isArray(recommendations) 
+        ? recommendations 
+        : (recommendations.recommendations || []);
+
+      // Add search links for each product
+      const recommendationsWithLinks = recsArray.map((rec: any) => {
+        const searchTerms = rec.searchTerms || rec.name || '';
+        const links = generateProductSearchLinks(searchTerms, rec.category);
+        
+        return {
+          ...rec,
+          links: {
+            alibaba: links.alibaba,
+            aliexpress: links.aliexpress,
+            indiamart: links.indiamart,
+            amazon: links.amazon,
+            flipkart: links.flipkart
+          },
+          searchTerms: searchTerms
+        };
+      });
+
       return NextResponse.json({
         success: true,
-        recommendations: Array.isArray(recommendations) ? recommendations : recommendations.recommendations || recommendations
+        recommendations: recommendationsWithLinks
       });
     } finally {
       client.release();

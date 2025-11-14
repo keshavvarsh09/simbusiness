@@ -78,6 +78,7 @@ Provide helpful, actionable advice. Be concise but thorough. Consider the user's
 
 /**
  * Generate product recommendations using best available AI
+ * Includes search terms for finding products on Alibaba, AliExpress, and IndiaMart
  */
 export async function generateProductRecommendations(
   budget: number,
@@ -92,7 +93,8 @@ For each product, provide:
 4. Market demand (high/medium/low)
 5. Competition level
 6. Recommended MOQ
-7. Why it's a good choice
+7. Search terms for finding on Alibaba, AliExpress, IndiaMart (specific keywords that will find this product)
+8. Why it's a good choice
 
 Format as JSON array:
 [
@@ -105,6 +107,7 @@ Format as JSON array:
     "demand": "high|medium|low",
     "competition": "high|medium|low",
     "recommendedMOQ": number,
+    "searchTerms": "string (keywords for Alibaba/AliExpress/IndiaMart search)",
     "reason": "string"
   }
 ]`;
