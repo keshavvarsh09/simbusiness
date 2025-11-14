@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiBox, FiDollarSign, FiTag, FiStar, FiFilter, FiAlertCircle, FiPlus } from 'react-icons/fi';
+import { FiBox, FiDollarSign, FiTag, FiStar, FiFilter, FiAlertCircle, FiPlus, FiTrendingUp } from 'react-icons/fi';
 import { Product } from '@/types';
 import { getAuthHeaders } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
