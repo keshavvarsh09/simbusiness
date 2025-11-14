@@ -33,10 +33,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const client = await pool.connect();
-    try {
-      // Get business data
-      const businessDataResult = await client.query(
+        const client = await pool.connect();
+        try {
+          // Auto-initialize database if tables don't exist
+          try {
+            await client.query('SELECT 1 FROM business_data LIMIT 1');
+          } catch (tableError: any) {
+            if (tableError.message?.includes('does not exist') || tableError.message?.includes('relation')) {
+              console.log('Database tables not found, initializing database...');
+              const { initDatabase } = await import('@/lib/db');
+              await initDatabase();
+              console.log('Database initialized successfully');
+            } else {
+              throw tableError;
+            }
+          }
+          
+          // Get business data
+          const businessDataResult = await client.query(
         'SELECT * FROM business_data WHERE user_id = $1',
         [userId]
       );
@@ -118,10 +132,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { revenue, expenses, profit, orders, inventory, marketing, day, metrics } = body;
 
-    const client = await pool.connect();
-    try {
-      // Always calculate profit as revenue - expenses to ensure accuracy
-      const calculatedProfit = (revenue || 0) - (expenses || 0);
+        const client = await pool.connect();
+        try {
+          // Auto-initialize database if tables don't exist
+          try {
+            await client.query('SELECT 1 FROM business_data LIMIT 1');
+          } catch (tableError: any) {
+            if (tableError.message?.includes('does not exist') || tableError.message?.includes('relation')) {
+              console.log('Database tables not found, initializing database...');
+              const { initDatabase } = await import('@/lib/db');
+              await initDatabase();
+              console.log('Database initialized successfully');
+            } else {
+              throw tableError;
+            }
+          }
+          
+          // Always calculate profit as revenue - expenses to ensure accuracy
+          const calculatedProfit = (revenue || 0) - (expenses || 0);
       
       // Update business_data
       await client.query(

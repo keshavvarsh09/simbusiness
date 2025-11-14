@@ -42,6 +42,20 @@ export async function POST(request: NextRequest) {
     // Get user context
     const client = await pool.connect();
     try {
+      // Auto-initialize database if products table doesn't exist
+      try {
+        await client.query('SELECT 1 FROM products LIMIT 1');
+      } catch (tableError: any) {
+        if (tableError.message?.includes('does not exist') || tableError.message?.includes('relation')) {
+          console.log('Products table not found, initializing database...');
+          const { initDatabase } = await import('@/lib/db');
+          await initDatabase();
+          console.log('Database initialized successfully');
+        } else {
+          throw tableError;
+        }
+      }
+      
       const userResult = await client.query(
         'SELECT budget, product_genre FROM users WHERE id = $1',
         [userId]
