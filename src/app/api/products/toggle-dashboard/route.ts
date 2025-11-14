@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Convert product IDs (remove 'P' prefix if present)
+      // Convert product IDs (remove 'P' prefix if present) and ensure they're integers
       const numericIds = productIds.map((id: string | number) => {
         const idStr = String(id);
         const numId = idStr.startsWith('P') ? parseInt(idStr.substring(1)) : parseInt(idStr);
@@ -83,18 +83,15 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Build the query with proper placeholders
-      const placeholders = numericIds.map((_, i) => `$${i + 3}`).join(',');
-      
-      // Update products - try with active_in_dashboard first, fallback without it
+      // Update products - use proper type casting for the array
       let result;
       try {
         result = await client.query(
           `UPDATE products 
            SET active_in_dashboard = $1
-           WHERE user_id = $2 AND id = ANY(ARRAY[${placeholders}])
+           WHERE user_id = $2 AND id = ANY($3::int[])
            RETURNING id, name, active_in_dashboard`,
-          [active, userId, ...numericIds]
+          [active, userId, numericIds]
         );
       } catch (updateError: any) {
         // If error is about column not existing, try to add it and retry
@@ -112,9 +109,9 @@ export async function POST(request: NextRequest) {
             result = await client.query(
               `UPDATE products 
                SET active_in_dashboard = $1
-               WHERE user_id = $2 AND id = ANY(ARRAY[${placeholders}])
+               WHERE user_id = $2 AND id = ANY($3::int[])
                RETURNING id, name, active_in_dashboard`,
-              [active, userId, ...numericIds]
+              [active, userId, numericIds]
             );
             
             console.log('Successfully added column and updated products');
