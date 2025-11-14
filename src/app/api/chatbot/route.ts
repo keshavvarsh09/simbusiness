@@ -142,20 +142,33 @@ export async function POST(request: NextRequest) {
     console.error('Chatbot error:', error);
     const errorMessage = error?.message || 'Unknown error';
     
-    // Provide helpful error messages
+    // Provide helpful error messages with API status
     let userFriendlyError = 'Failed to process message';
-    if (errorMessage.includes('GEMINI_API_KEY')) {
+    let errorDetails = '';
+    
+    if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('GROQ_API_KEY')) {
       userFriendlyError = 'AI service is not configured. Please check your API keys.';
+      errorDetails = 'No AI API keys found. Please add GEMINI_API_KEY or GROQ_API_KEY to environment variables.';
     } else if (errorMessage.includes('connection') || errorMessage.includes('ECONNREFUSED')) {
-      userFriendlyError = 'Database connection failed. Please try again in a moment.';
+      userFriendlyError = 'Connection error. Please check your internet connection.';
+      errorDetails = 'Unable to connect to AI service. This might be a network issue.';
+    } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+      userFriendlyError = 'Rate limit exceeded. Please wait a moment and try again.';
+      errorDetails = 'AI service is rate limiting requests. Cooldown: ~30 seconds.';
+    } else if (errorMessage.includes('timeout')) {
+      userFriendlyError = 'Request timed out. The AI service is taking too long to respond.';
+      errorDetails = 'Response time exceeded. This might indicate the AI service is overloaded.';
     } else if (errorMessage.includes('Unauthorized') || errorMessage.includes('token')) {
       userFriendlyError = 'Please sign in to use the chatbot.';
+      errorDetails = 'Authentication required. Please sign in and try again.';
+    } else {
+      errorDetails = errorMessage;
     }
     
     return NextResponse.json(
       { 
         error: userFriendlyError,
-        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+        details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
       },
       { status: 500 }
     );

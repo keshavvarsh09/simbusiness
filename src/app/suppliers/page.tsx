@@ -153,6 +153,10 @@ export default function Suppliers() {
     const supplier = suppliers.find(s => s.id === id);
     if (supplier) {
       setSelectedSupplier(supplier);
+      // Scroll to details panel on mobile
+      if (window.innerWidth < 1024) {
+        document.getElementById('supplier-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   };
 
@@ -412,7 +416,7 @@ export default function Suppliers() {
           </div>
           
           {/* Supplier Details */}
-          <div>
+          <div id="supplier-details">
             <div className="card">
               <h2 className="text-xl font-bold mb-4">
                 {selectedSupplier ? 'Supplier Details' : 'Select a Supplier'}

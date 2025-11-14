@@ -97,18 +97,30 @@ export async function initDatabase() {
       )
     `);
 
-    // User business data (for bankruptcy detection)
+    // User business data (for simulation state)
     await client.query(`
       CREATE TABLE IF NOT EXISTS business_data (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
         revenue DECIMAL(12, 2) DEFAULT 0,
         expenses DECIMAL(12, 2) DEFAULT 0,
         profit DECIMAL(12, 2) DEFAULT 0,
         cash_flow DECIMAL(12, 2) DEFAULT 0,
         inventory_value DECIMAL(12, 2) DEFAULT 0,
         outstanding_orders INTEGER DEFAULT 0,
-        bankruptcy_risk_score DECIMAL(5, 2),
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Simulation state (day, metrics, etc.)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS simulation_state (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        day INTEGER DEFAULT 0,
+        marketing_budget DECIMAL(12, 2) DEFAULT 0,
+        metrics JSONB DEFAULT '{"conversionRate": 2.7, "abandonmentRate": 68, "averageOrderValue": 47, "returnRate": 8}',
+        simulation_history JSONB DEFAULT '{"profit": []}',
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

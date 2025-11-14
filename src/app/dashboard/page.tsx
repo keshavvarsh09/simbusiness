@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { BusinessStats } from '@/types';
 import { 
   FiDollarSign, 
@@ -26,6 +27,7 @@ import {
   Legend,
 } from 'chart.js';
 import BusinessInsights from '@/components/BusinessInsights';
+import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
 
 ChartJS.register(
   CategoryScale,
@@ -84,6 +86,7 @@ const simulationSpeeds = [
 ];
 
 export default function Dashboard() {
+  const router = useRouter();
   const [businessStats, setBusinessStats] = useState<BusinessStats>({
     revenue: 0,
     expenses: 0,
@@ -103,6 +106,84 @@ export default function Dashboard() {
     averageOrderValue: 47, // dollars
     returnRate: 8 // percent
   });
+  const [loading, setLoading] = useState(true);
+  const [hasProducts, setHasProducts] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load state on mount
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    loadDashboardState();
+  }, [router]);
+
+  // Save state after changes (debounced)
+  useEffect(() => {
+    if (!loading && hasProducts) {
+      const saveTimer = setTimeout(() => {
+        saveDashboardState();
+      }, 1000); // Save 1 second after last change
+
+      return () => clearTimeout(saveTimer);
+    }
+  }, [businessStats, day, metrics, simulationHistory, loading, hasProducts]);
+
+  const loadDashboardState = async () => {
+    try {
+      const response = await fetch('/api/dashboard/state', {
+        headers: getAuthHeaders(),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setBusinessStats({
+          revenue: data.state.revenue,
+          expenses: data.state.expenses,
+          profit: data.state.profit,
+          orders: data.state.orders,
+          inventory: data.state.inventory,
+          marketing: data.state.marketing
+        });
+        setDay(data.state.day);
+        setMetrics(data.state.metrics);
+        setSimulationHistory(data.state.simulationHistory);
+        setHasProducts(data.hasProducts);
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard state:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveDashboardState = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await fetch('/api/dashboard/state', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          revenue: businessStats.revenue,
+          expenses: businessStats.expenses,
+          profit: businessStats.profit,
+          orders: businessStats.orders,
+          inventory: businessStats.inventory,
+          marketing: businessStats.marketing,
+          day,
+          metrics,
+          simulationHistory
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to save dashboard state:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Auto-simulation effect
   useEffect(() => {
@@ -121,6 +202,11 @@ export default function Dashboard() {
 
   // Simulate business operations
   const simulateDay = () => {
+    if (!hasProducts) {
+      alert('Please add products first before running simulation. Go to Products > Recommendations or Analyze Product.');
+      return;
+    }
+    
     setDay(prevDay => prevDay + 1);
     
     // Randomly trigger market events (10% chance each day)
@@ -254,11 +340,65 @@ export default function Dashboard() {
     },
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasProducts) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <main className="container mx-auto px-4 py-8">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+            <div className="flex items-start gap-3">
+              <FiAlertCircle className="text-yellow-600 mt-1 flex-shrink-0" size={24} />
+              <div>
+                <h2 className="text-xl font-bold text-yellow-800 mb-2">Add Products First</h2>
+                <p className="text-yellow-700 mb-4">
+                  You need to add products to your catalog before you can run the simulation. 
+                  The simulation uses your actual products to calculate sales, revenue, and profit.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => router.push('/products/recommendations')}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    <FiTrendingUp /> Get AI Recommendations
+                  </button>
+                  <button
+                    onClick={() => router.push('/products/analyze')}
+                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
+                  >
+                    <FiPlus /> Analyze Product
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Dashboard Content */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Business Dashboard</h1>
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Business Dashboard</h1>
+          {saving && (
+            <span className="text-xs text-gray-500 flex items-center gap-1">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+              Saving...
+            </span>
+          )}
+        </div>
         
         {/* Market Event Alert */}
         {currentEvent && (

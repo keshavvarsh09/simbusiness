@@ -56,16 +56,25 @@ export default function MissionsPanel() {
 
   const fetchMissions = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/missions', {
         headers: getAuthHeaders(),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       if (data.success) {
-        setMissions(data.missions);
+        setMissions(data.missions || []);
+      } else {
+        console.error('Failed to fetch missions:', data.error);
+        setMissions([]);
       }
     } catch (error) {
       console.error('Failed to fetch missions:', error);
+      setMissions([]);
     } finally {
       setLoading(false);
     }

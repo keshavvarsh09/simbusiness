@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { BusinessSettings } from '@/types';
 import { motion } from 'framer-motion';
 import { FiSave, FiMoon, FiSun, FiBell, FiDollarSign, FiMail, FiShoppingBag, FiPercent, FiTruck } from 'react-icons/fi';
+import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({
     businessName: 'My Dropshipping Business',
-    email: 'user@example.com',
+    email: '',
     currency: 'USD',
     taxRate: 7.5,
     shippingFee: 4.99,
@@ -19,18 +22,59 @@ export default function SettingsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Load settings from localStorage on initial load
+  // Load user email and settings
   useEffect(() => {
-    const savedSettings = localStorage.getItem('businessSettings');
-    if (savedSettings) {
-      try {
-        setBusinessSettings(JSON.parse(savedSettings));
-      } catch (error) {
-        console.error('Failed to parse saved settings:', error);
-      }
+    if (!isAuthenticated()) {
+      router.push('/auth/signin');
+      return;
     }
-  }, []);
+
+    loadUserData();
+  }, [router]);
+
+  const loadUserData = async () => {
+    try {
+      // Get user email from token
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Decode JWT to get email (simple decode, not verification)
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.email) {
+            setBusinessSettings(prev => ({ ...prev, email: payload.email }));
+          }
+        } catch (e) {
+          // If can't decode, fetch from API
+          const response = await fetch('/api/user/profile', {
+            headers: getAuthHeaders(),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.email) {
+              setBusinessSettings(prev => ({ ...prev, email: data.email }));
+            }
+          }
+        }
+      }
+
+      // Load saved settings from localStorage
+      const savedSettings = localStorage.getItem('businessSettings');
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          setBusinessSettings(prev => ({ ...prev, ...parsed }));
+        } catch (error) {
+          console.error('Failed to parse saved settings:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Apply dark mode when that setting changes
   useEffect(() => {
@@ -86,6 +130,17 @@ export default function SettingsPage() {
       default: return '$';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

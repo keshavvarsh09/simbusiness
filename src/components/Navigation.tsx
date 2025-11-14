@@ -52,7 +52,6 @@ export default function Navigation() {
     { href: '/suppliers', label: 'Suppliers', icon: FiPackage },
     { href: '/chatbot', label: 'AI Advisor', icon: FiMessageCircle },
     { href: '/missions', label: 'Missions', icon: FiClock },
-    { href: '/bankruptcy', label: 'Risk Check', icon: FiAlertTriangle },
   ];
 
   const settingsNav = [
