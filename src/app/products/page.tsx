@@ -199,6 +199,56 @@ export default function ProductsPage() {
           </div>
         )}
 
+        {/* Selection and Dashboard Controls */}
+        {!isLoading && !error && products.length > 0 && (
+          <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={selectAllProducts}
+                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center gap-2"
+                >
+                  <FiCheck />
+                  {selectedProducts.size === products.length ? 'Deselect All' : 'Select All'}
+                </button>
+                <span className="text-sm text-gray-600">
+                  {selectedProducts.size} of {products.length} selected
+                </span>
+                <span className="text-xs text-gray-500">
+                  ({activeProducts.size} active in dashboard)
+                </span>
+              </div>
+              {selectedProducts.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAddToDashboard}
+                    disabled={addingToDashboard}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm"
+                  >
+                    <FiPlus />
+                    {addingToDashboard ? 'Adding...' : 'Add to Dashboard'}
+                  </button>
+                  <button
+                    onClick={handleRemoveFromDashboard}
+                    disabled={addingToDashboard}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 text-sm"
+                  >
+                    Remove from Dashboard
+                  </button>
+                  <button
+                    onClick={handleSimulateProducts}
+                    disabled={simulating}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 text-sm"
+                  >
+                    <FiBarChart />
+                    {simulating ? 'Simulating...' : 'Simulate'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Product grid */}
         {!isLoading && !error && products.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
