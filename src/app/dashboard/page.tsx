@@ -633,7 +633,10 @@ export default function Dashboard() {
       <ConfirmationDialog
         isOpen={showRestockConfirm}
         title="Restock Inventory"
-        message={`Are you sure you want to restock 20 units? This will cost $${(20 * 15).toFixed(2)} and will be deducted from your profit.`}
+        message={`Are you sure you want to restock 20 units? This will cost $${userProducts.length > 0 
+          ? (20 * (userProducts.reduce((sum, p) => sum + p.cost, 0) / userProducts.length)).toFixed(2)
+          : (20 * 15).toFixed(2)
+        } and will be deducted from your profit.`}
         confirmText="Restock"
         cancelText="Cancel"
         variant="info"

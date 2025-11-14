@@ -70,12 +70,12 @@ export default function AddProductForm({ onSuccess, onCancel }: AddProductFormPr
         body: JSON.stringify({
           name: formData.name,
           category: formData.category || 'General',
-          cost,
-          selling_price: sellingPrice,
+          estimatedCost: cost,
+          sellingPrice: sellingPrice,
           moq: formData.moq ? parseInt(formData.moq) : 0,
-          vendor_name: formData.vendorName || null,
-          vendor_platform: formData.vendorPlatform || null,
-          source_url: formData.sourceUrl || null
+          vendorName: formData.vendorName || null,
+          vendorPlatform: formData.vendorPlatform || null,
+          sourceUrl: formData.sourceUrl || null
         }),
       });
 
