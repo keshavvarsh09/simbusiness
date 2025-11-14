@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       hint = 'Could not connect to the database. Check DATABASE_URL and network connectivity.';
     } else if (error.message?.includes('relation') || error.message?.includes('does not exist')) {
       errorMessage = 'Table does not exist';
-      hint = 'The products table does not exist. Please run /api/init-db first to create the database schema.';
+      hint = 'The products table does not exist. The database will be automatically initialized when you use the application.';
     }
     
     return NextResponse.json(

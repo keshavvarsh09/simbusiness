@@ -137,23 +137,53 @@ export async function POST(request: NextRequest) {
           [active, userId, ...numericIds]
         );
       } catch (updateError: any) {
-        // If error is about active_in_dashboard column, try to add it and retry
-        if (updateError.message?.includes('active_in_dashboard') || updateError.message?.includes('column') || updateError.message?.includes('does not exist')) {
-          console.warn('active_in_dashboard column not found, attempting to add it...');
+        // If error is about table or column not existing, try to fix it
+        if (updateError.message?.includes('active_in_dashboard') || 
+            updateError.message?.includes('column') || 
+            updateError.message?.includes('does not exist') ||
+            updateError.message?.includes('relation')) {
+          console.warn('Database schema issue detected, attempting to fix...');
           
           try {
-            // Try to add the column
-            await client.query(`
-              ALTER TABLE products 
-              ADD COLUMN active_in_dashboard BOOLEAN DEFAULT true
-            `);
+            // First, ensure the table exists by trying to initialize
+            try {
+              await client.query('SELECT 1 FROM products LIMIT 1');
+            } catch (tableCheckError: any) {
+              if (tableCheckError.message?.includes('does not exist') || tableCheckError.message?.includes('relation')) {
+                console.log('Products table not found, initializing database...');
+                const { initDatabase } = await import('@/lib/db');
+                await initDatabase();
+                console.log('Database initialized successfully');
+              }
+            }
             
-            // Update existing products
-            await client.query(`
-              UPDATE products 
-              SET active_in_dashboard = true 
-              WHERE active_in_dashboard IS NULL
-            `);
+            // Now try to add the column if it doesn't exist
+            try {
+              const columnCheck = await client.query(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='products' AND column_name='active_in_dashboard'
+              `);
+              
+              if (columnCheck.rows.length === 0) {
+                await client.query(`
+                  ALTER TABLE products 
+                  ADD COLUMN active_in_dashboard BOOLEAN DEFAULT true
+                `);
+                console.log('Added active_in_dashboard column');
+                
+                // Update existing products
+                await client.query(`
+                  UPDATE products 
+                  SET active_in_dashboard = true 
+                  WHERE active_in_dashboard IS NULL
+                `);
+              }
+            } catch (columnError: any) {
+              if (!columnError.message?.includes('already exists') && !columnError.message?.includes('duplicate')) {
+                console.warn('Column check/add failed:', columnError.message);
+              }
+            }
             
             // Retry the update
             result = await client.query(
@@ -164,23 +194,24 @@ export async function POST(request: NextRequest) {
               [active, userId, ...numericIds]
             );
             
-            console.log('Successfully added column and updated products');
+            console.log('Successfully fixed schema and updated products');
           } catch (retryError: any) {
-            console.error('Failed to add column and retry:', retryError.message);
+            console.error('Failed to fix schema and retry:', retryError.message);
+            console.error('Retry error stack:', retryError.stack);
             
             // Check for specific error types
             let errorMessage = 'Database schema error';
-            let errorDetails = 'Could not add required column.';
-            let hint = 'Please run database migration at /api/migrate or contact support.';
+            let errorDetails = 'Could not fix database schema.';
+            let hint = 'Please try again or contact support.';
             
             if (retryError.message?.includes('permission') || retryError.message?.includes('denied')) {
               errorMessage = 'Database permission error';
-              errorDetails = 'The database user does not have permission to alter the products table.';
-              hint = 'Please contact your database administrator to add the active_in_dashboard column manually, or run the migration with a database admin account.';
+              errorDetails = 'The database user does not have permission to modify the database.';
+              hint = 'Please contact your database administrator.';
             } else if (retryError.message?.includes('relation') || retryError.message?.includes('does not exist')) {
-              errorMessage = 'Table does not exist';
-              errorDetails = 'The products table does not exist.';
-              hint = 'Please run /api/init-db first to create the database schema.';
+              errorMessage = 'Database initialization failed';
+              errorDetails = 'Could not create required database tables.';
+              hint = 'Please check your database connection and try again. If the problem persists, contact support.';
             }
             
             return NextResponse.json({
@@ -188,6 +219,7 @@ export async function POST(request: NextRequest) {
               details: errorDetails,
               hint: hint,
               migrationEndpoint: '/api/migrate',
+              initEndpoint: '/api/init-db',
               retryError: process.env.NODE_ENV === 'development' ? retryError.message : undefined
             }, { status: 500 });
           }
@@ -222,9 +254,19 @@ export async function POST(request: NextRequest) {
     let errorMessage = 'Failed to update products';
     let errorDetails = error.message || 'Unknown error';
     
-    if (error.message?.includes('column') || error.message?.includes('does not exist')) {
+    if (error.message?.includes('column') || error.message?.includes('does not exist') || error.message?.includes('relation')) {
       errorMessage = 'Database schema error';
-      errorDetails = 'The products table structure may be outdated. The column will be created automatically on next product addition.';
+      errorDetails = 'The database tables may not exist or are outdated.';
+      
+      // Try to auto-initialize if we haven't already
+      try {
+        const { initDatabase } = await import('@/lib/db');
+        await initDatabase();
+        errorDetails = 'Database has been automatically initialized. Please try your operation again.';
+        errorMessage = 'Database initialized';
+      } catch (initError: any) {
+        errorDetails = 'Could not automatically initialize database. Please run /api/init-db manually.';
+      }
     } else if (error.message?.includes('Invalid product ID')) {
       errorMessage = 'Invalid product ID';
       errorDetails = error.message;
