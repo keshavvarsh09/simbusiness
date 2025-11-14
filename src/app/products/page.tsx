@@ -196,6 +196,11 @@ export default function ProductsPage() {
               <ProductCard 
                 key={product.id} 
                 product={product}
+                isSelected={selectedProducts.has(product.id)}
+                onSelect={() => toggleProductSelection(product.id)}
+                performance={productPerformances[product.id]}
+                loadingPerformance={loadingPerformance.has(product.id)}
+                onLoadPerformance={() => loadProductPerformance(product.id)}
               />
             ))}
           </div>
