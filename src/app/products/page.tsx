@@ -186,18 +186,48 @@ export default function ProductsPage() {
 }
 
 function ProductCard({ product }: { product: Product & { moq?: number; vendorName?: string; vendorPlatform?: string; sourceUrl?: string } }) {
-  const profitMargin = product.potentialPrice > 0 
+  const [imageUrl, setImageUrl] = useState<string | null>(product.imageUrl || null);
+  const [imageLoading, setImageLoading] = useState(!product.imageUrl && !!product.sourceUrl);
+
+  useEffect(() => {
+    // Fetch image from source URL if not already loaded
+    if (!imageUrl && product.sourceUrl) {
+      fetch(`/api/products/fetch-image?url=${encodeURIComponent(product.sourceUrl)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.imageUrl) {
+            setImageUrl(data.imageUrl);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching product image:', err);
+        })
+        .finally(() => {
+          setImageLoading(false);
+        });
+    }
+  }, [product.sourceUrl, imageUrl]);
+
+  const profitMargin = product.potentialPrice > 0
     ? (((product.potentialPrice - product.cost) / product.potentialPrice) * 100).toFixed(0)
     : '0';
 
   return (
     <div className="card bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
       <div className="bg-gray-100 h-40 flex items-center justify-center relative">
-        {product.imageUrl ? (
-          <img 
-            src={product.imageUrl} 
+        {imageLoading ? (
+          <div className="animate-pulse flex items-center justify-center">
+            <div className="w-16 h-16 bg-gray-300 rounded"></div>
+          </div>
+        ) : imageUrl ? (
+          <img
+            src={imageUrl}
             alt={product.name}
             className="w-full h-full object-contain p-2"
+            onError={() => {
+              setImageUrl(null);
+              setImageLoading(false);
+            }}
           />
         ) : (
           <FiBox size={48} className="text-gray-400" />

@@ -161,7 +161,7 @@ Format the response as JSON with the following structure:
 /**
  * Analyze Meta dashboard image
  */
-export async function analyzeMetaDashboard(imageBase64: string, mimeType: string = 'image/png') {
+export async function analyzeMetaDashboard(imageBase64: string, mimeType: string = 'image/png', customPrompt?: string) {
   try {
     const prompt = `Analyze this Meta (Facebook) advertising dashboard screenshot. 
 

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Supplier } from '@/types';
-import { FiInfo, FiStar, FiClock, FiDollarSign, FiPackage, FiAlertTriangle, FiBarChart, FiGlobe, FiSearch, FiFilter, FiPlus } from 'react-icons/fi';
-import { fetchSuppliers } from '@/services/api';
+import { FiInfo, FiStar, FiClock, FiDollarSign, FiPackage, FiAlertTriangle, FiBarChart, FiGlobe, FiSearch, FiFilter, FiPlus, FiRefreshCw } from 'react-icons/fi';
+import { getAuthHeaders, isAuthenticated } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 // Expanded supplier risk factors
 const supplierRiskFactors = {
@@ -55,78 +56,10 @@ const supplierAnalytics = [
 ];
 
 export default function Suppliers() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    { 
-      id: 1, 
-      name: 'Tech Innovations Ltd', 
-      location: 'China', 
-      category: 'Electronics',
-      rating: 4.8,
-      lead_time: '8-12 days',
-      price_level: 'Medium',
-      min_order: 5
-    },
-    { 
-      id: 2, 
-      name: 'EcoHome Goods', 
-      location: 'Vietnam', 
-      category: 'Home & Garden',
-      rating: 4.5,
-      lead_time: '10-14 days',
-      price_level: 'Low',
-      min_order: 10
-    },
-    { 
-      id: 3, 
-      name: 'FashionForward', 
-      location: 'India', 
-      category: 'Fashion',
-      rating: 4.2,
-      lead_time: '7-10 days',
-      price_level: 'Medium',
-      min_order: 8
-    },
-    { 
-      id: 4, 
-      name: 'Active Life', 
-      location: 'USA', 
-      category: 'Sports',
-      rating: 4.9,
-      lead_time: '3-5 days',
-      price_level: 'High',
-      min_order: 3
-    },
-    { 
-      id: 5, 
-      name: 'Beauty Essentials', 
-      location: 'South Korea', 
-      category: 'Beauty',
-      rating: 4.7,
-      lead_time: '7-9 days',
-      price_level: 'Medium',
-      min_order: 5
-    },
-    { 
-      id: 6, 
-      name: 'Tech Direct Source', 
-      location: 'China', 
-      category: 'Electronics',
-      rating: 3.9,
-      lead_time: '12-18 days',
-      price_level: 'Low',
-      min_order: 20
-    },
-    { 
-      id: 7, 
-      name: 'European Trends', 
-      location: 'Germany', 
-      category: 'Fashion',
-      rating: 4.6,
-      lead_time: '5-8 days',
-      price_level: 'High',
-      min_order: 5
-    },
-  ]);
+  const router = useRouter();
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,6 +67,44 @@ export default function Suppliers() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [activeAnalytic, setActiveAnalytic] = useState(0);
   const [riskFactorType, setRiskFactorType] = useState<'high' | 'medium' | 'low'>('medium');
+
+  // Load suppliers on mount
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push('/auth/signin');
+      return;
+    }
+    loadSuppliers();
+  }, [router]);
+
+  const loadSuppliers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/suppliers/recommendations', {
+        headers: getAuthHeaders(),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSuppliers(data.suppliers || []);
+      } else {
+        console.error('Failed to load suppliers:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const regenerateSuppliers = async () => {
+    setGenerating(true);
+    try {
+      await loadSuppliers();
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   // Extract unique categories and locations
   const categories = Array.from(new Set(suppliers.map(s => s.category)));
@@ -176,6 +147,39 @@ export default function Suppliers() {
   const toggleAnalytics = () => {
     setShowAnalytics(!showAnalytics);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading suppliers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (suppliers.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-8">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <FiPackage className="mx-auto text-yellow-600 mb-4" size={48} />
+            <h2 className="text-xl font-bold text-yellow-800 mb-2">No Suppliers Yet</h2>
+            <p className="text-yellow-700 mb-4">
+              Add products to your catalog first, then we'll generate AI-powered supplier recommendations for you.
+            </p>
+            <button
+              onClick={() => router.push('/products/recommendations')}
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+            >
+              Add Products
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
