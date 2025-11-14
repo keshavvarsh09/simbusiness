@@ -4,7 +4,9 @@ const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // Model name - can be overridden via environment variable
-const MODEL_NAME = process.env.GEMINI_MODEL_NAME || 'gemini-pro';
+// Updated to Gemini 2.5 models (June 2025)
+// Recommended: models/gemini-2.5-flash (fast, stable)
+const MODEL_NAME = process.env.GEMINI_MODEL_NAME || 'models/gemini-2.5-flash';
 
 // Rate limiting configuration
 // Gemini Free Tier: 15 requests per minute (RPM)
@@ -83,7 +85,7 @@ function setCachedResponse(cacheKey: string, response: any, ttl: number = DEFAUL
   // Clean up old entries periodically (simple cleanup)
   if (responseCache.size > 100) {
     const now = Date.now();
-    for (const [key, entry] of responseCache.entries()) {
+    for (const [key, entry] of Array.from(responseCache.entries())) {
       if (now > entry.timestamp + entry.ttl) {
         responseCache.delete(key);
       }

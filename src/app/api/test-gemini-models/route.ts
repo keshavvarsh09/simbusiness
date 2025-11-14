@@ -23,12 +23,16 @@ export async function GET() {
     // we'll try different model names to see which ones work
     
     const modelsToTest = [
+      // New Gemini 2.5 models (June 2025)
+      'models/gemini-2.5-flash',      // Recommended - stable, fast
+      'models/gemini-2.5-pro',        // More powerful
+      'models/gemini-2.0-flash',       // Fast and versatile
+      'models/gemini-2.0-flash-001',   // Stable version
+      'models/gemini-2.5-flash-lite', // Lightweight option
+      // Legacy models (for comparison - likely deprecated)
       'gemini-pro',
       'gemini-1.5-pro',
       'gemini-1.5-flash',
-      'gemini-1.5-pro-latest',
-      'gemini-1.5-flash-latest',
-      'gemini-pro-vision',
       'models/gemini-pro',
       'models/gemini-1.5-pro',
       'models/gemini-1.5-flash',

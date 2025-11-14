@@ -4,9 +4,10 @@ const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // Model name - can be overridden via environment variable
-// Default to gemini-pro which is the most stable for API v1
-// Try these in order: gemini-pro, gemini-1.5-pro, gemini-1.5-flash
-const MODEL_NAME = process.env.GEMINI_MODEL_NAME || 'gemini-pro';
+// Updated to Gemini 2.5 models (June 2025)
+// Recommended: models/gemini-2.5-flash (fast, stable)
+// Alternatives: models/gemini-2.5-pro, models/gemini-2.0-flash
+const MODEL_NAME = process.env.GEMINI_MODEL_NAME || 'models/gemini-2.5-flash';
 
 // Initialize Gemini models
 const geminiPro = genAI.getGenerativeModel({ model: MODEL_NAME });

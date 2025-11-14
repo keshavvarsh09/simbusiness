@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
       gemini: {
         apiKeyValid: false,
         error: null as string | null,
+        modelName: undefined as string | undefined,
       }
     };
 
@@ -92,9 +93,11 @@ export async function GET(request: NextRequest) {
       try {
         const { GoogleGenerativeAI } = await import('@google/generative-ai');
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const modelName = process.env.GEMINI_MODEL_NAME || 'models/gemini-2.5-flash';
+        const model = genAI.getGenerativeModel({ model: modelName });
         // Just verify the key is valid format, don't make actual call
         diagnostics.gemini.apiKeyValid = true;
+        diagnostics.gemini.modelName = modelName;
       } catch (geminiError: any) {
         diagnostics.gemini.error = geminiError.message;
       }

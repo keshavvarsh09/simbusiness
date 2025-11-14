@@ -3,6 +3,10 @@ import { analyzeMetaDashboard } from '@/lib/gemini';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 function getUserIdFromToken(request: NextRequest): number | null {
