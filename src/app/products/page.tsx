@@ -211,6 +211,7 @@ export default function ProductsPage() {
                 performance={productPerformances[product.id]}
                 loadingPerformance={loadingPerformance.has(product.id)}
                 onLoadPerformance={() => loadProductPerformance(product.id)}
+                isActiveInDashboard={activeProducts.has(product.id)}
               />
             ))}
           </div>
@@ -221,12 +222,13 @@ export default function ProductsPage() {
 }
 
 interface ProductCardProps {
-  product: Product & { moq?: number; vendorName?: string; vendorPlatform?: string; sourceUrl?: string };
+  product: Product & { moq?: number; vendorName?: string; vendorPlatform?: string; sourceUrl?: string; activeInDashboard?: boolean };
   isSelected?: boolean;
   onSelect?: () => void;
   performance?: any;
   loadingPerformance?: boolean;
   onLoadPerformance?: () => void;
+  isActiveInDashboard?: boolean;
 }
 
 function ProductCard({ product, isSelected = false, onSelect, performance, loadingPerformance, onLoadPerformance, isActiveInDashboard = false }: ProductCardProps) {
