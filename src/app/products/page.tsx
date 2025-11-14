@@ -16,7 +16,10 @@ export default function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setApiUrl(process.env.NEXT_PUBLIC_API_URL || 'Not configured');
+    // Show the actual API URL being used (with fallback)
+    const apiUrlEnv = process.env.NEXT_PUBLIC_API_URL;
+    const actualApiUrl = apiUrlEnv || 'https://fakestoreapi.com (default)';
+    setApiUrl(actualApiUrl);
     
     const loadData = async () => {
       setIsLoading(true);
@@ -79,10 +82,15 @@ export default function ProductsPage() {
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Product Catalog</h1>
         
-        {/* Display environment variable for demonstration */}
-        <div className="mb-6 p-4 bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-600">
-            <strong>Environment:</strong> Using API URL: {apiUrl}
+        {/* Display API URL being used */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-gray-700">
+            <strong>API Source:</strong> {apiUrl}
+            {!process.env.NEXT_PUBLIC_API_URL && (
+              <span className="ml-2 text-xs text-gray-500">
+                (Using default FakeStore API - products are for demonstration)
+              </span>
+            )}
           </p>
         </div>
         
