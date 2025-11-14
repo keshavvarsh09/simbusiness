@@ -86,9 +86,9 @@ export default function ProductsPage() {
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-gray-700">
             <strong>API Source:</strong> {apiUrl}
-            {!process.env.NEXT_PUBLIC_API_URL && (
+            {apiUrl.includes('(default)') && (
               <span className="ml-2 text-xs text-gray-500">
-                (Using default FakeStore API - products are for demonstration)
+                (Products are for demonstration purposes)
               </span>
             )}
           </p>
