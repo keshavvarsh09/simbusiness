@@ -185,6 +185,16 @@ export default function ProductsPage() {
       });
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        // Show detailed error message if available
+        const errorMsg = data.details 
+          ? `${data.error}: ${data.details}` 
+          : (data.error || 'Failed to add products to dashboard');
+        alert(errorMsg);
+        return;
+      }
+      
       if (data.success) {
         // Update active products set
         setActiveProducts(prev => {
@@ -194,7 +204,10 @@ export default function ProductsPage() {
         });
         alert(`${data.updated} product(s) added to dashboard! They will now be used in revenue calculations.`);
       } else {
-        alert(data.error || 'Failed to add products to dashboard');
+        const errorMsg = data.details 
+          ? `${data.error}: ${data.details}` 
+          : (data.error || 'Failed to add products to dashboard');
+        alert(errorMsg);
       }
     } catch (error: any) {
       alert('Failed to add products to dashboard: ' + error.message);
@@ -221,6 +234,16 @@ export default function ProductsPage() {
       });
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        // Show detailed error message if available
+        const errorMsg = data.details 
+          ? `${data.error}: ${data.details}` 
+          : (data.error || 'Failed to remove products from dashboard');
+        alert(errorMsg);
+        return;
+      }
+      
       if (data.success) {
         // Update active products set
         setActiveProducts(prev => {
@@ -230,7 +253,10 @@ export default function ProductsPage() {
         });
         alert(`${data.updated} product(s) removed from dashboard.`);
       } else {
-        alert(data.error || 'Failed to remove products from dashboard');
+        const errorMsg = data.details 
+          ? `${data.error}: ${data.details}` 
+          : (data.error || 'Failed to remove products from dashboard');
+        alert(errorMsg);
       }
     } catch (error: any) {
       alert('Failed to remove products from dashboard: ' + error.message);
