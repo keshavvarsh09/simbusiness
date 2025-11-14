@@ -166,8 +166,29 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: any) {
     console.error('Error adding product:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Provide more detailed error information
+    let errorMessage = 'Failed to add product';
+    let errorDetails = error.message || 'Unknown error';
+    
+    if (error.message?.includes('column') || error.message?.includes('does not exist')) {
+      errorMessage = 'Database schema error';
+      errorDetails = 'The products table structure may be outdated. Please contact support.';
+    } else if (error.message?.includes('null value') || error.message?.includes('NOT NULL')) {
+      errorMessage = 'Missing required field';
+      errorDetails = 'Please ensure all required fields are filled.';
+    } else if (error.message?.includes('foreign key') || error.message?.includes('user_id')) {
+      errorMessage = 'User authentication error';
+      errorDetails = 'Invalid user session. Please try logging in again.';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to add product', details: error.message },
+      { 
+        error: errorMessage, 
+        details: errorDetails,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
