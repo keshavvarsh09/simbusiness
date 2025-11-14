@@ -111,20 +111,6 @@ export default function ProductRecommendationsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendations.map((rec, idx) => (
                 <div key={idx} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white">
-                  {/* Product Image */}
-                  {rec.imageUrl && (
-                    <div className="relative w-full h-48 bg-gray-100">
-                      <img
-                        src={rec.imageUrl}
-                        alt={rec.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://via.placeholder.com/300x300?text=${encodeURIComponent(rec.name)}`;
-                        }}
-                      />
-                    </div>
-                  )}
-                  
                   <div className="p-4">
                     <h3 className="font-semibold text-lg mb-1">{rec.name}</h3>
                     <p className="text-sm text-gray-600 mb-3 capitalize">{rec.category}</p>
@@ -240,6 +226,45 @@ export default function ProductRecommendationsPage() {
 
                   {rec.reason && (
                     <p className="text-sm text-gray-600 mt-2 mb-3">{rec.reason}</p>
+                  )}
+
+                  {/* Product Image Links */}
+                  {rec.imageLinks && (
+                    <div className="mb-3 pt-3 border-t">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">View Product Images:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {rec.imageLinks.alibaba && (
+                          <a
+                            href={rec.imageLinks.alibaba}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 flex items-center gap-1"
+                          >
+                            📷 Alibaba Images <FiExternalLink className="text-xs" />
+                          </a>
+                        )}
+                        {rec.imageLinks.aliexpress && (
+                          <a
+                            href={rec.imageLinks.aliexpress}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 flex items-center gap-1"
+                          >
+                            📷 AliExpress Images <FiExternalLink className="text-xs" />
+                          </a>
+                        )}
+                        {rec.imageLinks.indiamart && (
+                          <a
+                            href={rec.imageLinks.indiamart}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
+                          >
+                            📷 IndiaMart Images <FiExternalLink className="text-xs" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   )}
 
                   {/* Product Links */}
