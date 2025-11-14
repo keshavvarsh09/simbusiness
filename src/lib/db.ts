@@ -47,9 +47,33 @@ export async function initDatabase() {
         competition_analysis JSONB,
         feasibility_analysis JSONB,
         gemini_analysis JSONB,
+        active_in_dashboard BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Ensure active_in_dashboard column exists (for existing databases)
+    try {
+      const columnCheck = await client.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name='products' AND column_name='active_in_dashboard'
+      `);
+      
+      if (columnCheck.rows.length === 0) {
+        // Column doesn't exist, add it
+        await client.query(`
+          ALTER TABLE products 
+          ADD COLUMN active_in_dashboard BOOLEAN DEFAULT true
+        `);
+        console.log('Added active_in_dashboard column to products table');
+      }
+    } catch (e: any) {
+      // If error is not about column already existing, log it
+      if (!e.message?.includes('already exists') && !e.message?.includes('duplicate')) {
+        console.warn('Warning: Could not add active_in_dashboard column:', e.message);
+      }
+    }
 
     // Missions table (time-bound problems)
     await client.query(`

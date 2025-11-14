@@ -63,15 +63,32 @@ export async function POST(request: NextRequest) {
         
         if (columnCheck.rows.length === 0) {
           // Column doesn't exist, add it
-          await client.query(`
-            ALTER TABLE products 
-            ADD COLUMN active_in_dashboard BOOLEAN DEFAULT true
-          `);
+          try {
+            await client.query(`
+              ALTER TABLE products 
+              ADD COLUMN active_in_dashboard BOOLEAN DEFAULT true
+            `);
+            console.log('Successfully added active_in_dashboard column');
+            
+            // Update existing products to be active by default
+            await client.query(`
+              UPDATE products 
+              SET active_in_dashboard = true 
+              WHERE active_in_dashboard IS NULL
+            `);
+          } catch (alterError: any) {
+            // If ALTER fails, it might be a permission issue or the column was just added
+            if (!alterError.message?.includes('already exists') && !alterError.message?.includes('duplicate')) {
+              console.error('Failed to add active_in_dashboard column:', alterError.message);
+              throw alterError;
+            }
+          }
         }
       } catch (e: any) {
-        // If error is not about column already existing, log it
+        // If error is not about column already existing, log it and try to continue
         if (!e.message?.includes('already exists') && !e.message?.includes('duplicate')) {
           console.warn('Warning: Could not ensure active_in_dashboard column exists:', e.message);
+          // Don't throw - try to continue with the update
         }
       }
 
@@ -106,17 +123,45 @@ export async function POST(request: NextRequest) {
           [active, userId, ...numericIds]
         );
       } catch (updateError: any) {
-        // If error is about active_in_dashboard column, try updating without it
-        if (updateError.message?.includes('active_in_dashboard') || updateError.message?.includes('column')) {
-          console.warn('active_in_dashboard column not available, skipping update');
-          // Return success but with 0 updated (column doesn't exist yet)
-          return NextResponse.json({
-            success: true,
-            message: 'Column not available yet. Products will be active by default.',
-            updated: 0
-          });
+        // If error is about active_in_dashboard column, try to add it and retry
+        if (updateError.message?.includes('active_in_dashboard') || updateError.message?.includes('column') || updateError.message?.includes('does not exist')) {
+          console.warn('active_in_dashboard column not found, attempting to add it...');
+          
+          try {
+            // Try to add the column
+            await client.query(`
+              ALTER TABLE products 
+              ADD COLUMN active_in_dashboard BOOLEAN DEFAULT true
+            `);
+            
+            // Update existing products
+            await client.query(`
+              UPDATE products 
+              SET active_in_dashboard = true 
+              WHERE active_in_dashboard IS NULL
+            `);
+            
+            // Retry the update
+            result = await client.query(
+              `UPDATE products 
+               SET active_in_dashboard = $1
+               WHERE user_id = $2 AND id = ANY(ARRAY[${placeholders}])
+               RETURNING id, name, active_in_dashboard`,
+              [active, userId, ...numericIds]
+            );
+            
+            console.log('Successfully added column and updated products');
+          } catch (retryError: any) {
+            console.error('Failed to add column and retry:', retryError.message);
+            return NextResponse.json({
+              error: 'Database schema error',
+              details: 'Could not add required column. Please run database migration or contact support.',
+              migrationEndpoint: '/api/migrate'
+            }, { status: 500 });
+          }
+        } else {
+          throw updateError; // Re-throw if it's a different error
         }
-        throw updateError; // Re-throw if it's a different error
       }
 
       if (result.rows.length === 0) {

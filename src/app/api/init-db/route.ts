@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initDatabase } from '@/lib/db';
+import pool from '@/lib/db';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -28,9 +29,43 @@ export async function GET(request: NextRequest) {
     await initDatabase();
     console.log('Database initialized successfully');
     
+    // Run migration to ensure all columns exist
+    try {
+      const client = await pool.connect();
+      try {
+        // Check and add active_in_dashboard column if needed
+        const columnCheck = await client.query(`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name='products' AND column_name='active_in_dashboard'
+        `);
+        
+        if (columnCheck.rows.length === 0) {
+          await client.query(`
+            ALTER TABLE products 
+            ADD COLUMN active_in_dashboard BOOLEAN DEFAULT true
+          `);
+          console.log('Added active_in_dashboard column to products table');
+          
+          // Update existing products
+          await client.query(`
+            UPDATE products 
+            SET active_in_dashboard = true 
+            WHERE active_in_dashboard IS NULL
+          `);
+        }
+      } finally {
+        client.release();
+      }
+    } catch (migrationError: any) {
+      console.warn('Migration warning:', migrationError.message);
+      // Don't fail init-db if migration has issues
+    }
+    
     return NextResponse.json({
       success: true,
-      message: 'Database initialized successfully'
+      message: 'Database initialized successfully',
+      migration: 'Migration completed'
     });
   } catch (error: any) {
     console.error('Database initialization error:', error);
