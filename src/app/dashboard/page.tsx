@@ -136,26 +136,51 @@ export default function Dashboard() {
 
   const loadDashboardState = async () => {
     try {
-      const response = await fetch('/api/dashboard/state', {
+      // Load dashboard state
+      const stateResponse = await fetch('/api/dashboard/state', {
         headers: getAuthHeaders(),
       });
 
-      const data = await response.json();
-      if (data.success) {
+      const stateData = await stateResponse.json();
+      if (stateData.success) {
         // Always recalculate profit from revenue - expenses to ensure accuracy
-        const calculatedProfit = data.state.revenue - data.state.expenses;
+        const calculatedProfit = stateData.state.revenue - stateData.state.expenses;
         setBusinessStats({
-          revenue: data.state.revenue,
-          expenses: data.state.expenses,
+          revenue: stateData.state.revenue,
+          expenses: stateData.state.expenses,
           profit: calculatedProfit, // Recalculate to ensure accuracy
-          orders: data.state.orders,
-          inventory: data.state.inventory,
-          marketing: data.state.marketing
+          orders: stateData.state.orders,
+          inventory: stateData.state.inventory,
+          marketing: stateData.state.marketing
         });
-        setDay(data.state.day);
-        setMetrics(data.state.metrics);
-        setSimulationHistory(data.state.simulationHistory);
-        setHasProducts(data.hasProducts);
+        setDay(stateData.state.day);
+        setMetrics(stateData.state.metrics);
+        setSimulationHistory(stateData.state.simulationHistory);
+        setHasProducts(stateData.hasProducts);
+      }
+
+      // Load user products for calculations
+      if (stateData.hasProducts) {
+        try {
+          const productsResponse = await fetch('/api/products/user-products', {
+            headers: getAuthHeaders(),
+          });
+
+          const productsData = await productsResponse.json();
+          if (productsData.success && productsData.products.length > 0) {
+            setUserProducts(productsData.products);
+            
+            // Update average order value based on actual products
+            if (productsData.averages.sellingPrice > 0) {
+              setMetrics(prev => ({
+                ...prev,
+                averageOrderValue: productsData.averages.sellingPrice
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load user products:', error);
+        }
       }
     } catch (error) {
       console.error('Failed to load dashboard state:', error);
@@ -330,7 +355,18 @@ export default function Dashboard() {
 
   const restockInventory = () => {
     const restockAmount = 20;
-    const restockCost = restockAmount * 15; // Average cost per item
+    
+    // Calculate restock cost based on actual product costs
+    let restockCost: number;
+    if (userProducts.length > 0) {
+      // Use average cost from actual products
+      const avgCost = userProducts.reduce((sum, p) => sum + p.cost, 0) / userProducts.length;
+      restockCost = restockAmount * avgCost;
+    } else {
+      // Fallback to default
+      restockCost = restockAmount * 15;
+    }
+    
     const currentProfit = businessStats.revenue - businessStats.expenses;
     
     if (currentProfit < restockCost) {
