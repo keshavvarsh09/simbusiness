@@ -69,12 +69,17 @@ export async function GET(request: NextRequest) {
       );
       const productCount = parseInt(productsResult.rows[0]?.count || '0');
 
+      // Always calculate profit from revenue - expenses to ensure accuracy
+      const revenue = parseFloat(businessData.revenue || 0);
+      const expenses = parseFloat(businessData.expenses || 0);
+      const calculatedProfit = revenue - expenses;
+
       return NextResponse.json({
         success: true,
         state: {
-          revenue: parseFloat(businessData.revenue || 0),
-          expenses: parseFloat(businessData.expenses || 0),
-          profit: parseFloat(businessData.profit || 0),
+          revenue,
+          expenses,
+          profit: calculatedProfit, // Always calculate, don't trust stored value
           orders: businessData.outstanding_orders || 0,
           inventory: Math.max(0, Math.floor(parseFloat(businessData.inventory_value || 0) / 15)),
           marketing: parseFloat(simulationState.marketing_budget || 0),
@@ -115,6 +120,9 @@ export async function POST(request: NextRequest) {
 
     const client = await pool.connect();
     try {
+      // Always calculate profit as revenue - expenses to ensure accuracy
+      const calculatedProfit = (revenue || 0) - (expenses || 0);
+      
       // Update business_data
       await client.query(
         `INSERT INTO business_data (user_id, revenue, expenses, profit, cash_flow, inventory_value, outstanding_orders)
@@ -132,8 +140,8 @@ export async function POST(request: NextRequest) {
           userId,
           revenue || 0,
           expenses || 0,
-          profit || 0,
-          (revenue || 0) - (expenses || 0), // cash_flow
+          calculatedProfit, // Always use calculated profit
+          calculatedProfit, // cash_flow = profit
           (inventory || 0) * 15, // Convert units to value (assuming $15 per unit)
           orders || 0
         ]

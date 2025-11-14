@@ -141,10 +141,12 @@ export default function Dashboard() {
 
       const data = await response.json();
       if (data.success) {
+        // Always recalculate profit from revenue - expenses to ensure accuracy
+        const calculatedProfit = data.state.revenue - data.state.expenses;
         setBusinessStats({
           revenue: data.state.revenue,
           expenses: data.state.expenses,
-          profit: data.state.profit,
+          profit: calculatedProfit, // Recalculate to ensure accuracy
           orders: data.state.orders,
           inventory: data.state.inventory,
           marketing: data.state.marketing
@@ -469,7 +471,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatCard title="Total Revenue" value={`$${businessStats.revenue.toFixed(2)}`} icon={<FiDollarSign className="text-green-500" />} />
           <StatCard title="Total Expenses" value={`$${businessStats.expenses.toFixed(2)}`} icon={<FiDollarSign className="text-red-500" />} />
-          <StatCard title="Total Profit" value={`$${businessStats.profit.toFixed(2)}`} icon={<FiTrendingUp className="text-blue-500" />} />
+          <StatCard title="Total Profit" value={`$${(businessStats.revenue - businessStats.expenses).toFixed(2)}`} icon={<FiTrendingUp className="text-blue-500" />} />
           <StatCard title="Orders Fulfilled" value={businessStats.orders.toString()} icon={<FiShoppingCart className="text-purple-500" />} />
         </div>
 
