@@ -64,10 +64,10 @@ export default function ProductsPage() {
         setCategories(data.categories || []);
         
         // Track which products are active in dashboard
-        const activeSet = new Set(
+        const activeSet = new Set<string>(
           (data.products || [])
             .filter((p: any) => p.activeInDashboard !== false)
-            .map((p: any) => p.id)
+            .map((p: any) => p.id as string)
         );
         setActiveProducts(activeSet);
       } else {
