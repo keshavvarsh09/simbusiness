@@ -112,7 +112,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [hasProducts, setHasProducts] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [userProducts, setUserProducts] = useState<Array<{ cost: number; sellingPrice: number }>>([]);
+  const [userProducts, setUserProducts] = useState<Array<{ id: number; name: string; cost: number; sellingPrice: number; category: string }>>([]);
 
   // Load state on mount
   useEffect(() => {
@@ -178,6 +178,9 @@ export default function Dashboard() {
                 averageOrderValue: productsData.averages.sellingPrice
               }));
             }
+          } else {
+            // If no active products found, set empty array
+            setUserProducts([]);
           }
         } catch (error) {
           console.error('Failed to load user products:', error);
@@ -636,6 +639,58 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Active Products Section */}
+        {userProducts.length > 0 && (
+          <div className="card bg-white mb-6 sm:mb-8 p-4 sm:p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <FiPackage className="text-indigo-500" /> Active Products in Simulation
+              </h2>
+              <button
+                onClick={() => router.push('/products')}
+                className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
+                Manage Products <FiPackage size={14} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              These products are currently being used in your simulation calculations. Revenue and profit are calculated based on these products.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {userProducts.map((product) => {
+                const profitMargin = product.sellingPrice > 0 
+                  ? ((product.sellingPrice - product.cost) / product.sellingPrice * 100).toFixed(1)
+                  : '0';
+                return (
+                  <div key={product.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <h3 className="font-semibold text-base mb-2 truncate" title={product.name}>{product.name}</h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Category:</span>
+                        <span className="font-medium capitalize">{product.category}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Cost:</span>
+                        <span className="font-medium text-green-600">${product.cost.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Price:</span>
+                        <span className="font-medium text-blue-600">${product.sellingPrice.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Profit Margin:</span>
+                        <span className={`font-medium ${parseFloat(profitMargin) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {profitMargin}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Profit Chart */}
         {simulationHistory.profit.length > 0 && (

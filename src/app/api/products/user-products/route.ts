@@ -74,7 +74,8 @@ export async function GET(request: NextRequest) {
         cost: parseFloat(row.cost || 0),
         sellingPrice: parseFloat(row.selling_price || row.cost * 1.5 || 0),
         moq: parseInt(row.moq || 0),
-        category: row.category || 'General'
+        category: row.category || 'General',
+        activeInDashboard: row.active_in_dashboard !== false
       }));
 
       // Calculate average values for simulation
