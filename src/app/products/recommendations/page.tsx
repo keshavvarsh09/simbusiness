@@ -75,7 +75,11 @@ export default function ProductRecommendationsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to add product');
+        // Show detailed error message if available
+        const errorMsg = data.details 
+          ? `${data.error}: ${data.details}` 
+          : (data.error || 'Failed to add product');
+        throw new Error(errorMsg);
       }
 
       setAddedProducts(prev => new Set(prev).add(index));
