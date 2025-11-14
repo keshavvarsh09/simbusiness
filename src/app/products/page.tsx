@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiBox, FiDollarSign, FiTag, FiStar, FiFilter, FiAlertCircle, FiPlus, FiTrendingUp } from 'react-icons/fi';
+import { FiBox, FiDollarSign, FiTag, FiStar, FiFilter, FiAlertCircle, FiPlus, FiTrendingUp, FiCheck, FiBarChart, FiImage, FiExternalLink } from 'react-icons/fi';
 import { Product } from '@/types';
 import { getAuthHeaders } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,11 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [simulating, setSimulating] = useState(false);
+  const [simulationResults, setSimulationResults] = useState<any>(null);
+  const [loadingPerformance, setLoadingPerformance] = useState<Set<string>>(new Set());
+  const [productPerformances, setProductPerformances] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (!isAuthenticated()) {

@@ -37,21 +37,22 @@ export async function GET(request: NextRequest) {
 
     const client = await pool.connect();
     try {
-      let query = `
-        SELECT 
-          id,
-          name,
-          category,
-          cost,
-          selling_price,
-          moq,
-          vendor_name,
-          vendor_platform,
-          source_url,
-          created_at
-        FROM products
-        WHERE user_id = $1
-      `;
+          let query = `
+            SELECT 
+              id,
+              name,
+              category,
+              cost,
+              selling_price,
+              moq,
+              vendor_name,
+              vendor_platform,
+              source_url,
+              gemini_analysis,
+              created_at
+            FROM products
+            WHERE user_id = $1
+          `;
       
       const params: any[] = [userId];
       
@@ -64,30 +65,50 @@ export async function GET(request: NextRequest) {
 
       const result = await client.query(query, params);
 
-      // Transform to match Product interface
-      const products = result.rows
-        .map((row) => {
-          const cost = parseFloat(row.cost || 0);
-          const price = parseFloat(row.selling_price || row.cost * 1.5 || 0);
-          const profitMargin = price > 0 ? ((price - cost) / price) * 100 : 0;
-          
-          return {
-            id: `P${row.id}`,
-            name: row.name,
-            category: row.category || 'Unknown',
-            cost,
-            potentialPrice: price,
-            rating: 4.0, // Default rating
-            imageUrl: null, // Products from DB don't have images yet
-            description: null,
-            moq: row.moq || 0,
-            vendorName: row.vendor_name,
-            vendorPlatform: row.vendor_platform,
-            sourceUrl: row.source_url,
-            profitMargin // Add profit margin for filtering
-          };
-        })
-        .filter(product => product.profitMargin > 0); // Filter out negative profit products
+          // Transform to match Product interface
+          const products = result.rows
+            .map((row) => {
+              const cost = parseFloat(row.cost || 0);
+              const price = parseFloat(row.selling_price || row.cost * 1.5 || 0);
+              const profitMargin = price > 0 ? ((price - cost) / price) * 100 : 0;
+              
+              // Extract vendor links from gemini_analysis if available
+              let vendorLinks: any = null;
+              if (row.gemini_analysis) {
+                try {
+                  const analysis = typeof row.gemini_analysis === 'string' 
+                    ? JSON.parse(row.gemini_analysis) 
+                    : row.gemini_analysis;
+                  vendorLinks = analysis.vendorLinks || null;
+                } catch (e) {
+                  // Ignore parse errors
+                }
+              }
+              
+              // Try to get image URL from vendor links
+              let imageUrl: string | null = null;
+              if (vendorLinks) {
+                // Use first available vendor link as image source hint
+                imageUrl = vendorLinks.alibaba || vendorLinks.aliexpress || vendorLinks.indiamart || null;
+              }
+              
+              return {
+                id: `P${row.id}`,
+                name: row.name,
+                category: row.category || 'Unknown',
+                cost,
+                potentialPrice: price,
+                rating: 4.0, // Default rating
+                imageUrl: imageUrl || row.source_url || null, // Use source URL as fallback
+                description: null,
+                moq: row.moq || 0,
+                vendorName: row.vendor_name,
+                vendorPlatform: row.vendor_platform,
+                sourceUrl: row.source_url || imageUrl, // Use source URL or vendor link
+                profitMargin // Add profit margin for filtering
+              };
+            })
+            .filter(product => product.profitMargin > 0); // Filter out negative profit products
 
       // Get unique categories
       const categoriesResult = await client.query(
