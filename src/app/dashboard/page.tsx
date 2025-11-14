@@ -276,14 +276,20 @@ export default function Dashboard() {
       returnRate: Math.max(5, Math.min(15, prev.returnRate + (Math.random() - 0.5) * 0.5))
     }));
     
-    setBusinessStats(prev => ({
-      revenue: prev.revenue + newRevenue,
-      expenses: prev.expenses + finalExpenses,
-      profit: prev.profit + newProfit,
-      orders: prev.orders + actualOrders,
-      inventory: prev.inventory - actualOrders,
-      marketing: Math.max(0, prev.marketing - marketingSpend) // Decrease marketing budget
-    }));
+    setBusinessStats(prev => {
+      const newTotalRevenue = prev.revenue + newRevenue;
+      const newTotalExpenses = prev.expenses + finalExpenses;
+      const newTotalProfit = newTotalRevenue - newTotalExpenses; // Profit = Revenue - Expenses
+      
+      return {
+        revenue: newTotalRevenue,
+        expenses: newTotalExpenses,
+        profit: newTotalProfit, // Recalculate total profit correctly
+        orders: prev.orders + actualOrders,
+        inventory: prev.inventory - actualOrders,
+        marketing: Math.max(0, prev.marketing - marketingSpend) // Decrease marketing budget
+      };
+    });
 
     setSimulationHistory(prev => ({
       profit: [...prev.profit, businessStats.profit + newProfit]
