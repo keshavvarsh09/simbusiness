@@ -108,3 +108,26 @@ export function generateProductSearchLinks(productName: string, category?: strin
   };
 }
 
+/**
+ * Enhanced product data with images, prices, and supplier details
+ */
+export interface EnhancedProductData {
+  name: string;
+  category?: string;
+  imageUrl?: string;
+  prices: {
+    alibaba: { min: number; max: number; average: number; currency: string };
+    aliexpress: { min: number; max: number; average: number; currency: string };
+    indiamart: { min: number; max: number; average: number; currency: string };
+  };
+  suppliers: Array<{
+    platform: string;
+    name: string;
+    url: string;
+    rating: number;
+    reviews: number;
+    verified: boolean;
+  }>;
+  links: ReturnType<typeof generateProductSearchLinks>;
+}
+

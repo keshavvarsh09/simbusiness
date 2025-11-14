@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiTrendingUp, FiDollarSign, FiPackage, FiExternalLink, FiPlus, FiCheck } from 'react-icons/fi';
+import { FiTrendingUp, FiDollarSign, FiPackage, FiExternalLink, FiPlus, FiCheck, FiStar, FiUsers, FiShield } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
 
@@ -110,9 +110,24 @@ export default function ProductRecommendationsPage() {
           ) : recommendations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendations.map((rec, idx) => (
-                <div key={idx} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
-                  <h3 className="font-semibold text-lg mb-2">{rec.name}</h3>
-                  <p className="text-sm text-gray-600 mb-3 capitalize">{rec.category}</p>
+                <div key={idx} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white">
+                  {/* Product Image */}
+                  {rec.imageUrl && (
+                    <div className="relative w-full h-48 bg-gray-100">
+                      <img
+                        src={rec.imageUrl}
+                        alt={rec.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://via.placeholder.com/300x300?text=${encodeURIComponent(rec.name)}`;
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg mb-1">{rec.name}</h3>
+                    <p className="text-sm text-gray-600 mb-3 capitalize">{rec.category}</p>
                   
                   <div className="space-y-2 mb-3">
                     <div className="flex justify-between">
@@ -151,6 +166,77 @@ export default function ProductRecommendationsPage() {
                       Competition: {rec.competition || 'N/A'}
                     </span>
                   </div>
+
+                  {/* Price Comparison */}
+                  {rec.prices && (
+                    <div className="mb-3 pt-3 border-t">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">Price Comparison:</p>
+                      <div className="space-y-1 text-xs">
+                        {rec.prices.alibaba && rec.prices.alibaba.average > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Alibaba:</span>
+                            <span className="font-semibold">
+                              ${rec.prices.alibaba.average.toFixed(2)} {rec.prices.alibaba.currency}
+                            </span>
+                          </div>
+                        )}
+                        {rec.prices.aliexpress && rec.prices.aliexpress.average > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">AliExpress:</span>
+                            <span className="font-semibold">
+                              ${rec.prices.aliexpress.average.toFixed(2)} {rec.prices.aliexpress.currency}
+                            </span>
+                          </div>
+                        )}
+                        {rec.prices.indiamart && rec.prices.indiamart.average > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">IndiaMart:</span>
+                            <span className="font-semibold">
+                              ₹{rec.prices.indiamart.average.toFixed(0)} {rec.prices.indiamart.currency}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Supplier Details */}
+                  {rec.suppliers && rec.suppliers.length > 0 && (
+                    <div className="mb-3 pt-3 border-t">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">Suppliers:</p>
+                      <div className="space-y-2">
+                        {rec.suppliers.map((supplier: any, sIdx: number) => (
+                          <a
+                            key={sIdx}
+                            href={supplier.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-medium">{supplier.name}</span>
+                                {supplier.verified && (
+                                  <FiShield className="text-xs text-green-600" title="Verified" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <FiStar className="text-xs text-yellow-500 fill-yellow-500" />
+                                <span className="text-xs font-semibold">{supplier.rating?.toFixed(1)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <FiUsers className="text-xs" />
+                                <span>{supplier.reviews?.toLocaleString() || 0} reviews</span>
+                              </div>
+                              <span className="capitalize">{supplier.platform}</span>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {rec.reason && (
                     <p className="text-sm text-gray-600 mt-2 mb-3">{rec.reason}</p>
@@ -221,6 +307,7 @@ export default function ProductRecommendationsPage() {
                       </>
                     )}
                   </button>
+                  </div>
                 </div>
               ))}
             </div>
