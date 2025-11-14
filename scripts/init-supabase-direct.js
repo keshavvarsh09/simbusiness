@@ -251,9 +251,12 @@ async function initSupabaseDirect() {
       client.release();
     }
   } catch (error) {
-    console.error('\n❌ Error:', error.message);
+    console.error('\n❌ Error:', error.message || error.toString());
+    if (error.stack) {
+      console.error('Stack:', error.stack);
+    }
     
-    if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {
+    if (error.message && (error.message.includes('timeout') || error.message.includes('ECONNREFUSED'))) {
       console.log('\n💡 Troubleshooting:');
       console.log('   1. Check if your Supabase project is active (not paused)');
       console.log('   2. Verify the connection string is correct');

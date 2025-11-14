@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "verify-db": "node scripts/verify-supabase-connection.js",
-    "init-supabase": "node scripts/init-supabase-direct.js"
+    "init-supabase": "node scripts/init-supabase-direct.js",
+    "execute-sql": "node scripts/execute-sql-direct.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.2.1",
