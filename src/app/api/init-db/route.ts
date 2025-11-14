@@ -15,11 +15,17 @@ export async function GET(request: NextRequest) {
     const secret = request.headers.get('x-init-secret') || 
                    new URL(request.url).searchParams.get('secret');
     
-    // Only check secret if it's set in environment
-    if (process.env.INIT_DB_SECRET) {
+    // Only check secret if it's set in environment AND provided
+    // This allows the endpoint to work without secret for easier setup
+    // For production, set INIT_DB_SECRET in Vercel and use it
+    if (process.env.INIT_DB_SECRET && process.env.INIT_DB_SECRET.trim() !== '') {
       if (!secret || secret !== process.env.INIT_DB_SECRET) {
         return NextResponse.json(
-          { error: 'Unauthorized - Secret required' },
+          { 
+            error: 'Unauthorized - Secret required',
+            hint: `Add ?secret=YOUR_SECRET to the URL. Your secret is set in Vercel as INIT_DB_SECRET.`,
+            note: 'To disable secret requirement, remove INIT_DB_SECRET from Vercel environment variables'
+          },
           { status: 401 }
         );
       }
