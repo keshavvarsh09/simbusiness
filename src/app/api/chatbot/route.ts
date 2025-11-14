@@ -103,7 +103,16 @@ export async function POST(request: NextRequest) {
       }
 
       // Generate response using AI router (tries Groq first, falls back to Gemini)
-      const response = await generateChatResponse(message, userContext);
+      // Convert null values to undefined for type compatibility
+      const aiContext = {
+        budget: userContext.budget ?? undefined,
+        productGenre: userContext.productGenre ?? undefined,
+        revenue: userContext.revenue,
+        expenses: userContext.expenses,
+        profit: userContext.profit,
+        products: userContext.products
+      };
+      const response = await generateChatResponse(message, aiContext);
 
       // Save conversation to database (don't fail if this fails)
       try {
