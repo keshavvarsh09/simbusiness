@@ -281,6 +281,11 @@ export default function Dashboard() {
       const newTotalExpenses = prev.expenses + finalExpenses;
       const newTotalProfit = newTotalRevenue - newTotalExpenses; // Profit = Revenue - Expenses
       
+      // Update simulation history with the new total profit
+      setSimulationHistory(prevHistory => ({
+        profit: [...prevHistory.profit, newTotalProfit]
+      }));
+      
       return {
         revenue: newTotalRevenue,
         expenses: newTotalExpenses,
@@ -290,10 +295,6 @@ export default function Dashboard() {
         marketing: Math.max(0, prev.marketing - marketingSpend) // Decrease marketing budget
       };
     });
-
-    setSimulationHistory(prev => ({
-      profit: [...prev.profit, businessStats.profit + newProfit]
-    }));
   };
 
   const [showRestockConfirm, setShowRestockConfirm] = useState(false);
