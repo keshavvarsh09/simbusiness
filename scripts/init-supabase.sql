@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS dropshipping_checklist_steps (
   checklist_actions JSONB,
   dependencies INTEGER[],
   resources JSONB,
+  reflection_prompts JSONB,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

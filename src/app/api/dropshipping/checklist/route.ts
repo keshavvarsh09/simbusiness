@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
         for (const step of DROPSHIPPING_CHECKLIST) {
           await client.query(
             `INSERT INTO dropshipping_checklist_steps 
-             (step_number, section, title, description, checklist_actions, dependencies, resources)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             (step_number, section, title, description, checklist_actions, dependencies, resources, reflection_prompts)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              ON CONFLICT (step_number) DO NOTHING`,
             [
               step.stepNumber,
@@ -57,16 +57,17 @@ export async function GET(request: NextRequest) {
               step.description,
               JSON.stringify(step.checklistActions),
               step.dependencies,
-              JSON.stringify(step.resources)
+              JSON.stringify(step.resources),
+              JSON.stringify(step.reflectionPrompts || [])
             ]
           );
         }
       }
 
       // Get all steps
-      const stepsResult = await client.query(
-        'SELECT * FROM dropshipping_checklist_steps ORDER BY step_number'
-      );
+        const stepsResult = await client.query(
+          'SELECT * FROM dropshipping_checklist_steps ORDER BY step_number'
+        );
 
       // Get user progress
       const progressResult = await client.query(
@@ -93,18 +94,22 @@ export async function GET(request: NextRequest) {
           checklistData: null
         };
 
-        return {
-          stepNumber: step.step_number,
-          section: step.section,
-          title: step.title,
-          description: step.description,
-          checklistActions: step.checklist_actions,
-          dependencies: step.dependencies || [],
-          resources: step.resources || [],
-          progress: progress,
-          // Get MCQ from static data
-          mcq: DROPSHIPPING_CHECKLIST.find(s => s.stepNumber === step.step_number)?.mcq
-        };
+        // Get step data from static file to ensure latest resources and MCQ
+        const staticStep = DROPSHIPPING_CHECKLIST.find(s => s.stepNumber === step.step_number);
+
+          return {
+            stepNumber: step.step_number,
+            section: step.section,
+            title: step.title,
+            description: step.description,
+            checklistActions: step.checklist_actions,
+            dependencies: step.dependencies || [],
+            resources: staticStep?.resources || step.resources || [],
+            reflectionPrompts: staticStep?.reflectionPrompts || step.reflection_prompts || [],
+            progress: progress,
+            // Get MCQ from static data
+            mcq: staticStep?.mcq
+          };
       });
 
       // Calculate progress summary
@@ -152,29 +157,31 @@ export async function POST(request: NextRequest) {
     const client = await pool.connect();
     try {
       // Initialize all checklist steps
-      for (const step of DROPSHIPPING_CHECKLIST) {
-        await client.query(
-          `INSERT INTO dropshipping_checklist_steps 
-           (step_number, section, title, description, checklist_actions, dependencies, resources)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (step_number) DO UPDATE SET
-           section = EXCLUDED.section,
-           title = EXCLUDED.title,
-           description = EXCLUDED.description,
-           checklist_actions = EXCLUDED.checklist_actions,
-           dependencies = EXCLUDED.dependencies,
-           resources = EXCLUDED.resources`,
-          [
-            step.stepNumber,
-            step.section,
-            step.title,
-            step.description,
-            JSON.stringify(step.checklistActions),
-            step.dependencies,
-            JSON.stringify(step.resources)
-          ]
-        );
-      }
+        for (const step of DROPSHIPPING_CHECKLIST) {
+          await client.query(
+            `INSERT INTO dropshipping_checklist_steps 
+             (step_number, section, title, description, checklist_actions, dependencies, resources, reflection_prompts)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (step_number) DO UPDATE SET
+             section = EXCLUDED.section,
+             title = EXCLUDED.title,
+             description = EXCLUDED.description,
+             checklist_actions = EXCLUDED.checklist_actions,
+             dependencies = EXCLUDED.dependencies,
+             resources = EXCLUDED.resources,
+             reflection_prompts = EXCLUDED.reflection_prompts`,
+            [
+              step.stepNumber,
+              step.section,
+              step.title,
+              step.description,
+              JSON.stringify(step.checklistActions),
+              step.dependencies,
+              JSON.stringify(step.resources),
+              JSON.stringify(step.reflectionPrompts || [])
+            ]
+          );
+        }
 
       return NextResponse.json({
         success: true,
@@ -191,4 +198,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 

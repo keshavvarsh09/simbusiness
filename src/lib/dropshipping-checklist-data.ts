@@ -11,6 +11,7 @@ export interface ChecklistStep {
   checklistActions: string[];
   dependencies: number[];
   resources: Array<{ title: string; url: string; type: string }>;
+  reflectionPrompts?: string[];
   mcq?: {
     question: string;
     options: string[];
@@ -23,7 +24,9 @@ export interface ChecklistStep {
   };
 }
 
-export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
+type ChecklistStepBase = Omit<ChecklistStep, 'reflectionPrompts'>;
+
+const BASE_CHECKLIST: ChecklistStepBase[] = [
   // Section A: Ideation & Validating the Opportunity
   {
     stepNumber: 1,
@@ -38,8 +41,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [],
     resources: [
-      { title: 'Business Goal Template', url: '/resources/business-goals-template.pdf', type: 'pdf' },
-      { title: 'Time Management Guide', url: '/resources/time-management', type: 'article' }
+      { title: 'SMART Goals Template (HubSpot)', url: 'https://blog.hubspot.com/marketing/smart-goals-template', type: 'article' },
+      { title: 'Time Management for Entrepreneurs (Forbes)', url: 'https://www.forbes.com/sites/forbesbusinesscouncil/2021/03/15/time-management-tips-for-entrepreneurs/', type: 'article' }
     ]
   },
   {
@@ -55,8 +58,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [1],
     resources: [
-      { title: 'Niche Research Tool', url: '/tools/niche-research', type: 'tool' },
-      { title: 'Trending Niches Report', url: '/resources/trending-niches', type: 'article' }
+      { title: 'Google Trends - Niche Research', url: 'https://trends.google.com', type: 'tool' },
+      { title: 'Top Dropshipping Niches 2024 (Oberlo)', url: 'https://www.oberlo.com/blog/dropshipping-niches', type: 'article' }
     ],
     mcq: {
       question: 'Which is a warning sign that a niche may be saturated?',
@@ -89,7 +92,7 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     dependencies: [2],
     resources: [
       { title: 'Google Trends', url: 'https://trends.google.com', type: 'external' },
-      { title: 'Competitor Analysis Template', url: '/resources/competitor-analysis', type: 'template' }
+      { title: 'Competitor Analysis Guide (Shopify)', url: 'https://www.shopify.com/blog/competitor-analysis', type: 'article' }
     ]
   },
 
@@ -107,8 +110,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [3],
     resources: [
-      { title: 'Entity Type Guide', url: '/resources/entity-types', type: 'guide' },
-      { title: 'Filing Portal Links', url: '/resources/filing-portals', type: 'links' }
+      { title: 'Business Entity Types Explained (NerdWallet)', url: 'https://www.nerdwallet.com/article/small-business/business-structure-types', type: 'guide' },
+      { title: 'US Business Registration (SBA)', url: 'https://www.sba.gov/business-guide/launch-your-business/register-your-business', type: 'guide' }
     ],
     mcq: {
       question: 'If you launch without trademarking your store name, biggest risk is?',
@@ -139,8 +142,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [4],
     resources: [
-      { title: 'Trademark Search Tool', url: '/tools/trademark-search', type: 'tool' },
-      { title: 'IP Basics Guide', url: '/resources/ip-basics', type: 'guide' }
+      { title: 'USPTO Trademark Search', url: 'https://www.uspto.gov/trademarks/search', type: 'tool' },
+      { title: 'Trademark Basics Guide (USPTO)', url: 'https://www.uspto.gov/trademarks/basics', type: 'guide' }
     ]
   },
   {
@@ -156,8 +159,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [4],
     resources: [
-      { title: 'Payment Processor Comparison', url: '/resources/payment-processors', type: 'article' },
-      { title: 'Bank Setup Checklist', url: '/resources/bank-setup', type: 'checklist' }
+      { title: 'Payment Processor Comparison (Shopify)', url: 'https://www.shopify.com/payment-providers', type: 'article' },
+      { title: 'Business Bank Account Guide (NerdWallet)', url: 'https://www.nerdwallet.com/article/small-business/business-bank-account', type: 'guide' }
     ]
   },
 
@@ -175,8 +178,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [3],
     resources: [
-      { title: 'Supplier Platform Guide', url: '/resources/supplier-platforms', type: 'guide' },
-      { title: 'Supplier Evaluation Template', url: '/resources/supplier-evaluation', type: 'template' }
+      { title: 'AliExpress Dropshipping Guide (Oberlo)', url: 'https://www.oberlo.com/blog/aliexpress-dropshipping', type: 'guide' },
+      { title: 'How to Find Suppliers (Shopify)', url: 'https://www.shopify.com/blog/how-to-find-suppliers', type: 'guide' }
     ]
   },
   {
@@ -192,8 +195,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [7],
     resources: [
-      { title: 'Sample Evaluation Checklist', url: '/resources/sample-evaluation', type: 'checklist' },
-      { title: 'Quality Standards Guide', url: '/resources/quality-standards', type: 'guide' }
+      { title: 'Product Quality Checklist (Oberlo)', url: 'https://www.oberlo.com/blog/product-quality-checklist', type: 'article' },
+      { title: 'Supplier Quality Control (Shopify)', url: 'https://www.shopify.com/blog/supplier-quality-control', type: 'guide' }
     ],
     mcq: {
       question: 'A supplier offers fast shipping but won\'t offer returns. Choose the best practice.',
@@ -224,8 +227,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [8],
     resources: [
-      { title: 'Pricing Calculator', url: '/tools/pricing-calculator', type: 'tool' },
-      { title: 'Profit Margin Guide', url: '/resources/profit-margins', type: 'guide' }
+      { title: 'Profit Margin Calculator (Calculator.net)', url: 'https://www.calculator.net/profit-margin-calculator.html', type: 'tool' },
+      { title: 'Pricing Strategy Guide (Shopify)', url: 'https://www.shopify.com/blog/pricing-strategy', type: 'guide' }
     ]
   },
 
@@ -243,8 +246,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [6],
     resources: [
-      { title: 'Platform Comparison', url: '/resources/platform-comparison', type: 'article' },
-      { title: 'Platform Setup Guides', url: '/resources/platform-setup', type: 'guides' }
+      { title: 'E-commerce Platform Comparison (Shopify)', url: 'https://www.shopify.com/blog/ecommerce-platform-comparison', type: 'article' },
+      { title: 'Shopify Setup Guide', url: 'https://www.shopify.com/guides', type: 'guides' }
     ]
   },
   {
@@ -261,8 +264,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [10],
     resources: [
-      { title: 'Branding Guide', url: '/resources/branding-guide', type: 'guide' },
-      { title: 'Theme Templates', url: '/resources/themes', type: 'templates' }
+      { title: 'Branding Guide for E-commerce (Shopify)', url: 'https://www.shopify.com/blog/branding-guide', type: 'guide' },
+      { title: 'Shopify Theme Store', url: 'https://themes.shopify.com', type: 'templates' }
     ]
   },
   {
@@ -279,8 +282,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [11],
     resources: [
-      { title: 'Policy Generator', url: '/tools/policy-generator', type: 'tool' },
-      { title: 'Legal Requirements Guide', url: '/resources/legal-requirements', type: 'guide' }
+      { title: 'Free Privacy Policy Generator (Shopify)', url: 'https://www.shopify.com/tools/policy-generator', type: 'tool' },
+      { title: 'E-commerce Legal Requirements (LegalZoom)', url: 'https://www.legalzoom.com/articles/ecommerce-legal-requirements', type: 'guide' }
     ],
     mcq: {
       question: 'What is required by law on all ecommerce stores?',
@@ -314,8 +317,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [12],
     resources: [
-      { title: 'Testing Checklist', url: '/resources/testing-checklist', type: 'checklist' },
-      { title: 'Payment Testing Guide', url: '/resources/payment-testing', type: 'guide' }
+      { title: 'Pre-Launch Checklist (Shopify)', url: 'https://www.shopify.com/blog/pre-launch-checklist', type: 'checklist' },
+      { title: 'Payment Testing Guide (Stripe)', url: 'https://stripe.com/docs/testing', type: 'guide' }
     ]
   },
   {
@@ -331,8 +334,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [13],
     resources: [
-      { title: 'Abandoned Cart Guide', url: '/resources/abandoned-cart', type: 'guide' },
-      { title: 'Email Template Library', url: '/resources/email-templates', type: 'templates' }
+      { title: 'Abandoned Cart Recovery Guide (Shopify)', url: 'https://www.shopify.com/blog/abandoned-cart-recovery', type: 'guide' },
+      { title: 'Email Marketing Templates (Mailchimp)', url: 'https://mailchimp.com/email-templates', type: 'templates' }
     ]
   },
   {
@@ -349,8 +352,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [13],
     resources: [
-      { title: 'Analytics Setup Guide', url: '/resources/analytics-setup', type: 'guide' },
-      { title: 'Event Tracking Guide', url: '/resources/event-tracking', type: 'guide' }
+      { title: 'Google Analytics Setup (Google)', url: 'https://support.google.com/analytics/answer/9304153', type: 'guide' },
+      { title: 'Facebook Pixel Setup (Meta)', url: 'https://www.facebook.com/business/help/952192354843755', type: 'guide' }
     ],
     mcq: {
       question: 'If you forget analytics on launch, what\'s the main issue?',
@@ -384,8 +387,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [15],
     resources: [
-      { title: 'Launch Email Template', url: '/resources/launch-email', type: 'template' },
-      { title: 'Social Media Templates', url: '/resources/social-templates', type: 'templates' }
+      { title: 'Launch Email Templates (Mailchimp)', url: 'https://mailchimp.com/help/create-an-email-campaign/', type: 'template' },
+      { title: 'Social Media Templates (Canva)', url: 'https://www.canva.com/templates/EAE-5qJqJ5k-social-media-post/', type: 'templates' }
     ]
   },
   {
@@ -402,8 +405,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [16],
     resources: [
-      { title: 'Ad Budget Calculator', url: '/tools/ad-budget-calculator', type: 'tool' },
-      { title: 'Influencer Outreach Guide', url: '/resources/influencer-outreach', type: 'guide' }
+      { title: 'Facebook Ad Budget Calculator (Meta)', url: 'https://www.facebook.com/business/help/163081508372038', type: 'guide' },
+      { title: 'Influencer Marketing Guide (Shopify)', url: 'https://www.shopify.com/blog/influencer-marketing', type: 'guide' }
     ],
     mcq: {
       question: 'Why start with a modest ad budget on launch?',
@@ -435,8 +438,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [17],
     resources: [
-      { title: 'Support Templates', url: '/resources/support-templates', type: 'templates' },
-      { title: 'Fulfillment Workflow Guide', url: '/resources/fulfillment-workflow', type: 'guide' }
+      { title: 'Customer Service Templates (Zendesk)', url: 'https://www.zendesk.com/blog/customer-service-email-templates/', type: 'templates' },
+      { title: 'Order Fulfillment Guide (Shopify)', url: 'https://www.shopify.com/blog/order-fulfillment', type: 'guide' }
     ]
   },
 
@@ -455,8 +458,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [18],
     resources: [
-      { title: 'Analytics Review Template', url: '/resources/analytics-review', type: 'template' },
-      { title: 'Optimization Guide', url: '/resources/optimization-guide', type: 'guide' }
+      { title: 'E-commerce Analytics Guide (Google)', url: 'https://support.google.com/analytics/answer/9216061', type: 'guide' },
+      { title: 'Conversion Rate Optimization (Shopify)', url: 'https://www.shopify.com/blog/conversion-rate-optimization', type: 'guide' }
     ]
   },
   {
@@ -473,8 +476,8 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [4],
     resources: [
-      { title: 'Tax Filing Checklist', url: '/resources/tax-filing', type: 'checklist' },
-      { title: 'GST Guide', url: '/resources/gst-guide', type: 'guide' }
+      { title: 'Small Business Tax Guide (IRS)', url: 'https://www.irs.gov/businesses/small-businesses-self-employed', type: 'guide' },
+      { title: 'E-commerce Tax Guide (Shopify)', url: 'https://www.shopify.com/blog/ecommerce-tax-guide', type: 'guide' }
     ],
     mcq: {
       question: 'If you sell in the US from India, what must you track?',
@@ -506,11 +509,103 @@ export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = [
     ],
     dependencies: [19],
     resources: [
-      { title: 'Scaling Guide', url: '/resources/scaling-guide', type: 'guide' },
-      { title: 'Automation Tools Directory', url: '/resources/automation-tools', type: 'directory' }
+      { title: 'Scaling Your Business Guide (Shopify)', url: 'https://www.shopify.com/blog/scaling-your-business', type: 'guide' },
+      { title: 'E-commerce Automation Tools (Oberlo)', url: 'https://www.oberlo.com/blog/ecommerce-automation-tools', type: 'article' }
     ]
   }
 ];
+
+const REFLECTION_PROMPTS: Record<number, string[]> = {
+  1: [
+    'Does my motivation align with the time I can realistically invest each week?',
+    'What does success look like for me 90 days from now?'
+  ],
+  2: [
+    'Which niche best matches both demand data and my personal interest?',
+    'What unique gap did my competitor scan reveal?'
+  ],
+  3: [
+    'Which validation signal felt the strongest (data, customer pain point, or competitor weakness)?',
+    'Where do I still feel uncertain about demand?'
+  ],
+  4: [
+    'Are there any legal or compliance tasks I am still procrastinating?',
+    'Do I have a schedule to review compliance updates after launch?'
+  ],
+  5: [
+    'If my store name was taken tomorrow, what would my backup be?',
+    'How does my trademark timeline align with launch milestones?'
+  ],
+  6: [
+    'Did my payment test simulate a real order from start to refund?',
+    'Have I factored payment gateway fees into my pricing model?'
+  ],
+  7: [
+    'Which supplier inspired the most confidence and why?',
+    'What red flags did I notice while comparing suppliers?'
+  ],
+  8: [
+    'What did the sample reveal about perceived product quality and packaging?',
+    'What return or replacement policy will I offer for defective items?'
+  ],
+  9: [
+    'Is my net margin still healthy after returns, taxes, and CAC?',
+    'Which cost assumption feels the riskiest or least proven?'
+  ],
+  10: [
+    'Why is this ecommerce platform the best fit for my roadmap?',
+    'What integrations or apps will I likely need within the next quarter?'
+  ],
+  11: [
+    'Does the brand voice truly resonate with my target customer persona?',
+    'Which design elements still feel like placeholders that need polishing?'
+  ],
+  12: [
+    'Which policy (refund, shipping, privacy, T&C) feels the weakest right now?',
+    'Have I role-played a customer actually reading each policy?'
+  ],
+  13: [
+    'What failed or felt clunky during my mock checkout?',
+    'How confident am I in processing refunds quickly if needed tomorrow?'
+  ],
+  14: [
+    'What message or incentive felt most compelling in the abandoned cart flow?',
+    'How quickly after abandonment does the follow-up trigger?'
+  ],
+  15: [
+    'If ads go live today, can I confidently track every sale back to its source?',
+    'What metric will I monitor daily during launch week?'
+  ],
+  16: [
+    'Which audience or channel reacted best to the launch announcement?',
+    'What is the top piece of feedback I need to address immediately?'
+  ],
+  17: [
+    'What result will convince me to scale ad spend beyond the test budget?',
+    'Which creatives or influencers excite me the most and why?'
+  ],
+  18: [
+    'How fast can I respond to a frustrated customer with today’s workflow?',
+    'Which part of fulfillment relies on a single person or supplier, and how do I back it up?'
+  ],
+  19: [
+    'Which product performance metric surprised me the most?',
+    'What experiment will I run next week based on this review?'
+  ],
+  20: [
+    'Which filing deadlines or compliance steps make me most nervous?',
+    'Have I documented tax obligations for every market I plan to sell into?'
+  ],
+  21: [
+    'What automation or process would save me the most time right now?',
+    'Which growth lever deserves my focus for the next quarter?'
+  ]
+};
+
+export const DROPSHIPPING_CHECKLIST: ChecklistStep[] = BASE_CHECKLIST.map(step => ({
+  ...step,
+  reflectionPrompts: REFLECTION_PROMPTS[step.stepNumber] || []
+}));
 
 // Helper function to get steps by section
 export function getStepsBySection(): Record<string, ChecklistStep[]> {
@@ -535,4 +630,5 @@ export function areDependenciesMet(stepNumber: number, completedSteps: number[])
   if (!step || step.dependencies.length === 0) return true;
   return step.dependencies.every(dep => completedSteps.includes(dep));
 }
+
 

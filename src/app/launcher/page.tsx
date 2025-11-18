@@ -13,6 +13,7 @@ interface ChecklistStep {
   checklistActions: string[];
   dependencies: number[];
   resources: Array<{ title: string; url: string; type: string }>;
+  reflectionPrompts?: string[];
   progress: {
     status: 'pending' | 'in_progress' | 'completed';
     completedAt: string | null;
@@ -50,6 +51,8 @@ export default function DropshippingLauncherPage() {
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
   const [mcqAnswer, setMcqAnswer] = useState<string>('');
   const [mcqFeedback, setMcqFeedback] = useState<any>(null);
+  const [notesDrafts, setNotesDrafts] = useState<Record<number, string>>({});
+  const [savingReflectionStep, setSavingReflectionStep] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -68,6 +71,11 @@ export default function DropshippingLauncherPage() {
       if (data.success) {
         setSteps(data.steps);
         setSummary(data.summary);
+        const initialDrafts: Record<number, string> = {};
+        data.steps.forEach((step: ChecklistStep) => {
+          initialDrafts[step.stepNumber] = step.progress.notes || '';
+        });
+        setNotesDrafts(initialDrafts);
         // Expand first section by default
         if (data.steps.length > 0) {
           setExpandedSections(new Set([data.steps[0].section]));
@@ -77,6 +85,24 @@ export default function DropshippingLauncherPage() {
       console.error('Error fetching checklist:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNotesChange = (stepNumber: number, value: string) => {
+    setNotesDrafts(prev => ({
+      ...prev,
+      [stepNumber]: value,
+    }));
+  };
+
+  const saveReflectionNotes = async (stepNumber: number) => {
+    const step = steps.find(s => s.stepNumber === stepNumber);
+    if (!step) return;
+    setSavingReflectionStep(stepNumber);
+    try {
+      await updateStepProgress(stepNumber, step.progress.status, notesDrafts[stepNumber] || '');
+    } finally {
+      setSavingReflectionStep(null);
     }
   };
 
@@ -408,6 +434,40 @@ export default function DropshippingLauncherPage() {
                                             <p className="text-sm mt-2 text-gray-600 italic">{mcqFeedback.explanation}</p>
                                           </div>
                                         )}
+                                      </div>
+                                    )}
+
+                                    {/* Reflection Prompts */}
+                                    {step.reflectionPrompts && step.reflectionPrompts.length > 0 && (
+                                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                                        <div className="flex items-center gap-2">
+                                          <FiBook className="text-amber-600" />
+                                          <h4 className="font-semibold text-gray-800">Reflect & Adjust</h4>
+                                        </div>
+                                        <ul className="list-disc list-inside text-gray-700 space-y-1">
+                                          {step.reflectionPrompts.map((prompt, idx) => (
+                                            <li key={idx}>{prompt}</li>
+                                          ))}
+                                        </ul>
+                                        <div>
+                                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Your Reflection Notes
+                                          </label>
+                                          <textarea
+                                            className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                                            rows={3}
+                                            value={notesDrafts[step.stepNumber] ?? ''}
+                                            onChange={(e) => handleNotesChange(step.stepNumber, e.target.value)}
+                                            placeholder="Summarize what you learned or what needs adjustment..."
+                                          />
+                                          <button
+                                            onClick={() => saveReflectionNotes(step.stepNumber)}
+                                            disabled={savingReflectionStep === step.stepNumber}
+                                            className="mt-2 bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 disabled:opacity-50"
+                                          >
+                                            {savingReflectionStep === step.stepNumber ? 'Saving...' : 'Save Reflection'}
+                                          </button>
+                                        </div>
                                       </div>
                                     )}
 

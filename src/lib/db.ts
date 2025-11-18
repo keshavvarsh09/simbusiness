@@ -196,6 +196,7 @@ export async function initDatabase() {
         checklist_actions JSONB,
         dependencies INTEGER[],
         resources JSONB,
+        reflection_prompts JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
