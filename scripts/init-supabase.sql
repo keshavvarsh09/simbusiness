@@ -31,7 +31,49 @@ CREATE TABLE IF NOT EXISTS products (
   feasibility_analysis JSONB,
   gemini_analysis JSONB,
   active_in_dashboard BOOLEAN DEFAULT true,
+  seasonality_factor DECIMAL(5, 2) DEFAULT 1.0, -- Multiplier for seasonal demand (0.5-2.0)
+  trend_factor DECIMAL(5, 2) DEFAULT 1.0, -- Multiplier for trending products (0.8-1.5)
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Product budget allocations (per-product budget tracking)
+CREATE TABLE IF NOT EXISTS product_budget_allocations (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  allocated_budget DECIMAL(12, 2) DEFAULT 0,
+  used_budget DECIMAL(12, 2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, product_id)
+);
+
+-- Budget transactions (wallet transactions)
+CREATE TABLE IF NOT EXISTS budget_transactions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  transaction_type VARCHAR(50) NOT NULL, -- 'deposit', 'allocation', 'spend', 'refund'
+  amount DECIMAL(12, 2) NOT NULL,
+  description TEXT,
+  metadata JSONB, -- Additional context (product IDs, etc.)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Product performance tracking (daily stats per product)
+CREATE TABLE IF NOT EXISTS product_performance (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  orders INTEGER DEFAULT 0,
+  revenue DECIMAL(12, 2) DEFAULT 0,
+  expenses DECIMAL(12, 2) DEFAULT 0,
+  profit DECIMAL(12, 2) DEFAULT 0,
+  marketing_spend DECIMAL(12, 2) DEFAULT 0,
+  seasonality_applied DECIMAL(5, 2) DEFAULT 1.0,
+  trend_applied DECIMAL(5, 2) DEFAULT 1.0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, product_id, date)
 );
 
 -- Business data table
@@ -157,9 +199,21 @@ CREATE TABLE IF NOT EXISTS dropshipping_mcq_answers (
   selected_answer VARCHAR(10),
   is_correct BOOLEAN,
   feedback_shown BOOLEAN DEFAULT false,
+  question_context JSONB, -- Stores full MCQ context: options, correctAnswer, feedback, explanation, isAiGenerated
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, step_number, question_text)
 );
+
+-- Add question_context column if it doesn't exist (for existing databases)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'dropshipping_mcq_answers' AND column_name = 'question_context'
+  ) THEN
+    ALTER TABLE dropshipping_mcq_answers ADD COLUMN question_context JSONB;
+  END IF;
+END $$;
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -174,6 +228,12 @@ CREATE INDEX IF NOT EXISTS idx_simulation_state_user_id ON simulation_state(user
 CREATE INDEX IF NOT EXISTS idx_dropshipping_progress_user_id ON dropshipping_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_dropshipping_progress_step ON dropshipping_progress(step_number);
 CREATE INDEX IF NOT EXISTS idx_dropshipping_mcq_user_id ON dropshipping_mcq_answers(user_id);
+CREATE INDEX IF NOT EXISTS idx_product_budget_user_id ON product_budget_allocations(user_id);
+CREATE INDEX IF NOT EXISTS idx_product_budget_product_id ON product_budget_allocations(product_id);
+CREATE INDEX IF NOT EXISTS idx_budget_transactions_user_id ON budget_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_product_performance_user_id ON product_performance(user_id);
+CREATE INDEX IF NOT EXISTS idx_product_performance_product_id ON product_performance(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_performance_date ON product_performance(date);
 
 -- Enable Row Level Security (RLS) - Optional but recommended for Supabase
 -- ALTER TABLE users ENABLE ROW LEVEL SECURITY;

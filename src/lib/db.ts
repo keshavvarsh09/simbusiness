@@ -56,7 +56,69 @@ export async function initDatabase() {
         feasibility_analysis JSONB,
         gemini_analysis JSONB,
         active_in_dashboard BOOLEAN DEFAULT true,
+        seasonality_factor DECIMAL(5, 2) DEFAULT 1.0,
+        trend_factor DECIMAL(5, 2) DEFAULT 1.0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add seasonality and trend columns if they don't exist
+    try {
+      await client.query(`
+        ALTER TABLE products 
+        ADD COLUMN IF NOT EXISTS seasonality_factor DECIMAL(5, 2) DEFAULT 1.0
+      `);
+      await client.query(`
+        ALTER TABLE products 
+        ADD COLUMN IF NOT EXISTS trend_factor DECIMAL(5, 2) DEFAULT 1.0
+      `);
+    } catch (e: any) {
+      console.warn('Warning: Could not add seasonality/trend columns:', e.message);
+    }
+
+    // Product budget allocations
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS product_budget_allocations (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        allocated_budget DECIMAL(12, 2) DEFAULT 0,
+        used_budget DECIMAL(12, 2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, product_id)
+      )
+    `);
+
+    // Budget transactions
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS budget_transactions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        transaction_type VARCHAR(50) NOT NULL,
+        amount DECIMAL(12, 2) NOT NULL,
+        description TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Product performance tracking
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS product_performance (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        date DATE NOT NULL,
+        orders INTEGER DEFAULT 0,
+        revenue DECIMAL(12, 2) DEFAULT 0,
+        expenses DECIMAL(12, 2) DEFAULT 0,
+        profit DECIMAL(12, 2) DEFAULT 0,
+        marketing_spend DECIMAL(12, 2) DEFAULT 0,
+        seasonality_applied DECIMAL(5, 2) DEFAULT 1.0,
+        trend_applied DECIMAL(5, 2) DEFAULT 1.0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, product_id, date)
       )
     `);
 

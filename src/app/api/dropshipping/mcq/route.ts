@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { stepNumber, questionText, selectedAnswer } = body;
+    const { stepNumber, questionText, selectedAnswer, allOptions, correctAnswer, feedback, explanation, isAiGenerated } = body;
 
     if (!stepNumber || !questionText || !selectedAnswer) {
       return NextResponse.json(
@@ -45,42 +45,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the step to check correct answer
-    const step = DROPSHIPPING_CHECKLIST.find(s => s.stepNumber === stepNumber);
-    if (!step || !step.mcq) {
-      return NextResponse.json(
-        { error: 'Step not found or has no MCQ' },
-        { status: 404 }
-      );
-    }
+    // Determine if answer is correct
+    let isCorrect = false;
+    let finalFeedback = feedback;
+    let finalExplanation = explanation;
 
-    const isCorrect = step.mcq.correctAnswer.toLowerCase() === selectedAnswer.toLowerCase();
-    const feedback = isCorrect ? step.mcq.feedback.correct : step.mcq.feedback.incorrect;
+    // If AI-generated, use provided correctAnswer
+    if (isAiGenerated && correctAnswer) {
+      isCorrect = correctAnswer.toLowerCase() === selectedAnswer.toLowerCase();
+    } else {
+      // Fallback to static MCQ check
+      const step = DROPSHIPPING_CHECKLIST.find(s => s.stepNumber === stepNumber);
+      if (step && step.mcq) {
+        isCorrect = step.mcq.correctAnswer.toLowerCase() === selectedAnswer.toLowerCase();
+        finalFeedback = isCorrect ? step.mcq.feedback.correct : step.mcq.feedback.incorrect;
+        finalExplanation = step.mcq.feedback.explanation;
+      }
+    }
 
     const client = await pool.connect();
     try {
+      // Build full context object for storage
+      const questionContext = isAiGenerated && allOptions ? {
+        isAiGenerated: true,
+        allOptions,
+        correctAnswer,
+        feedback,
+        explanation,
+        generatedAt: new Date().toISOString()
+      } : null;
+
+      // Store full context: question, all options, selected answer, correctness, and metadata
       await client.query(
         `INSERT INTO dropshipping_mcq_answers 
-         (user_id, step_number, question_text, selected_answer, is_correct, feedback_shown)
-         VALUES ($1, $2, $3, $4, $5, true)
+         (user_id, step_number, question_text, selected_answer, is_correct, feedback_shown, question_context)
+         VALUES ($1, $2, $3, $4, $5, true, $6)
          ON CONFLICT (user_id, step_number, question_text) DO UPDATE SET
          selected_answer = EXCLUDED.selected_answer,
          is_correct = EXCLUDED.is_correct,
-         feedback_shown = true`,
+         feedback_shown = true,
+         question_context = EXCLUDED.question_context,
+         created_at = CURRENT_TIMESTAMP`,
         [
           userId,
           stepNumber,
           questionText,
           selectedAnswer,
-          isCorrect
+          isCorrect,
+          questionContext ? JSON.stringify(questionContext) : null
         ]
       );
 
       return NextResponse.json({
         success: true,
         isCorrect,
-        feedback,
-        explanation: step.mcq.feedback.explanation
+        feedback: finalFeedback,
+        explanation: finalExplanation
       });
     } finally {
       client.release();

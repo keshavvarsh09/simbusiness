@@ -31,6 +31,7 @@ import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import AdMetricsChecker from '@/components/AdMetricsChecker';
 import AddProductForm from '@/components/AddProductForm';
+import BudgetAllocation from '@/components/BudgetAllocation';
 
 ChartJS.register(
   CategoryScale,
@@ -236,8 +237,8 @@ export default function Dashboard() {
     };
   }, [autoSimulate, businessStats.inventory, simulationSpeed]);
 
-  // Simulate business operations
-  const simulateDay = () => {
+  // Simulate business operations with per-product budgets and seasonality
+  const simulateDay = async () => {
     if (!hasProducts) {
       alert('Please add products first before running simulation. Go to Products > Recommendations or Analyze Product.');
       return;
@@ -254,65 +255,147 @@ export default function Dashboard() {
       setCurrentEvent(null);
     }
     
-    // Apply marketing effect
-    const marketingEffect = 1 + (businessStats.marketing / 500);
+    // Fetch product budget allocations and seasonality
+    let productAllocations: any[] = [];
+    let productSeasonality: Record<number, { seasonality: number; trend: number }> = {};
     
-    // Calculate sales with realistic e-commerce metrics
-    // Base visitors
-    const dailyVisitors = 100 + (day / 10); // Traffic grows slightly over time
-    
-    // Apply conversion rate (with marketing and event effects)
-    let conversionRate = metrics.conversionRate / 100; // Convert percentage to decimal
-    
-    // Apply event impacts if present
-    if (currentEvent) {
-      conversionRate = conversionRate * (1 + (currentEvent.impact.sales / 100));
+    try {
+      // Get budget allocations
+      const budgetResponse = await fetch('/api/budget/allocate', {
+        headers: getAuthHeaders(),
+      });
+      const budgetData = await budgetResponse.json();
+      if (budgetData.success) {
+        productAllocations = budgetData.allocations || [];
+      }
+
+      // Get seasonality factors
+      const seasonalityResponse = await fetch('/api/products/seasonality', {
+        headers: getAuthHeaders(),
+      });
+      const seasonalityData = await seasonalityResponse.json();
+      if (seasonalityData.success) {
+        seasonalityData.products.forEach((p: any) => {
+          productSeasonality[p.productId] = {
+            seasonality: p.calculatedSeasonality || 1.0,
+            trend: p.currentTrend || 1.0
+          };
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching budget/seasonality:', error);
     }
     
-    // Apply marketing effect
-    conversionRate = conversionRate * marketingEffect;
+    // Calculate total allocated budget for distribution
+    const totalAllocated = productAllocations.reduce((sum, a) => sum + a.allocated, 0);
     
-    // Calculate orders based on visitors and conversion rate
-    const potentialOrders = Math.round(dailyVisitors * conversionRate);
-    const availableInventory = businessStats.inventory;
-    const actualOrders = Math.min(potentialOrders, availableInventory);
+    // Base visitors (grows over time)
+    const dailyVisitors = 100 + (day / 10);
     
-    // Calculate revenue and costs based on actual products
-    let actualOrderValue: number;
-    let costPerOrder: number;
-    
-    if (userProducts.length > 0) {
-      // Use actual product data - randomly select a product for each order
-      const selectedProduct = userProducts[Math.floor(Math.random() * userProducts.length)];
-      actualOrderValue = selectedProduct.sellingPrice;
-      costPerOrder = selectedProduct.cost;
-    } else {
-      // Fallback to metrics if no products loaded
-      const orderValueVariation = 0.2; // 20% variation in order value
-      const baseOrderValue = metrics.averageOrderValue;
-      actualOrderValue = baseOrderValue * (1 - orderValueVariation/2 + Math.random() * orderValueVariation);
-      costPerOrder = actualOrderValue * 0.4; // 40% COGS fallback
-    }
-    
-    const newRevenue = actualOrders * actualOrderValue;
-    
-    // Calculate costs (product cost, shipping, returns handling)
+    // Distribute orders across products based on budget allocation and seasonality
+    let totalRevenue = 0;
+    let totalExpenses = 0;
+    let totalOrders = 0;
     const shippingPerOrder = 5;
-    const returnCost = newRevenue * (metrics.returnRate / 100) * 0.5; // 50% of returned revenue is lost
     
-    // Marketing spend
-    const marketingSpend = businessStats.marketing * 0.05; // Daily marketing spend
-    
-    // Total expenses
-    const newExpenses = (actualOrders * (costPerOrder + shippingPerOrder)) + marketingSpend + returnCost;
+    // If products have budget allocations, distribute orders proportionally
+    if (productAllocations.length > 0 && totalAllocated > 0) {
+      for (const alloc of productAllocations) {
+        const product = userProducts.find(p => p.id === alloc.productId);
+        if (!product || alloc.allocated <= 0) continue;
+
+        // Calculate product's share of total budget
+        const budgetShare = alloc.allocated / totalAllocated;
+        
+        // Get seasonality and trend factors
+        const seasonality = productSeasonality[product.id]?.seasonality || 1.0;
+        const trend = productSeasonality[product.id]?.trend || 1.0;
+        
+        // Calculate visitors for this product (based on budget allocation)
+        const productVisitors = Math.round(dailyVisitors * budgetShare);
+        
+        // Apply seasonality and trend to conversion rate
+        let productConversionRate = (metrics.conversionRate / 100) * seasonality * trend;
+        
+        // Apply marketing effect (based on allocated budget)
+        const marketingEffect = 1 + (alloc.allocated / 1000); // More budget = better marketing
+        productConversionRate = productConversionRate * marketingEffect;
+        
+        // Apply event impacts
+        if (currentEvent) {
+          productConversionRate = productConversionRate * (1 + (currentEvent.impact.sales / 100));
+        }
+        
+        // Calculate orders for this product
+        const productOrders = Math.round(productVisitors * productConversionRate);
+        const productRevenue = productOrders * product.sellingPrice;
+        
+        // Calculate costs
+        const productCost = productOrders * product.cost;
+        const productShipping = productOrders * shippingPerOrder;
+        const productReturns = productRevenue * (metrics.returnRate / 100) * 0.5;
+        
+        // Marketing spend from allocated budget (5% daily)
+        const productMarketingSpend = Math.min(alloc.allocated * 0.05, alloc.available);
+        
+        const productExpenses = productCost + productShipping + productReturns + productMarketingSpend;
+        const productProfit = productRevenue - productExpenses;
+        
+        totalRevenue += productRevenue;
+        totalExpenses += productExpenses;
+        totalOrders += productOrders;
+        
+        // Update product performance in database
+        try {
+          await fetch('/api/products/performance', {
+            method: 'POST',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productId: product.id,
+              orders: productOrders,
+              revenue: productRevenue,
+              expenses: productExpenses,
+              profit: productProfit,
+              marketingSpend: productMarketingSpend,
+              seasonalityApplied: seasonality,
+              trendApplied: trend
+            }),
+          });
+        } catch (error) {
+          console.error('Error saving product performance:', error);
+        }
+      }
+    } else {
+      // Fallback: distribute evenly or use single product
+      const selectedProduct = userProducts[Math.floor(Math.random() * userProducts.length)];
+      const seasonality = productSeasonality[selectedProduct.id]?.seasonality || 1.0;
+      const trend = productSeasonality[selectedProduct.id]?.trend || 1.0;
+      
+      let conversionRate = (metrics.conversionRate / 100) * seasonality * trend;
+      if (currentEvent) {
+        conversionRate = conversionRate * (1 + (currentEvent.impact.sales / 100));
+      }
+      
+      const potentialOrders = Math.round(dailyVisitors * conversionRate);
+      const availableInventory = businessStats.inventory;
+      const actualOrders = Math.min(potentialOrders, availableInventory);
+      
+      totalRevenue = actualOrders * selectedProduct.sellingPrice;
+      const productCost = actualOrders * selectedProduct.cost;
+      const shipping = actualOrders * shippingPerOrder;
+      const returns = totalRevenue * (metrics.returnRate / 100) * 0.5;
+      const marketingSpend = businessStats.marketing * 0.05;
+      
+      totalExpenses = productCost + shipping + returns + marketingSpend;
+      totalOrders = actualOrders;
+    }
     
     // Apply event expense impact
     const expenseMultiplier = currentEvent ? (1 + (currentEvent.impact.expenses / 100)) : 1;
-    const finalExpenses = newExpenses * expenseMultiplier;
+    const finalExpenses = totalExpenses * expenseMultiplier;
+    const finalProfit = totalRevenue - finalExpenses;
     
-    const newProfit = newRevenue - finalExpenses;
-    
-    // Update business metrics (simulating real business conditions)
+    // Update business metrics
     setMetrics(prev => ({
       ...prev,
       conversionRate: Math.max(1, Math.min(5, prev.conversionRate + (Math.random() - 0.5) * 0.2)),
@@ -322,11 +405,10 @@ export default function Dashboard() {
     }));
     
     setBusinessStats(prev => {
-      const newTotalRevenue = prev.revenue + newRevenue;
+      const newTotalRevenue = prev.revenue + totalRevenue;
       const newTotalExpenses = prev.expenses + finalExpenses;
-      const newTotalProfit = newTotalRevenue - newTotalExpenses; // Profit = Revenue - Expenses
+      const newTotalProfit = newTotalRevenue - newTotalExpenses;
       
-      // Update simulation history with the new total profit
       setSimulationHistory(prevHistory => ({
         profit: [...prevHistory.profit, newTotalProfit]
       }));
@@ -334,10 +416,10 @@ export default function Dashboard() {
       return {
         revenue: newTotalRevenue,
         expenses: newTotalExpenses,
-        profit: newTotalProfit, // Recalculate total profit correctly
-        orders: prev.orders + actualOrders,
-        inventory: prev.inventory - actualOrders,
-        marketing: Math.max(0, prev.marketing - marketingSpend) // Decrease marketing budget
+        profit: newTotalProfit,
+        orders: prev.orders + totalOrders,
+        inventory: Math.max(0, prev.inventory - totalOrders),
+        marketing: Math.max(0, prev.marketing - (totalExpenses * 0.1)) // Decrease marketing budget
       };
     });
   };
@@ -571,6 +653,11 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500">(Industry avg: 8-10%)</p>
             </div>
           </div>
+        </div>
+
+        {/* Budget Allocation */}
+        <div className="mb-6 sm:mb-8">
+          <BudgetAllocation />
         </div>
 
         {/* Actions Panel */}

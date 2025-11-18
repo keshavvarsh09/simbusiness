@@ -85,6 +85,13 @@ export async function GET(request: NextRequest) {
         };
       });
 
+      // Get all MCQ answers for this user to check which steps have answers
+      const mcqAnswersResult = await client.query(
+        'SELECT DISTINCT step_number FROM dropshipping_mcq_answers WHERE user_id = $1',
+        [userId]
+      );
+      const stepsWithMcqAnswers = new Set(mcqAnswersResult.rows.map((r: any) => r.step_number));
+
       // Combine steps with progress
       const stepsWithProgress = stepsResult.rows.map((step: any) => {
         const progress = progressMap[step.step_number] || {
@@ -97,6 +104,10 @@ export async function GET(request: NextRequest) {
         // Get step data from static file to ensure latest resources and MCQ
         const staticStep = DROPSHIPPING_CHECKLIST.find(s => s.stepNumber === step.step_number);
 
+        // Check if user has answered an AI-generated MCQ for this step
+        const hasMcqAnswer = stepsWithMcqAnswers.has(step.step_number);
+        const shouldUseAiMcq = !hasMcqAnswer; // Use AI if no answer yet
+
           return {
             stepNumber: step.step_number,
             section: step.section,
@@ -107,8 +118,10 @@ export async function GET(request: NextRequest) {
             resources: staticStep?.resources || step.resources || [],
             reflectionPrompts: staticStep?.reflectionPrompts || step.reflection_prompts || [],
             progress: progress,
-            // Get MCQ from static data
-            mcq: staticStep?.mcq
+            // Use static MCQ as fallback, but indicate AI should be used
+            mcq: staticStep?.mcq,
+            // Flag to indicate AI MCQ should be generated
+            useAiMcq: shouldUseAiMcq && !staticStep?.mcq // Only if no static MCQ exists
           };
       });
 

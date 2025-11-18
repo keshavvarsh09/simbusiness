@@ -30,6 +30,8 @@ interface ChecklistStep {
       explanation: string;
     };
   };
+  useAiMcq?: boolean; // Flag to indicate AI MCQ should be generated
+  isAiGenerated?: boolean; // Flag to indicate this MCQ is AI-generated
 }
 
 interface ChecklistSummary {
@@ -53,6 +55,8 @@ export default function DropshippingLauncherPage() {
   const [mcqFeedback, setMcqFeedback] = useState<any>(null);
   const [notesDrafts, setNotesDrafts] = useState<Record<number, string>>({});
   const [savingReflectionStep, setSavingReflectionStep] = useState<number | null>(null);
+  const [loadingAiMcq, setLoadingAiMcq] = useState<number | null>(null);
+  const [aiMcqs, setAiMcqs] = useState<Record<number, any>>({});
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -122,16 +126,69 @@ export default function DropshippingLauncherPage() {
     }
   };
 
-  const submitMcq = async (stepNumber: number, questionText: string, selectedAnswer: string) => {
+  const generateAiMcq = async (stepNumber: number) => {
+    setLoadingAiMcq(stepNumber);
     try {
+      const response = await fetch('/api/dropshipping/generate-mcq', {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stepNumber }),
+      });
+      const data = await response.json();
+      if (data.success && data.mcq) {
+        // Store the AI-generated MCQ
+        setAiMcqs(prev => ({
+          ...prev,
+          [stepNumber]: { ...data.mcq, isAiGenerated: true }
+        }));
+        // Update the step with the AI MCQ
+        setSteps(prevSteps => prevSteps.map(step => 
+          step.stepNumber === stepNumber 
+            ? { ...step, mcq: data.mcq, isAiGenerated: true }
+            : step
+        ));
+      } else {
+        console.error('Failed to generate AI MCQ:', data.error);
+        alert('Failed to generate question. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error generating AI MCQ:', error);
+      alert('Error generating question. Please try again.');
+    } finally {
+      setLoadingAiMcq(null);
+    }
+  };
+
+  const submitMcq = async (stepNumber: number, questionText: string, selectedAnswer: string, mcqData?: any) => {
+    try {
+      const step = steps.find(s => s.stepNumber === stepNumber);
+      const isAiGenerated = step?.isAiGenerated || mcqData?.isAiGenerated || false;
+      
+      const payload: any = {
+        stepNumber,
+        questionText,
+        selectedAnswer
+      };
+
+      // If AI-generated, include full context
+      if (isAiGenerated && mcqData) {
+        payload.isAiGenerated = true;
+        payload.allOptions = mcqData.options;
+        payload.correctAnswer = mcqData.correctAnswer;
+        payload.feedback = mcqData.feedback;
+        payload.explanation = mcqData.feedback.explanation;
+      }
+
       const response = await fetch('/api/dropshipping/mcq', {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepNumber, questionText, selectedAnswer }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (data.success) {
         setMcqFeedback(data);
+        // Refresh checklist to update useAiMcq flags
+        fetchChecklist();
       }
     } catch (error) {
       console.error('Error submitting MCQ:', error);
@@ -385,11 +442,36 @@ export default function DropshippingLauncherPage() {
                                     )}
 
                                     {/* MCQ */}
+                                    {step.useAiMcq && !step.mcq && (
+                                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                          <FiBook className="text-purple-600" />
+                                          AI-Powered Learning Question:
+                                        </h4>
+                                        <p className="text-gray-600 mb-4 text-sm">
+                                          Get a personalized question based on your budget, interests, and learning progress.
+                                        </p>
+                                        <button
+                                          onClick={() => generateAiMcq(step.stepNumber)}
+                                          disabled={loadingAiMcq === step.stepNumber}
+                                          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        >
+                                          {loadingAiMcq === step.stepNumber ? (
+                                            <>
+                                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                              Generating...
+                                            </>
+                                          ) : (
+                                            'Generate Personalized Question'
+                                          )}
+                                        </button>
+                                      </div>
+                                    )}
                                     {step.mcq && (
                                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                         <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
                                           <FiBook className="text-blue-600" />
-                                          Learning Question:
+                                          {step.isAiGenerated ? 'AI-Powered ' : ''}Learning Question:
                                         </h4>
                                         <p className="text-gray-800 mb-4">{step.mcq.question}</p>
                                         <div className="space-y-2 mb-4">
@@ -419,7 +501,7 @@ export default function DropshippingLauncherPage() {
                                         </div>
                                         {mcqAnswer && selectedStep === step.stepNumber && (
                                           <button
-                                            onClick={() => submitMcq(step.stepNumber, step.mcq!.question, mcqAnswer)}
+                                            onClick={() => submitMcq(step.stepNumber, step.mcq!.question, mcqAnswer, step.mcq)}
                                             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
                                           >
                                             Submit Answer
