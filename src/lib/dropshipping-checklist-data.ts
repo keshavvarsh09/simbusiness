@@ -150,7 +150,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     stepNumber: 6,
     section: 'Legal, Admin & Brand Foundation',
     title: 'Open Bank Account & Payments',
-    description: 'Set up bank account and payment processor (Stripe, Razorpay, etc.).',
+    description: 'Set up bank account and payment processor (Stripe, Razorpay, PayPal, etc.).',
     checklistActions: [
       'Complete bank account setup',
       'Configure payment processor',
@@ -158,10 +158,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Verify payment flow'
     ],
     dependencies: [4],
-    resources: [
-      { title: 'Payment Processor Comparison (Shopify)', url: 'https://www.shopify.com/payment-providers', type: 'article' },
-      { title: 'Business Bank Account Guide (NerdWallet)', url: 'https://www.nerdwallet.com/article/small-business/business-bank-account', type: 'guide' }
-    ]
+    resources: [],
+    mcq: {
+      question: 'You\'re setting up payments for your dropshipping store. You need to accept international payments, want low fees, and need quick setup. Your store is on Shopify. Which payment processor should you prioritize?',
+      options: [
+        'Shopify Payments - Integrated with Shopify, 2.9% + 30¢ per transaction, accepts all major cards, no setup fees, instant activation',
+        'Stripe - 2.9% + 30¢, requires separate account setup, more technical integration, better for custom solutions',
+        'PayPal - 2.9% + fixed fee, widely trusted, but higher fees for international, separate account needed',
+        'Just use cash on delivery - no fees at all'
+      ],
+      correctAnswer: 'a',
+      feedback: {
+        correct: 'Perfect! Shopify Payments is the best choice for Shopify stores. Benefits: Zero setup fees, Instant activation (no waiting for approval), Lower transaction fees (2.9% + 30¢), Accepts all major credit cards and digital wallets, Automatic fraud protection, Unified dashboard with your store, and No additional account management needed. For international stores, it supports 135+ currencies.',
+        incorrect: 'While these are valid options, Shopify Payments is optimal for Shopify stores:\n\n**Stripe** (2.9% + 30¢): Great for custom websites, but requires developer setup and separate account management. More complex than needed for Shopify.\n\n**PayPal** (2.9% + fixed fee): Trusted by customers, but international fees are higher (4.4% + fixed fee), and you need a separate PayPal Business account.\n\n**Shopify Payments** eliminates the need for third-party processors, integrates seamlessly, and offers competitive rates with instant setup.',
+        explanation: '**Payment Processor Comparison:**\n\n**Shopify Payments** (for Shopify stores):\n- ✅ 2.9% + 30¢ per transaction (US)\n- ✅ Zero setup fees\n- ✅ Instant activation\n- ✅ Accepts credit cards, Apple Pay, Google Pay\n- ✅ 135+ currencies supported\n- ✅ Built-in fraud protection\n- ✅ Unified dashboard\n- ❌ Only works with Shopify\n- ❌ Slightly higher fees than Stripe for non-Shopify stores\n\n**Stripe** (2.9% + 30¢):\n- ✅ Works with any platform\n- ✅ Developer-friendly API\n- ✅ Strong fraud protection\n- ✅ 135+ currencies\n- ❌ Requires technical integration\n- ❌ Separate account management\n- ❌ Approval process can take days\n\n**PayPal** (2.9% + fixed fee):\n- ✅ High customer trust\n- ✅ Easy for customers\n- ✅ Works globally\n- ❌ Higher international fees (4.4%)\n- ❌ Separate account needed\n- ❌ Can hold funds for new accounts\n\n**For Shopify stores, Shopify Payments is the clear winner** - it\'s designed specifically for your platform and offers the best balance of fees, features, and ease of use.'
+      }
+    }
   },
 
   // Section C: Product Sourcing & Supplier Selection
@@ -169,7 +181,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     stepNumber: 7,
     section: 'Product Sourcing & Supplier Selection',
     title: 'Supplier Platform Research',
-    description: 'Main sources: AliExpress, IndiaMART, Oberlo, local B2B platforms.',
+    description: 'Main sources: AliExpress, IndiaMART, Oberlo, local B2B platforms. Each has different advantages for dropshipping.',
     checklistActions: [
       'Research supplier platforms',
       'Save top 3 suppliers per product',
@@ -177,10 +189,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Compare supplier terms'
     ],
     dependencies: [3],
-    resources: [
-      { title: 'AliExpress Dropshipping Guide (Oberlo)', url: 'https://www.oberlo.com/blog/aliexpress-dropshipping', type: 'guide' },
-      { title: 'How to Find Suppliers (Shopify)', url: 'https://www.shopify.com/blog/how-to-find-suppliers', type: 'guide' }
-    ]
+    resources: [],
+    mcq: {
+      question: 'You\'re starting dropshipping and need to find suppliers. You want low minimum order quantities, fast shipping options, and easy integration with your Shopify store. Which supplier platform should you start with?',
+      options: [
+        'AliExpress - Millions of products, MOQ of 1, integrates with Oberlo/DSers, 10-30 day shipping, best for beginners',
+        'IndiaMART - Great for Indian suppliers, B2B focused, requires negotiation, better for bulk orders, longer setup',
+        'Alibaba - Wholesale prices, MOQ usually 100+, best for scaling, requires direct supplier contact',
+        'Local suppliers only - avoid international shipping delays'
+      ],
+      correctAnswer: 'a',
+      feedback: {
+        correct: 'Smart choice! AliExpress is perfect for dropshipping beginners. Why it works: MOQ of 1 (order as you sell), Direct integration with Shopify via Oberlo/DSers apps, Millions of products across all categories, ePacket shipping (10-20 days) available, Supplier ratings and reviews help you choose, No upfront inventory costs, and Easy to test multiple products. Most successful dropshippers start here before scaling to Alibaba for bulk orders.',
+        incorrect: 'While these platforms have their place, AliExpress is ideal for starting:\n\n**IndiaMART**: Great for Indian market, but requires B2B negotiation, higher MOQs, and more complex setup. Better for established businesses.\n\n**Alibaba**: Wholesale prices are great, but MOQ of 100+ means you need capital upfront. Best for scaling after validating products on AliExpress.\n\n**Local suppliers**: Can work, but limits product selection and may have higher costs. International suppliers offer better margins for dropshipping.\n\n**AliExpress** lets you test products risk-free with MOQ of 1 and integrates seamlessly with Shopify.',
+        explanation: '**Supplier Platform Comparison:**\n\n**AliExpress** (Best for beginners):\n- ✅ MOQ: 1 unit (order as you sell)\n- ✅ Millions of products\n- ✅ Integrates with Oberlo, DSers, Spocket\n- ✅ ePacket shipping: 10-20 days\n- ✅ Supplier ratings and reviews\n- ✅ No upfront inventory\n- ✅ Easy product testing\n- ❌ Longer shipping than local\n- ❌ Quality varies by supplier\n\n**IndiaMART** (B2B marketplace):\n- ✅ Great for Indian suppliers\n- ✅ Lower prices for bulk\n- ✅ Local shipping options\n- ❌ Requires negotiation\n- ❌ Higher MOQs (usually 50+)\n- ❌ More complex setup\n- ❌ Less Shopify integration\n\n**Alibaba** (Wholesale):\n- ✅ Lowest prices (wholesale)\n- ✅ Direct supplier contact\n- ✅ Custom manufacturing options\n- ❌ MOQ: 100+ units typically\n- ❌ Requires upfront capital\n- ❌ More complex ordering\n- ❌ Better for scaling, not starting\n\n**Strategy**: Start with AliExpress to test products risk-free. Once you find winners, scale with Alibaba for better margins. Use IndiaMART if targeting the Indian market specifically.'
+      }
+    }
   },
   {
     stepNumber: 8,
@@ -237,7 +261,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     stepNumber: 10,
     section: 'Store Setup & Branding',
     title: 'Choose Platform',
-    description: 'Shopify, WooCommerce, Dukaan, etc. Compare pros and cons.',
+    description: 'Shopify, Webflow, WordPress (WooCommerce) - Each has unique strengths. Choose based on your technical skills, budget, and business needs.',
     checklistActions: [
       'Compare platform options',
       'Select platform',
@@ -245,10 +269,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Open setup wizard'
     ],
     dependencies: [6],
-    resources: [
-      { title: 'E-commerce Platform Comparison (Shopify)', url: 'https://www.shopify.com/blog/ecommerce-platform-comparison', type: 'article' },
-      { title: 'Shopify Setup Guide', url: 'https://www.shopify.com/guides', type: 'guides' }
-    ]
+    resources: [],
+    mcq: {
+      question: 'You\'re launching a dropshipping store with limited technical skills, need quick setup, and want built-in payment processing. You expect to scale to 100+ products within 6 months. Which platform should you choose?',
+      options: [
+        'Shopify - Best for beginners, all-in-one solution with 2000+ apps, $29/month, handles everything from payments to inventory',
+        'Webflow - Most design flexibility, requires coding knowledge, $23/month, better for custom brand experiences',
+        'WordPress + WooCommerce - Free and open-source, full control, but requires hosting, security, and plugin management',
+        'Any platform works the same - just pick the cheapest option'
+      ],
+      correctAnswer: 'a',
+      feedback: {
+        correct: 'Excellent choice! Shopify is ideal for dropshipping beginners. It offers: Built-in payment processing (Shopify Payments), Easy product import from AliExpress via Oberlo, 2000+ apps for marketing/automation, Mobile app for managing orders, 24/7 support, and scales from startup to enterprise. Starting at $29/month, it handles hosting, security, and updates automatically.',
+        incorrect: 'Not the best fit for this scenario. Here\'s why:\n\n**Webflow** ($23/month): Great for designers and developers who want pixel-perfect control, but requires HTML/CSS knowledge and doesn\'t have built-in dropshipping apps like Shopify.\n\n**WordPress + WooCommerce** (Free but needs hosting): While free, you\'ll need to manage hosting ($10-30/month), security plugins, updates, and technical maintenance. More complex for beginners.\n\n**Shopify** is the right choice because it\'s designed specifically for e-commerce, has the largest app ecosystem for dropshipping, and handles all technical aspects automatically.',
+        explanation: '**Platform Comparison for Dropshipping:**\n\n**Shopify** ($29-299/month):\n- ✅ Best for beginners - no coding needed\n- ✅ Built-in payment processing (2.9% + 30¢ per transaction)\n- ✅ 2000+ apps including Oberlo, DSers for dropshipping\n- ✅ Automatic updates, hosting, SSL included\n- ✅ Mobile app for order management\n- ✅ 24/7 support\n- ❌ Less design flexibility than Webflow\n- ❌ Transaction fees if not using Shopify Payments\n\n**Webflow** ($23-39/month):\n- ✅ Most design flexibility - pixel-perfect control\n- ✅ Great for custom brand experiences\n- ✅ No transaction fees\n- ❌ Requires HTML/CSS/JavaScript knowledge\n- ❌ Limited dropshipping integrations\n- ❌ More complex setup for e-commerce\n\n**WordPress + WooCommerce** (Free + hosting $10-30/month):\n- ✅ Completely free and open-source\n- ✅ Full control over everything\n- ✅ Massive plugin ecosystem\n- ❌ Requires technical knowledge for setup/maintenance\n- ❌ You manage hosting, security, backups\n- ❌ More time-consuming for beginners\n\n**For dropshipping beginners, Shopify is the clear winner** because it removes technical barriers and provides everything you need out of the box.'
+      }
+    }
   },
   {
     stepNumber: 11,

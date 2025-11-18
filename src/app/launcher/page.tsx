@@ -426,12 +426,47 @@ export default function DropshippingLauncherPage() {
                                           </button>
                                         )}
                                         {mcqFeedback && selectedStep === step.stepNumber && (
-                                          <div className={`mt-4 p-3 rounded ${mcqFeedback.isCorrect ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'}`}>
-                                            <p className={`font-semibold ${mcqFeedback.isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                                          <div className={`mt-4 p-4 rounded-lg ${mcqFeedback.isCorrect ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'}`}>
+                                            <p className={`font-bold text-lg mb-3 ${mcqFeedback.isCorrect ? 'text-green-800' : 'text-red-800'}`}>
                                               {mcqFeedback.isCorrect ? '✓ Correct!' : '✗ Incorrect'}
                                             </p>
-                                            <p className="text-sm mt-2 text-gray-700">{mcqFeedback.feedback}</p>
-                                            <p className="text-sm mt-2 text-gray-600 italic">{mcqFeedback.explanation}</p>
+                                            <div className="text-sm mt-3 text-gray-800 whitespace-pre-line space-y-2">
+                                              {mcqFeedback.feedback?.split('\n').map((line: string, idx: number) => {
+                                                // Handle bold markdown **text**
+                                                const parts = line.split(/(\*\*.*?\*\*)/g);
+                                                return (
+                                                  <p key={idx} className="mb-2">
+                                                    {parts.map((part, pIdx) => {
+                                                      if (part.startsWith('**') && part.endsWith('**')) {
+                                                        return <strong key={pIdx} className="font-semibold">{part.slice(2, -2)}</strong>;
+                                                      }
+                                                      return <span key={pIdx}>{part}</span>;
+                                                    })}
+                                                  </p>
+                                                );
+                                              })}
+                                            </div>
+                                            {mcqFeedback.explanation && (
+                                              <div className="mt-4 pt-4 border-t border-gray-300">
+                                                <p className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Detailed Explanation:</p>
+                                                <div className="text-sm text-gray-700 whitespace-pre-line space-y-2">
+                                                  {mcqFeedback.explanation.split('\n').map((line: string, idx: number) => {
+                                                    // Handle bold markdown **text**
+                                                    const parts = line.split(/(\*\*.*?\*\*)/g);
+                                                    return (
+                                                      <p key={idx} className="mb-1">
+                                                        {parts.map((part, pIdx) => {
+                                                          if (part.startsWith('**') && part.endsWith('**')) {
+                                                            return <strong key={pIdx} className="font-semibold text-gray-800">{part.slice(2, -2)}</strong>;
+                                                          }
+                                                          return <span key={pIdx}>{part}</span>;
+                                                        })}
+                                                      </p>
+                                                    );
+                                                  })}
+                                                </div>
+                                              </div>
+                                            )}
                                           </div>
                                         )}
                                       </div>
