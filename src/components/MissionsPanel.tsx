@@ -121,10 +121,34 @@ export default function MissionsPanel() {
           alert(data.message || 'No new missions generated. You may already have similar active missions.');
         }
       } else {
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
-          : (data.error || 'Failed to generate missions');
+        let errorMsg = data.error || 'Failed to generate missions';
+        if (data.details) {
+          errorMsg += `: ${data.details}`;
+        }
+        if (data.hint) {
+          errorMsg += `\n\nHint: ${data.hint}`;
+        }
         alert(errorMsg);
+        
+        // If database not initialized, offer to initialize
+        if (data.error === 'Database not initialized' || data.details?.includes('does not exist')) {
+          if (confirm('Database needs to be initialized. Would you like to initialize it now?')) {
+            try {
+              const initResponse = await fetch('/api/init-db', {
+                method: 'GET',
+                headers: getAuthHeaders(),
+              });
+              const initData = await initResponse.json();
+              if (initData.success) {
+                alert('Database initialized! Please try auto-generating missions again.');
+              } else {
+                alert(`Database initialization failed: ${initData.error || initData.details}`);
+              }
+            } catch (initError: any) {
+              alert(`Failed to initialize database: ${initError.message}`);
+            }
+          }
+        }
       }
     } catch (error: any) {
       console.error('Auto-generate error:', error);

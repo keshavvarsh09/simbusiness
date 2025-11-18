@@ -67,6 +67,32 @@ export async function POST(request: NextRequest) {
     
     const client = await pool.connect();
     try {
+      // Auto-initialize database if missions table doesn't exist
+      try {
+        await client.query('SELECT 1 FROM missions LIMIT 1');
+      } catch (tableError: any) {
+        if (tableError.message?.includes('does not exist') || tableError.message?.includes('relation')) {
+          console.log('Missions table not found, initializing database...');
+          const { initDatabase } = await import('@/lib/db');
+          try {
+            await initDatabase();
+            console.log('Database initialized successfully');
+          } catch (initError: any) {
+            console.error('Database initialization failed:', initError.message);
+            return NextResponse.json(
+              { 
+                error: 'Database not initialized', 
+                details: 'The missions table does not exist. Please run /api/init-db first or contact support.',
+                hint: 'Visit /api/init-db to initialize the database'
+              },
+              { status: 500 }
+            );
+          }
+        } else {
+          // Some other database error, re-throw it
+          throw tableError;
+        }
+      }
       const createdMissions = [];
       
       for (const template of missionsToCreate) {
