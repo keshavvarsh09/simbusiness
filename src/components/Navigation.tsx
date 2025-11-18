@@ -37,6 +37,7 @@ export default function Navigation() {
   // Group navigation items logically
   const mainNav = [
     { href: '/', label: 'Home', icon: FiHome },
+    { href: '/launcher', label: 'Launcher', icon: FiTrendingUp },
     { href: '/dashboard', label: 'Dashboard', icon: FiLayout },
     { href: '/products', label: 'Products', icon: FiShoppingBag },
   ];

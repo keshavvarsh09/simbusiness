@@ -185,6 +185,52 @@ export async function initDatabase() {
       )
     `);
 
+    // Dropshipping checklist steps (static reference data)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS dropshipping_checklist_steps (
+        id SERIAL PRIMARY KEY,
+        step_number INTEGER NOT NULL UNIQUE,
+        section VARCHAR(100) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        checklist_actions JSONB,
+        dependencies INTEGER[],
+        resources JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Dropshipping progress (user-specific progress tracking)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS dropshipping_progress (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        step_number INTEGER NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        completed_at TIMESTAMP,
+        notes TEXT,
+        checklist_data JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, step_number)
+      )
+    `);
+
+    // Dropshipping MCQ answers
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS dropshipping_mcq_answers (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        step_number INTEGER NOT NULL,
+        question_text TEXT NOT NULL,
+        selected_answer VARCHAR(10),
+        is_correct BOOLEAN,
+        feedback_shown BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, step_number, question_text)
+      )
+    `);
+
     // Create indexes for better performance
     await client.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_products_user_id ON products(user_id)`);
@@ -193,6 +239,9 @@ export async function initDatabase() {
     await client.query(`CREATE INDEX IF NOT EXISTS idx_analytics_user_id ON analytics(user_id)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_chatbot_user_id ON chatbot_conversations(user_id)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_business_data_user_id ON business_data(user_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_dropshipping_progress_user_id ON dropshipping_progress(user_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_dropshipping_progress_step ON dropshipping_progress(step_number)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_dropshipping_mcq_user_id ON dropshipping_mcq_answers(user_id)`);
 
     console.log('Database initialized successfully');
   } catch (error: any) {
