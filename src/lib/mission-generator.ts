@@ -5,6 +5,34 @@
 
 import { fetchRelevantNews, getUpcomingFestivals, NewsEvent } from './news-api';
 
+/**
+ * Validate and ensure URL is properly formatted
+ */
+export function validateAndFixUrl(url: string | undefined | null): string | undefined {
+  if (!url || url.trim() === '') return undefined;
+  
+  const trimmedUrl = url.trim();
+  
+  // If URL is already valid, return it
+  if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+    try {
+      new URL(trimmedUrl);
+      return trimmedUrl;
+    } catch {
+      // Invalid URL format, return default
+      return 'https://www.reuters.com/business/';
+    }
+  }
+  
+  // If URL doesn't start with http, try to fix it
+  if (trimmedUrl.includes('.') && !trimmedUrl.includes(' ')) {
+    return `https://${trimmedUrl}`;
+  }
+  
+  // If it's not a valid URL at all, return default news URL (main domain, guaranteed to work)
+  return 'https://www.reuters.com';
+}
+
 export interface MissionTemplate {
   title: string;
   description: string;
@@ -87,11 +115,15 @@ export async function generateMissionsFromEvents(
 /**
  * Create mission from news event
  */
+
 function createMissionFromNews(event: NewsEvent): MissionTemplate {
   const baseImpact = {
     sales: -10,
     customerSatisfaction: -15
   };
+
+  // Validate and fix the news URL
+  const validUrl = validateAndFixUrl(event.url);
 
   switch (event.impactType) {
     case 'supply_chain':
@@ -104,7 +136,7 @@ function createMissionFromNews(event: NewsEvent): MissionTemplate {
         impact: { ...baseImpact, inventory: -20 },
         eventSource: 'news',
         affectedLocation: event.location,
-        newsUrl: event.url
+        newsUrl: validUrl
       };
     
     case 'shipping':
@@ -117,7 +149,7 @@ function createMissionFromNews(event: NewsEvent): MissionTemplate {
         impact: { ...baseImpact, customerSatisfaction: -25 },
         eventSource: 'news',
         affectedLocation: event.location,
-        newsUrl: event.url
+        newsUrl: validUrl
       };
     
     case 'labour':
@@ -130,7 +162,7 @@ function createMissionFromNews(event: NewsEvent): MissionTemplate {
         impact: { ...baseImpact, inventory: -30, expenses: 15 },
         eventSource: 'labour',
         affectedLocation: event.location,
-        newsUrl: event.url
+        newsUrl: validUrl
       };
     
     case 'curfew':
@@ -143,7 +175,7 @@ function createMissionFromNews(event: NewsEvent): MissionTemplate {
         impact: { ...baseImpact, sales: -25, inventory: -40 },
         eventSource: 'curfew',
         affectedLocation: event.location,
-        newsUrl: event.url
+        newsUrl: validUrl
       };
     
     case 'disaster':
@@ -156,7 +188,7 @@ function createMissionFromNews(event: NewsEvent): MissionTemplate {
         impact: { ...baseImpact, sales: -30, inventory: -50, customerSatisfaction: -30 },
         eventSource: 'news',
         affectedLocation: event.location,
-        newsUrl: event.url
+        newsUrl: validUrl
       };
     
     default:
@@ -169,7 +201,7 @@ function createMissionFromNews(event: NewsEvent): MissionTemplate {
         impact: baseImpact,
         eventSource: 'news',
         affectedLocation: event.location,
-        newsUrl: event.url
+        newsUrl: validUrl
       };
   }
 }
@@ -245,57 +277,190 @@ function generateSystemMissions(locations: string[]): MissionTemplate[] {
 
 /**
  * Get standard mission templates (fallback)
+ * Pre-generated time-bound missions with valid working links
  */
 export function getStandardMissionTemplates(): MissionTemplate[] {
   return [
     {
-      title: 'Delayed Supplier Shipment',
-      description: 'Your manufacturer has delayed shipment by 2 weeks. You have 10 pending orders that need to be fulfilled. Customers are getting impatient.',
+      title: 'Delayed Supplier Shipment from China',
+      description: 'Your manufacturer in Guangzhou has delayed shipment by 2 weeks due to port congestion. You have 10 pending orders that need to be fulfilled. Customers are getting impatient and threatening chargebacks.',
       type: 'supply_chain',
       durationHours: 24,
       costToSolve: 500,
-      impact: { sales: -15, customerSatisfaction: -20 }
+      impact: { sales: -15, customerSatisfaction: -20 },
+      eventSource: 'system',
+      affectedLocation: 'China',
+      newsUrl: 'https://www.reuters.com/business/'
     },
     {
-      title: 'Stock Management Crisis',
-      description: 'You\'ve run out of your best-selling product. Orders are piling up but you have no inventory. Quick decisions needed!',
+      title: 'Stock Management Crisis - Best Seller Out of Stock',
+      description: 'You\'ve run out of your best-selling product. Orders are piling up but you have no inventory. Quick decisions needed! Consider emergency restocking or refunding customers.',
       type: 'inventory',
       durationHours: 12,
       costToSolve: 300,
-      impact: { sales: -25, reputation: -15 }
+      impact: { sales: -25, reputation: -15 },
+      eventSource: 'system',
+      newsUrl: 'https://www.shopify.com/blog'
     },
     {
-      title: 'Logistics Partner Delay',
-      description: 'Your delivery partner has delayed all shipments by 3 days. 15 customers are waiting. You need to keep them happy.',
+      title: 'Logistics Partner Delay - 3 Day Shipping Delay',
+      description: 'Your delivery partner has delayed all shipments by 3 days due to weather conditions. 15 customers are waiting. You need to keep them happy with proactive communication.',
       type: 'logistics',
       durationHours: 18,
       costToSolve: 400,
-      impact: { customerSatisfaction: -25, refunds: 10 }
+      impact: { customerSatisfaction: -25, refunds: 10 },
+      eventSource: 'system',
+      newsUrl: 'https://www.fedex.com'
     },
     {
-      title: 'Payment Gateway Issue',
-      description: 'Your payment processor is down. Customers can\'t complete purchases. Revenue is being lost every minute.',
+      title: 'Payment Gateway Issue - Stripe Outage',
+      description: 'Your payment processor (Stripe) is experiencing an outage. Customers can\'t complete purchases. Revenue is being lost every minute. Set up backup payment method immediately.',
       type: 'technical',
       durationHours: 6,
       costToSolve: 200,
-      impact: { sales: -30 }
+      impact: { sales: -30 },
+      eventSource: 'system',
+      newsUrl: 'https://status.stripe.com/'
     },
     {
-      title: 'Negative Review Crisis',
-      description: 'A viral negative review is affecting your brand. You need to respond quickly to prevent further damage.',
+      title: 'Negative Review Crisis - Viral Bad Review',
+      description: 'A viral negative review on Trustpilot is affecting your brand reputation. The review has 500+ likes and is ranking high in search results. You need to respond quickly to prevent further damage.',
       type: 'reputation',
       durationHours: 8,
       costToSolve: 150,
-      impact: { sales: -20, reputation: -30 }
+      impact: { sales: -20, reputation: -30 },
+      eventSource: 'system',
+      newsUrl: 'https://www.trustpilot.com'
     },
     {
-      title: 'Competitor Price War',
-      description: 'A major competitor just dropped prices by 30%. Your sales have dropped. You need to respond strategically.',
+      title: 'Competitor Price War - 30% Price Drop',
+      description: 'A major competitor just dropped prices by 30% on your top 3 products. Your sales have dropped 40% in the last 24 hours. You need to respond strategically without starting a price war.',
       type: 'competition',
       durationHours: 48,
       costToSolve: 800,
-      impact: { sales: -35, profitMargin: -15 }
+      impact: { sales: -35, profitMargin: -15 },
+      eventSource: 'system',
+      newsUrl: 'https://www.shopify.com/blog/pricing-strategy'
+    },
+    {
+      title: 'Supplier Quality Issue - Defective Batch Received',
+      description: 'You received a batch of 50 defective products from your supplier. Customers are complaining about quality. You need to handle returns and find an alternative supplier quickly.',
+      type: 'quality',
+      durationHours: 36,
+      costToSolve: 600,
+      impact: { reputation: -25, refunds: 20, customerSatisfaction: -30 },
+      eventSource: 'system',
+      newsUrl: 'https://www.aliexpress.com'
+    },
+    {
+      title: 'Customs Clearance Delay - Shipment Held',
+      description: 'Your shipment from India is held at customs due to incomplete documentation. 20 orders are stuck. You need to provide proper documentation within 48 hours or face penalties.',
+      type: 'customs',
+      durationHours: 48,
+      costToSolve: 700,
+      impact: { sales: -20, customerSatisfaction: -25, expenses: 15 },
+      eventSource: 'system',
+      affectedLocation: 'India',
+      newsUrl: 'https://www.cbp.gov'
+    },
+    {
+      title: 'Social Media Crisis - Brand Mention Gone Viral',
+      description: 'A negative TikTok video about your product has gone viral with 100K+ views. Your brand reputation is at risk. You need to respond professionally and address concerns immediately.',
+      type: 'reputation',
+      durationHours: 12,
+      costToSolve: 250,
+      impact: { sales: -30, reputation: -35 },
+      eventSource: 'system',
+      newsUrl: 'https://www.tiktok.com/'
+    },
+    {
+      title: 'Warehouse Fire - Inventory Loss',
+      description: 'A fire at your supplier\'s warehouse has destroyed your inventory. You need to find alternative suppliers immediately and inform customers about delays.',
+      type: 'disaster',
+      durationHours: 72,
+      costToSolve: 1200,
+      impact: { sales: -40, inventory: -60, customerSatisfaction: -30 },
+      eventSource: 'system',
+      newsUrl: 'https://www.reuters.com/business/'
+    },
+    {
+      title: 'Currency Exchange Rate Crash',
+      description: 'The local currency has dropped 15% against USD. Your supplier costs have increased significantly. You need to adjust pricing or find local suppliers to maintain margins.',
+      type: 'financial',
+      durationHours: 24,
+      costToSolve: 500,
+      impact: { expenses: 20, profitMargin: -18 },
+      eventSource: 'system',
+      newsUrl: 'https://www.xe.com/currencyconverter/'
+    },
+    {
+      title: 'Platform Account Suspension Risk',
+      description: 'Your Shopify account is at risk of suspension due to policy violations. You need to fix issues immediately or risk losing your entire business.',
+      type: 'compliance',
+      durationHours: 6,
+      costToSolve: 300,
+      impact: { sales: -100, reputation: -50 },
+      eventSource: 'system',
+      newsUrl: 'https://www.shopify.com/legal/terms'
+    },
+    {
+      title: 'Email Marketing Blacklist',
+      description: 'Your email domain has been blacklisted by major email providers. Your marketing campaigns are not reaching customers. You need to resolve this quickly.',
+      type: 'marketing',
+      durationHours: 12,
+      costToSolve: 200,
+      impact: { sales: -15, marketingEffectiveness: -40 },
+      eventSource: 'system',
+      newsUrl: 'https://mxtoolbox.com'
+    },
+    {
+      title: 'Customer Data Breach Alert',
+      description: 'You\'ve discovered a potential data breach. Customer information may be compromised. You need to notify customers and implement security measures immediately.',
+      type: 'security',
+      durationHours: 4,
+      costToSolve: 1000,
+      impact: { reputation: -40, legalRisk: 50 },
+      eventSource: 'system',
+      newsUrl: 'https://www.ftc.gov'
+    },
+    {
+      title: 'Shipping Cost Surge - Carrier Rate Increase',
+      description: 'Your shipping carrier has increased rates by 25% effective immediately. Your profit margins are shrinking. You need to renegotiate or find alternative carriers.',
+      type: 'logistics',
+      durationHours: 24,
+      costToSolve: 400,
+      impact: { expenses: 18, profitMargin: -12 },
+      eventSource: 'system',
+      newsUrl: 'https://www.fedex.com'
     }
   ];
+}
+
+/**
+ * Get pre-generated time-bound missions for all users
+ * These are always available and don't depend on external APIs
+ */
+export function getPreGeneratedTimeBoundMissions(): MissionTemplate[] {
+  const now = new Date();
+  const missions: MissionTemplate[] = [];
+  
+  // Generate 10+ time-bound missions with varying deadlines
+  const baseMissions = getStandardMissionTemplates();
+  
+  // Create variations with different deadlines (1 hour to 7 days)
+  const deadlineVariations = [1, 3, 6, 12, 24, 48, 72, 96, 120, 168]; // hours
+  
+  baseMissions.forEach((mission, index) => {
+    if (index < 10) { // Get first 10 missions
+      missions.push({
+        ...mission,
+        durationHours: deadlineVariations[index] || 24,
+        // Ensure newsUrl is always a valid URL (use main domain to avoid 404s)
+        newsUrl: mission.newsUrl || 'https://www.reuters.com'
+      });
+    }
+  });
+  
+  return missions;
 }
 

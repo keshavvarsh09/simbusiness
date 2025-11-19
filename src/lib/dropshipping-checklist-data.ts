@@ -41,8 +41,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [],
     resources: [
-      { title: 'SMART Goals Template (HubSpot)', url: 'https://blog.hubspot.com/marketing/smart-goals-template', type: 'article' },
-      { title: 'Time Management for Entrepreneurs (Forbes)', url: 'https://www.forbes.com/sites/forbesbusinesscouncil/2021/03/15/time-management-tips-for-entrepreneurs/', type: 'article' }
+      { title: 'SMART Goals Template (HubSpot)', url: 'https://blog.hubspot.com', type: 'article' },
+      { title: 'Time Management for Entrepreneurs (Forbes)', url: 'https://www.forbes.com', type: 'article' }
     ]
   },
   {
@@ -59,7 +59,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [1],
     resources: [
       { title: 'Google Trends - Niche Research', url: 'https://trends.google.com', type: 'tool' },
-      { title: 'Top Dropshipping Niches 2024 (Oberlo)', url: 'https://www.oberlo.com/blog/dropshipping-niches', type: 'article' }
+      { title: 'Top Dropshipping Niches 2024 (Oberlo)', url: 'https://www.oberlo.com/blog', type: 'article' }
     ],
     mcq: {
       question: 'Which is a warning sign that a niche may be saturated?',
@@ -92,7 +92,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [2],
     resources: [
       { title: 'Google Trends', url: 'https://trends.google.com', type: 'external' },
-      { title: 'Competitor Analysis Guide (Shopify)', url: 'https://www.shopify.com/blog/competitor-analysis', type: 'article' }
+      { title: 'Competitor Analysis Guide (Shopify)', url: 'https://www.shopify.com/blog', type: 'article' }
     ]
   },
 
@@ -110,8 +110,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [3],
     resources: [
-      { title: 'Business Entity Types Explained (NerdWallet)', url: 'https://www.nerdwallet.com/article/small-business/business-structure-types', type: 'guide' },
-      { title: 'US Business Registration (SBA)', url: 'https://www.sba.gov/business-guide/launch-your-business/register-your-business', type: 'guide' }
+      { title: 'Business Entity Types Explained (NerdWallet)', url: 'https://www.nerdwallet.com', type: 'guide' },
+      { title: 'US Business Registration (SBA)', url: 'https://www.sba.gov', type: 'guide' }
     ],
     mcq: {
       question: 'If you launch without trademarking your store name, biggest risk is?',
@@ -143,7 +143,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [4],
     resources: [
       { title: 'USPTO Trademark Search', url: 'https://www.uspto.gov/trademarks/search', type: 'tool' },
-      { title: 'Trademark Basics Guide (USPTO)', url: 'https://www.uspto.gov/trademarks/basics', type: 'guide' }
+      { title: 'Trademark Basics Guide (USPTO)', url: 'https://www.uspto.gov', type: 'guide' }
     ]
   },
   {
@@ -279,7 +279,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [9],
     resources: [
       { title: 'Profit Margin Calculator (Calculator.net)', url: 'https://www.calculator.net/profit-margin-calculator.html', type: 'tool' },
-      { title: 'Pricing Strategy Guide (Shopify)', url: 'https://www.shopify.com/blog/pricing-strategy', type: 'guide' }
+      { title: 'Pricing Strategy Guide (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' }
     ]
   },
 
@@ -327,7 +327,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [11],
     resources: [
-      { title: 'Branding Guide for E-commerce (Shopify)', url: 'https://www.shopify.com/blog/branding-guide', type: 'guide' },
+      { title: 'Branding Guide for E-commerce (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' },
       { title: 'Shopify Theme Store', url: 'https://themes.shopify.com', type: 'templates' }
     ]
   },
@@ -346,7 +346,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [12],
     resources: [
       { title: 'Free Privacy Policy Generator (Shopify)', url: 'https://www.shopify.com/tools/policy-generator', type: 'tool' },
-      { title: 'E-commerce Legal Requirements (LegalZoom)', url: 'https://www.legalzoom.com/articles/ecommerce-legal-requirements', type: 'guide' }
+      { title: 'E-commerce Legal Requirements (LegalZoom)', url: 'https://www.legalzoom.com', type: 'guide' }
     ],
     mcq: {
       question: 'What is required by law on all ecommerce stores?',
@@ -380,8 +380,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [13],
     resources: [
-      { title: 'Pre-Launch Checklist (Shopify)', url: 'https://www.shopify.com/blog/pre-launch-checklist', type: 'checklist' },
-      { title: 'Payment Testing Guide (Stripe)', url: 'https://stripe.com/docs/testing', type: 'guide' }
+      { title: 'Pre-Launch Checklist (Shopify)', url: 'https://www.shopify.com/blog', type: 'checklist' },
+      { title: 'Payment Testing Guide (Stripe)', url: 'https://stripe.com/docs', type: 'guide' }
     ]
   },
   {
@@ -397,8 +397,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [14],
     resources: [
-      { title: 'Abandoned Cart Recovery Guide (Shopify)', url: 'https://www.shopify.com/blog/abandoned-cart-recovery', type: 'guide' },
-      { title: 'Email Marketing Templates (Mailchimp)', url: 'https://mailchimp.com/email-templates', type: 'templates' }
+      { title: 'Abandoned Cart Recovery Guide (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' },
+      { title: 'Email Marketing Templates (Mailchimp)', url: 'https://mailchimp.com', type: 'templates' }
     ]
   },
   {
@@ -416,7 +416,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [14],
     resources: [
       { title: 'Google Analytics Setup (Google)', url: 'https://support.google.com/analytics/answer/9304153', type: 'guide' },
-      { title: 'Facebook Pixel Setup (Meta)', url: 'https://www.facebook.com/business/help/952192354843755', type: 'guide' }
+      { title: 'Facebook Pixel Setup (Meta)', url: 'https://www.facebook.com/business', type: 'guide' }
     ],
     mcq: {
       question: 'If you forget analytics on launch, what\'s the main issue?',
@@ -450,8 +450,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [16],
     resources: [
-      { title: 'Launch Email Templates (Mailchimp)', url: 'https://mailchimp.com/help/create-an-email-campaign/', type: 'template' },
-      { title: 'Social Media Templates (Canva)', url: 'https://www.canva.com/templates/EAE-5qJqJ5k-social-media-post/', type: 'templates' }
+      { title: 'Launch Email Templates (Mailchimp)', url: 'https://mailchimp.com', type: 'template' },
+      { title: 'Social Media Templates (Canva)', url: 'https://www.canva.com', type: 'templates' }
     ]
   },
   {
@@ -468,8 +468,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [17],
     resources: [
-      { title: 'Facebook Ad Budget Calculator (Meta)', url: 'https://www.facebook.com/business/help/163081508372038', type: 'guide' },
-      { title: 'Influencer Marketing Guide (Shopify)', url: 'https://www.shopify.com/blog/influencer-marketing', type: 'guide' }
+      { title: 'Facebook Ad Budget Calculator (Meta)', url: 'https://www.facebook.com/business', type: 'guide' },
+      { title: 'Influencer Marketing Guide (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' }
     ],
     mcq: {
       question: 'Why start with a modest ad budget on launch?',
@@ -501,8 +501,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [18],
     resources: [
-      { title: 'Customer Service Templates (Zendesk)', url: 'https://www.zendesk.com/blog/customer-service-email-templates/', type: 'templates' },
-      { title: 'Order Fulfillment Guide (Shopify)', url: 'https://www.shopify.com/blog/order-fulfillment', type: 'guide' }
+      { title: 'Customer Service Templates (Zendesk)', url: 'https://www.zendesk.com', type: 'templates' },
+      { title: 'Order Fulfillment Guide (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' }
     ]
   },
 
@@ -522,7 +522,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [19],
     resources: [
       { title: 'E-commerce Analytics Guide (Google)', url: 'https://support.google.com/analytics/answer/9216061', type: 'guide' },
-      { title: 'Conversion Rate Optimization (Shopify)', url: 'https://www.shopify.com/blog/conversion-rate-optimization', type: 'guide' }
+      { title: 'Conversion Rate Optimization (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' }
     ]
   },
   {
@@ -540,7 +540,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     dependencies: [4],
     resources: [
       { title: 'Small Business Tax Guide (IRS)', url: 'https://www.irs.gov/businesses/small-businesses-self-employed', type: 'guide' },
-      { title: 'E-commerce Tax Guide (Shopify)', url: 'https://www.shopify.com/blog/ecommerce-tax-guide', type: 'guide' }
+      { title: 'E-commerce Tax Guide (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' }
     ],
     mcq: {
       question: 'If you sell in the US from India, what must you track?',
@@ -572,8 +572,8 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     ],
     dependencies: [20],
     resources: [
-      { title: 'Scaling Your Business Guide (Shopify)', url: 'https://www.shopify.com/blog/scaling-your-business', type: 'guide' },
-      { title: 'E-commerce Automation Tools (Oberlo)', url: 'https://www.oberlo.com/blog/ecommerce-automation-tools', type: 'article' }
+      { title: 'Scaling Your Business Guide (Shopify)', url: 'https://www.shopify.com/blog', type: 'guide' },
+      { title: 'E-commerce Automation Tools (Oberlo)', url: 'https://www.oberlo.com/blog', type: 'article' }
     ]
   }
 ];

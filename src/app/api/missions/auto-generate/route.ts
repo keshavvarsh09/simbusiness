@@ -48,11 +48,11 @@ export async function POST(request: NextRequest) {
       // Continue with standard missions if event generation fails
     }
     
-    // Always get standard missions as fallback
-    const standardMissions = getStandardMissionTemplates();
+    // Always get pre-generated time-bound missions (guaranteed to have 10+)
+    const preGeneratedMissions = getPreGeneratedTimeBoundMissions();
     
-    // Combine missions - prioritize event missions, then standard
-    const allMissions = [...eventMissions, ...standardMissions];
+    // Combine missions - prioritize event missions, then pre-generated
+    const allMissions = [...eventMissions, ...preGeneratedMissions];
     
     // If no missions at all, something is wrong
     if (allMissions.length === 0) {
@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Select 1-2 missions to create (prioritize event missions)
-    const missionsToCreate = allMissions.slice(0, Math.min(2, allMissions.length));
+    // Select up to 5 missions to create (prioritize event missions, then pre-generated)
+    // This ensures users get multiple time-bound missions
+    const missionsToCreate = allMissions.slice(0, Math.min(5, allMissions.length));
     
     const client = await pool.connect();
     try {
