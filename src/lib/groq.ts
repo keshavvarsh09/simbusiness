@@ -11,6 +11,9 @@ const DEFAULT_MODEL = process.env.GROQ_MODEL_NAME || 'llama-3.1-70b-versatile';
 const RATE_LIMIT_RPM = parseInt(process.env.GROQ_RATE_LIMIT_RPM || '30');
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 
+// Request timeout (20 seconds)
+const REQUEST_TIMEOUT_MS = 20000;
+
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -82,12 +85,21 @@ export async function generateWithGroq(
       content: prompt
     });
 
-    const completion = await groq.chat.completions.create({
+    // Create timeout promise
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`)), REQUEST_TIMEOUT_MS);
+    });
+
+    // Create API call promise
+    const apiPromise = groq.chat.completions.create({
       model,
       messages,
       temperature,
       max_tokens: maxTokens,
     });
+
+    // Race between API call and timeout
+    const completion = await Promise.race([apiPromise, timeoutPromise]);
 
     const response = completion.choices[0]?.message?.content;
     

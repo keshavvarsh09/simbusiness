@@ -21,8 +21,31 @@ export interface NewsEvent {
   affectedLocations?: string[];
 }
 
+// Request timeout (10 seconds for news APIs)
+const NEWS_API_TIMEOUT_MS = 10000;
+
+/**
+ * Create a timeout promise
+ */
+function createTimeout(ms: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(`Request timeout after ${ms}ms`)), ms);
+  });
+}
+
+/**
+ * Fetch with timeout
+ */
+async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  const timeoutPromise = createTimeout(NEWS_API_TIMEOUT_MS);
+  const fetchPromise = fetch(url, options);
+  
+  return await Promise.race([fetchPromise, timeoutPromise]);
+}
+
 /**
  * Fetch news relevant to supply chain, shipping, and business operations
+ * Improved with timeout handling and better error recovery
  */
 export async function fetchRelevantNews(
   locations: string[] = ['India', 'China', 'Delhi', 'Mumbai', 'Bangalore'],
@@ -36,29 +59,42 @@ export async function fetchRelevantNews(
       const query = keywords.join(' OR ');
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
       
-      const response = await fetch(url);
+      const response = await fetchWithTimeout(url, { 
+        signal: AbortSignal.timeout(NEWS_API_TIMEOUT_MS) 
+      });
+      
+      if (!response.ok) {
+        throw new Error(`NewsAPI returned ${response.status}`);
+      }
+      
       const data = await response.json();
       
-      if (data.articles) {
+      if (data.articles && Array.isArray(data.articles)) {
         for (const article of data.articles.slice(0, 10)) {
           const relevance = calculateRelevance(article, locations, keywords);
           if (relevance !== 'low') {
             events.push({
-              title: article.title,
-              description: article.description || article.title,
+              title: article.title || 'Untitled',
+              description: article.description || article.title || '',
               source: article.source?.name || 'Unknown',
-              url: article.url,
-              publishedAt: article.publishedAt,
-              location: extractLocation(article.title + ' ' + article.description),
+              url: article.url || '#',
+              publishedAt: article.publishedAt || new Date().toISOString(),
+              location: extractLocation(article.title + ' ' + (article.description || '')),
               relevance,
-              impactType: determineImpactType(article.title + ' ' + article.description),
-              affectedLocations: extractLocations(article.title + ' ' + article.description, locations)
+              impactType: determineImpactType(article.title + ' ' + (article.description || '')),
+              affectedLocations: extractLocations(article.title + ' ' + (article.description || ''), locations)
             });
           }
         }
       }
-    } catch (error) {
-      console.error('NewsAPI error:', error);
+      
+      // If we got results, return early
+      if (events.length > 0) {
+        return events;
+      }
+    } catch (error: any) {
+      console.error('NewsAPI error:', error.message);
+      // Continue to next API
     }
   }
 
@@ -68,29 +104,42 @@ export async function fetchRelevantNews(
       const query = keywords.join(' OR ');
       const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&max=10&apikey=${process.env.GNEWS_API_KEY}`;
       
-      const response = await fetch(url);
+      const response = await fetchWithTimeout(url, { 
+        signal: AbortSignal.timeout(NEWS_API_TIMEOUT_MS) 
+      });
+      
+      if (!response.ok) {
+        throw new Error(`GNews API returned ${response.status}`);
+      }
+      
       const data = await response.json();
       
-      if (data.articles) {
+      if (data.articles && Array.isArray(data.articles)) {
         for (const article of data.articles) {
           const relevance = calculateRelevance(article, locations, keywords);
           if (relevance !== 'low') {
             events.push({
-              title: article.title,
-              description: article.description || article.title,
+              title: article.title || 'Untitled',
+              description: article.description || article.title || '',
               source: article.source?.name || 'Unknown',
-              url: article.url,
-              publishedAt: article.publishedAt,
-              location: extractLocation(article.title + ' ' + article.description),
+              url: article.url || '#',
+              publishedAt: article.publishedAt || new Date().toISOString(),
+              location: extractLocation(article.title + ' ' + (article.description || '')),
               relevance,
-              impactType: determineImpactType(article.title + ' ' + article.description),
-              affectedLocations: extractLocations(article.title + ' ' + article.description, locations)
+              impactType: determineImpactType(article.title + ' ' + (article.description || '')),
+              affectedLocations: extractLocations(article.title + ' ' + (article.description || ''), locations)
             });
           }
         }
       }
-    } catch (error) {
-      console.error('GNews API error:', error);
+      
+      // If we got results, return early
+      if (events.length > 0) {
+        return events;
+      }
+    } catch (error: any) {
+      console.error('GNews API error:', error.message);
+      // Continue to next API
     }
   }
 
@@ -100,32 +149,41 @@ export async function fetchRelevantNews(
       const query = keywords.join(' OR ');
       const url = `https://api.currentsapi.services/v1/search?keywords=${encodeURIComponent(query)}&language=en&apiKey=${process.env.CURRENTS_API_KEY}`;
       
-      const response = await fetch(url);
+      const response = await fetchWithTimeout(url, { 
+        signal: AbortSignal.timeout(NEWS_API_TIMEOUT_MS) 
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Currents API returned ${response.status}`);
+      }
+      
       const data = await response.json();
       
-      if (data.news) {
+      if (data.news && Array.isArray(data.news)) {
         for (const article of data.news.slice(0, 10)) {
           const relevance = calculateRelevance(article, locations, keywords);
           if (relevance !== 'low') {
             events.push({
-              title: article.title,
-              description: article.description || article.title,
+              title: article.title || 'Untitled',
+              description: article.description || article.title || '',
               source: article.author || 'Unknown',
-              url: article.url,
-              publishedAt: article.published,
-              location: extractLocation(article.title + ' ' + article.description),
+              url: article.url || '#',
+              publishedAt: article.published || new Date().toISOString(),
+              location: extractLocation(article.title + ' ' + (article.description || '')),
               relevance,
-              impactType: determineImpactType(article.title + ' ' + article.description),
-              affectedLocations: extractLocations(article.title + ' ' + article.description, locations)
+              impactType: determineImpactType(article.title + ' ' + (article.description || '')),
+              affectedLocations: extractLocations(article.title + ' ' + (article.description || ''), locations)
             });
           }
         }
       }
-    } catch (error) {
-      console.error('Currents API error:', error);
+    } catch (error: any) {
+      console.error('Currents API error:', error.message);
+      // Continue - return empty or fallback data
     }
   }
 
+  // If no events found from APIs, return empty array (or could add fallback mock data)
   return events;
 }
 

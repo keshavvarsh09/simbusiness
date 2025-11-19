@@ -97,9 +97,9 @@ export async function POST(request: NextRequest) {
         // Continue without history if query fails
       }
 
-      // Check if at least one AI provider is available
-      if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
-        throw new Error('At least one AI API key (GEMINI_API_KEY or GROQ_API_KEY) must be set');
+      // Check if at least one FREE AI provider is available (prioritize free tiers)
+      if (!process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
+        throw new Error('At least one AI API key must be set. Recommended FREE options: GROQ_API_KEY (fastest) or GEMINI_API_KEY');
       }
 
       // Generate response using AI router (tries Groq first, falls back to Gemini)
