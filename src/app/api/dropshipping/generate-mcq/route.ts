@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { stepNumber } = body;
 
-    if (!stepNumber || stepNumber < 1 || stepNumber > 21) {
+    if (!stepNumber || stepNumber < 1 || stepNumber > 22) {
       return NextResponse.json(
-        { error: 'Invalid step number. Must be between 1 and 21.' },
+        { error: 'Invalid step number. Must be between 1 and 22.' },
         { status: 400 }
       );
     }
