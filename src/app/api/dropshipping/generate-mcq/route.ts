@@ -193,7 +193,38 @@ Create ONE critical thinking multiple-choice question that:
 
 Generate the question now:`;
 
-      const aiResponse = await chatWithGemini(prompt, userContext);
+      let aiResponse;
+      try {
+        aiResponse = await chatWithGemini(prompt, userContext);
+      } catch (geminiError: any) {
+        console.error('Gemini API error:', geminiError);
+        // Fallback to a default question if AI fails
+        return NextResponse.json({
+          success: true,
+          mcq: {
+            question: `You're at Step ${stepNumber}: "${step.title}". Given your budget of $${userContext.budget} and interest in ${userContext.productGenre}, what's the most important factor to consider right now?`,
+            options: [
+              'Focus on validating demand before investing more budget',
+              'Invest all budget immediately to scale fast',
+              'Wait until you have more experience',
+              'Copy what competitors are doing exactly'
+            ],
+            correctAnswer: 'a',
+            feedback: {
+              correct: 'Correct! Validating demand before scaling is crucial. Test with small budgets first.',
+              incorrect: 'Validating demand is key. Always test before scaling.',
+              explanation: 'In dropshipping, validating demand with small tests before investing heavily is essential. This prevents wasting budget on products that don\'t sell.'
+            }
+          },
+          generatedAt: new Date().toISOString(),
+          context: {
+            stepNumber,
+            userBudget: userContext.budget,
+            productGenre: userContext.productGenre,
+            fallback: true
+          }
+        });
+      }
       
       // Parse AI response (it should be JSON)
       let mcqData;
@@ -205,12 +236,32 @@ Generate the question now:`;
       } catch (parseError) {
         // If parsing fails, try to construct MCQ from text response
         console.error('Failed to parse AI response as JSON:', aiResponse);
-        // Fallback: return a structured error
+        // Fallback: return a default question
         return NextResponse.json({
-          error: 'Failed to generate valid MCQ format',
-          details: 'AI response could not be parsed. Please try again.',
-          rawResponse: aiResponse.substring(0, 200)
-        }, { status: 500 });
+          success: true,
+          mcq: {
+            question: `You're at Step ${stepNumber}: "${step.title}". Given your budget of $${userContext.budget} and interest in ${userContext.productGenre}, what's the most important factor to consider right now?`,
+            options: [
+              'Focus on validating demand before investing more budget',
+              'Invest all budget immediately to scale fast',
+              'Wait until you have more experience',
+              'Copy what competitors are doing exactly'
+            ],
+            correctAnswer: 'a',
+            feedback: {
+              correct: 'Correct! Validating demand before scaling is crucial. Test with small budgets first.',
+              incorrect: 'Validating demand is key. Always test before scaling.',
+              explanation: 'In dropshipping, validating demand with small tests before investing heavily is essential. This prevents wasting budget on products that don\'t sell.'
+            }
+          },
+          generatedAt: new Date().toISOString(),
+          context: {
+            stepNumber,
+            userBudget: userContext.budget,
+            productGenre: userContext.productGenre,
+            fallback: true
+          }
+        });
       }
 
       // Validate MCQ structure

@@ -56,15 +56,35 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      let recommendations = await generateProductRecommendations(
-        budget,
-        genre
-      );
+      let recommendations;
+      try {
+        recommendations = await generateProductRecommendations(
+          budget,
+          genre
+        );
+      } catch (aiError: any) {
+        console.error('AI recommendation error:', aiError);
+        // Fallback to default recommendations if AI fails
+        recommendations = [
+          {
+            name: `${genre} Product 1`,
+            category: genre,
+            estimatedCost: budget * 0.3,
+            sellingPrice: budget * 0.5,
+            profitMargin: 40,
+            demand: 'medium',
+            competition: 'medium',
+            recommendedMOQ: 10,
+            searchTerms: `${genre} dropshipping`,
+            reason: 'Good starting product for your budget'
+          }
+        ];
+      }
 
       // Convert to array if needed
       const recsArray = Array.isArray(recommendations) 
         ? recommendations 
-        : (recommendations.recommendations || []);
+        : (recommendations?.recommendations || recommendations || []);
 
       // Apply pagination
       const paginatedRecs = recsArray.slice(offset, offset + limit);

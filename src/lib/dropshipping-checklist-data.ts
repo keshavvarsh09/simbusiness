@@ -218,10 +218,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Rate supplier communication'
     ],
     dependencies: [7],
-    resources: [
-      { title: 'Product Quality Checklist (Oberlo)', url: 'https://www.oberlo.com/blog/product-quality-checklist', type: 'article' },
-      { title: 'Supplier Quality Control (Shopify)', url: 'https://www.shopify.com/blog/supplier-quality-control', type: 'guide' }
-    ],
+    resources: [],
     mcq: {
       question: 'A supplier offers fast shipping but won\'t offer returns. Choose the best practice.',
       options: [
@@ -241,6 +238,36 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
   {
     stepNumber: 9,
     section: 'Product Sourcing & Supplier Selection',
+    title: 'SKU Management & Inventory Setup',
+    description: 'Learn SKU (Stock Keeping Unit) basics for dropshipping. SKUs help track products, variants, and inventory even when you don\'t hold stock.',
+    checklistActions: [
+      'Understand what SKU means in dropshipping',
+      'Create SKU naming convention (e.g., PROD-001-BLUE-L)',
+      'Set up SKU for each product variant',
+      'Configure reorder points and quantities',
+      'Document SKU system'
+    ],
+    dependencies: [8],
+    resources: [],
+    mcq: {
+      question: 'In dropshipping, why do you need SKUs even though you don\'t hold inventory?',
+      options: [
+        'SKUs are only for warehouses, not needed in dropshipping',
+        'SKUs help track product variants, supplier info, and automate reordering when stock runs low',
+        'SKUs are just for accounting purposes',
+        'You only need SKUs if you have 100+ products'
+      ],
+      correctAnswer: 'b',
+      feedback: {
+        correct: 'Correct! Even in dropshipping, SKUs help you: Track different product variants (size, color, style), Identify which supplier to order from, Automate reordering when inventory drops, Manage product data across platforms, and Handle returns/exchanges efficiently.',
+        incorrect: 'SKUs are essential in dropshipping too. They help track variants, manage supplier relationships, and automate operations even when you don\'t physically hold inventory.',
+        explanation: '**SKU in Dropshipping Explained:**\n\n**What is a SKU?**\n- Stock Keeping Unit: A unique identifier for each product variant\n- Example: "TSHIRT-001-BLUE-L" = T-shirt product #001, Blue color, Large size\n\n**Why SKUs Matter in Dropshipping:**\n- **Variant Tracking**: Same product, different sizes/colors need different SKUs\n- **Supplier Management**: Each SKU links to a specific supplier and their product code\n- **Automation**: When stock runs low, system knows which supplier to contact\n- **Platform Integration**: Shopify, WooCommerce use SKUs to sync inventory\n- **Order Management**: Helps route orders to correct supplier automatically\n\n**SKU Naming Best Practices:**\n- Use consistent format: PROD-CATEGORY-VARIANT (e.g., "ELEC-001-BLACK")\n- Include size/color codes: "APP-002-RED-M"\n- Keep it short but descriptive: Max 20 characters\n- Avoid special characters: Use hyphens, not spaces\n\n**In dropshipping, SKUs connect your store to supplier catalogs**, making automation possible even without physical inventory.'
+      }
+    }
+  },
+  {
+    stepNumber: 10,
+    section: 'Product Sourcing & Supplier Selection',
     title: 'Pricing & Cost Simulator',
     description: 'Use pricing calculator with fees, taxes, shipping, returns, and CAC (Customer Acquisition Cost).',
     checklistActions: [
@@ -249,7 +276,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Factor in returns and CAC',
       'Save target profit percentage'
     ],
-    dependencies: [8],
+    dependencies: [9],
     resources: [
       { title: 'Profit Margin Calculator (Calculator.net)', url: 'https://www.calculator.net/profit-margin-calculator.html', type: 'tool' },
       { title: 'Pricing Strategy Guide (Shopify)', url: 'https://www.shopify.com/blog/pricing-strategy', type: 'guide' }
@@ -258,7 +285,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
 
   // Section D: Store Setup & Branding
   {
-    stepNumber: 10,
+    stepNumber: 11,
     section: 'Store Setup & Branding',
     title: 'Choose Platform',
     description: 'Shopify, Webflow, WordPress (WooCommerce) - Each has unique strengths. Choose based on your technical skills, budget, and business needs.',
@@ -287,7 +314,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     }
   },
   {
-    stepNumber: 11,
+    stepNumber: 12,
     section: 'Store Setup & Branding',
     title: 'Store Design & Branding',
     description: 'Import theme, set logo, brand voice guidelines, and copy basics.',
@@ -298,14 +325,14 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Complete favicon setup',
       'Apply theme'
     ],
-    dependencies: [10],
+    dependencies: [11],
     resources: [
       { title: 'Branding Guide for E-commerce (Shopify)', url: 'https://www.shopify.com/blog/branding-guide', type: 'guide' },
       { title: 'Shopify Theme Store', url: 'https://themes.shopify.com', type: 'templates' }
     ]
   },
   {
-    stepNumber: 12,
+    stepNumber: 13,
     section: 'Store Setup & Branding',
     title: 'Legal Pages Setup',
     description: 'Add T&C, privacy policy, return/refund, shipping policy (auto-generators provided).',
@@ -316,7 +343,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Define Shipping Policy',
       'Confirm all policies live'
     ],
-    dependencies: [11],
+    dependencies: [12],
     resources: [
       { title: 'Free Privacy Policy Generator (Shopify)', url: 'https://www.shopify.com/tools/policy-generator', type: 'tool' },
       { title: 'E-commerce Legal Requirements (LegalZoom)', url: 'https://www.legalzoom.com/articles/ecommerce-legal-requirements', type: 'guide' }
@@ -340,7 +367,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
 
   // Section E: Pre-Launch & Testing
   {
-    stepNumber: 13,
+    stepNumber: 14,
     section: 'Pre-Launch & Testing',
     title: 'Mock Orders & Checkout Testing',
     description: 'Place test orders for full payment/refund loop to verify everything works.',
@@ -351,14 +378,14 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Screenshot test cases',
       'Confirm all test cases passed'
     ],
-    dependencies: [12],
+    dependencies: [13],
     resources: [
       { title: 'Pre-Launch Checklist (Shopify)', url: 'https://www.shopify.com/blog/pre-launch-checklist', type: 'checklist' },
       { title: 'Payment Testing Guide (Stripe)', url: 'https://stripe.com/docs/testing', type: 'guide' }
     ]
   },
   {
-    stepNumber: 14,
+    stepNumber: 15,
     section: 'Pre-Launch & Testing',
     title: 'Abandoned Cart Setup',
     description: 'Automate follow-up emails/SMS for abandoned carts.',
@@ -368,14 +395,14 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Test with dummy account',
       'Review email templates'
     ],
-    dependencies: [13],
+    dependencies: [14],
     resources: [
       { title: 'Abandoned Cart Recovery Guide (Shopify)', url: 'https://www.shopify.com/blog/abandoned-cart-recovery', type: 'guide' },
       { title: 'Email Marketing Templates (Mailchimp)', url: 'https://mailchimp.com/email-templates', type: 'templates' }
     ]
   },
   {
-    stepNumber: 15,
+    stepNumber: 16,
     section: 'Pre-Launch & Testing',
     title: 'Analytics Setup',
     description: 'Connect Google Analytics, FB Pixel, Hotjar, and other tracking tools.',
@@ -386,7 +413,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Confirm scripts working',
       'Test event triggers'
     ],
-    dependencies: [13],
+    dependencies: [14],
     resources: [
       { title: 'Google Analytics Setup (Google)', url: 'https://support.google.com/analytics/answer/9304153', type: 'guide' },
       { title: 'Facebook Pixel Setup (Meta)', url: 'https://www.facebook.com/business/help/952192354843755', type: 'guide' }
@@ -410,7 +437,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
 
   // Section F: Launch & First Sales
   {
-    stepNumber: 16,
+    stepNumber: 17,
     section: 'Launch & First Sales',
     title: 'Launch Announcement',
     description: 'Email, social media, friends/family blast to announce your launch.',
@@ -421,14 +448,14 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'List 3 feedback sources',
       'Track launch metrics'
     ],
-    dependencies: [15],
+    dependencies: [16],
     resources: [
       { title: 'Launch Email Templates (Mailchimp)', url: 'https://mailchimp.com/help/create-an-email-campaign/', type: 'template' },
       { title: 'Social Media Templates (Canva)', url: 'https://www.canva.com/templates/EAE-5qJqJ5k-social-media-post/', type: 'templates' }
     ]
   },
   {
-    stepNumber: 17,
+    stepNumber: 18,
     section: 'Launch & First Sales',
     title: 'Paid Traffic & Organic Growth',
     description: 'Define ad test budget; set up influencer/UGC (User Generated Content) flow.',
@@ -439,7 +466,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Plan UGC strategy',
       'Attach influencer contacts'
     ],
-    dependencies: [16],
+    dependencies: [17],
     resources: [
       { title: 'Facebook Ad Budget Calculator (Meta)', url: 'https://www.facebook.com/business/help/163081508372038', type: 'guide' },
       { title: 'Influencer Marketing Guide (Shopify)', url: 'https://www.shopify.com/blog/influencer-marketing', type: 'guide' }
@@ -461,7 +488,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     }
   },
   {
-    stepNumber: 18,
+    stepNumber: 19,
     section: 'Launch & First Sales',
     title: 'Customer Support & Fulfillment Workflow',
     description: 'Respond promptly, process orders as per policy.',
@@ -472,7 +499,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'Test fulfillment workflow',
       'Document support processes'
     ],
-    dependencies: [17],
+    dependencies: [18],
     resources: [
       { title: 'Customer Service Templates (Zendesk)', url: 'https://www.zendesk.com/blog/customer-service-email-templates/', type: 'templates' },
       { title: 'Order Fulfillment Guide (Shopify)', url: 'https://www.shopify.com/blog/order-fulfillment', type: 'guide' }
@@ -481,7 +508,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
 
   // Section G: Iteration, Compliance & Scale
   {
-    stepNumber: 19,
+    stepNumber: 20,
     section: 'Iteration, Compliance & Scale',
     title: 'Post-launch Review & Analytics',
     description: 'Evaluate best-selling products, optimize conversion funnels.',
@@ -492,14 +519,14 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'List winning products',
       'Document optimization opportunities'
     ],
-    dependencies: [18],
+    dependencies: [19],
     resources: [
       { title: 'E-commerce Analytics Guide (Google)', url: 'https://support.google.com/analytics/answer/9216061', type: 'guide' },
       { title: 'Conversion Rate Optimization (Shopify)', url: 'https://www.shopify.com/blog/conversion-rate-optimization', type: 'guide' }
     ]
   },
   {
-    stepNumber: 20,
+    stepNumber: 21,
     section: 'Iteration, Compliance & Scale',
     title: 'Compliance & Tax Filings',
     description: 'Annual/monthly tax workflow, GST, returns, etc.',
@@ -532,7 +559,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     }
   },
   {
-    stepNumber: 21,
+    stepNumber: 22,
     section: 'Iteration, Compliance & Scale',
     title: 'Scale-Up Decision Point',
     description: 'Consider building private label, new products, automation tools.',
@@ -543,7 +570,7 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
       'List automation tools tested',
       'Save roadmap notes'
     ],
-    dependencies: [19],
+    dependencies: [20],
     resources: [
       { title: 'Scaling Your Business Guide (Shopify)', url: 'https://www.shopify.com/blog/scaling-your-business', type: 'guide' },
       { title: 'E-commerce Automation Tools (Oberlo)', url: 'https://www.oberlo.com/blog/ecommerce-automation-tools', type: 'article' }
@@ -585,54 +612,58 @@ const REFLECTION_PROMPTS: Record<number, string[]> = {
     'What return or replacement policy will I offer for defective items?'
   ],
   9: [
+    'How will my SKU system help me scale when I add more products?',
+    'What variant information (size, color, style) do I need to track?'
+  ],
+  10: [
     'Is my net margin still healthy after returns, taxes, and CAC?',
     'Which cost assumption feels the riskiest or least proven?'
   ],
-  10: [
+  11: [
     'Why is this ecommerce platform the best fit for my roadmap?',
     'What integrations or apps will I likely need within the next quarter?'
   ],
-  11: [
+  12: [
     'Does the brand voice truly resonate with my target customer persona?',
     'Which design elements still feel like placeholders that need polishing?'
   ],
-  12: [
+  13: [
     'Which policy (refund, shipping, privacy, T&C) feels the weakest right now?',
     'Have I role-played a customer actually reading each policy?'
   ],
-  13: [
+  14: [
     'What failed or felt clunky during my mock checkout?',
     'How confident am I in processing refunds quickly if needed tomorrow?'
   ],
-  14: [
+  15: [
     'What message or incentive felt most compelling in the abandoned cart flow?',
     'How quickly after abandonment does the follow-up trigger?'
   ],
-  15: [
+  16: [
     'If ads go live today, can I confidently track every sale back to its source?',
     'What metric will I monitor daily during launch week?'
   ],
-  16: [
+  17: [
     'Which audience or channel reacted best to the launch announcement?',
     'What is the top piece of feedback I need to address immediately?'
   ],
-  17: [
+  18: [
     'What result will convince me to scale ad spend beyond the test budget?',
     'Which creatives or influencers excite me the most and why?'
   ],
-  18: [
-    'How fast can I respond to a frustrated customer with today’s workflow?',
+  19: [
+    'How fast can I respond to a frustrated customer with today's workflow?',
     'Which part of fulfillment relies on a single person or supplier, and how do I back it up?'
   ],
-  19: [
+  20: [
     'Which product performance metric surprised me the most?',
     'What experiment will I run next week based on this review?'
   ],
-  20: [
+  21: [
     'Which filing deadlines or compliance steps make me most nervous?',
     'Have I documented tax obligations for every market I plan to sell into?'
   ],
-  21: [
+  22: [
     'What automation or process would save me the most time right now?',
     'Which growth lever deserves my focus for the next quarter?'
   ]

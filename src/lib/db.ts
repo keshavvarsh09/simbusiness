@@ -122,6 +122,34 @@ export async function initDatabase() {
       )
     `);
 
+    // Add SKU column to products if it doesn't exist
+    try {
+      await client.query(`
+        ALTER TABLE products 
+        ADD COLUMN IF NOT EXISTS sku VARCHAR(100)
+      `);
+    } catch (e: any) {
+      console.warn('Warning: Could not add sku column:', e.message);
+    }
+
+    // Product SKU Inventory
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS product_inventory (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        sku VARCHAR(100) NOT NULL,
+        quantity INTEGER DEFAULT 0,
+        reserved_quantity INTEGER DEFAULT 0,
+        reorder_point INTEGER DEFAULT 10,
+        reorder_quantity INTEGER DEFAULT 20,
+        last_restocked_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, product_id, sku)
+      )
+    `);
+
     // Ensure active_in_dashboard column exists (for existing databases)
     try {
       const columnCheck = await client.query(`

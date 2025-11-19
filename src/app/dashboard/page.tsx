@@ -32,6 +32,7 @@ import ConfirmationDialog from '@/components/ConfirmationDialog';
 import AdMetricsChecker from '@/components/AdMetricsChecker';
 import AddProductForm from '@/components/AddProductForm';
 import BudgetAllocation from '@/components/BudgetAllocation';
+import ProductInventoryManager from '@/components/ProductInventoryManager';
 
 ChartJS.register(
   CategoryScale,
@@ -658,6 +659,11 @@ export default function Dashboard() {
         {/* Budget Allocation */}
         <div className="mb-6 sm:mb-8">
           <BudgetAllocation />
+        </div>
+
+        {/* SKU & Inventory Management */}
+        <div className="mb-6 sm:mb-8">
+          <ProductInventoryManager />
         </div>
 
         {/* Actions Panel */}

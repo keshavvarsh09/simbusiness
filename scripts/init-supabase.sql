@@ -33,7 +33,24 @@ CREATE TABLE IF NOT EXISTS products (
   active_in_dashboard BOOLEAN DEFAULT true,
   seasonality_factor DECIMAL(5, 2) DEFAULT 1.0, -- Multiplier for seasonal demand (0.5-2.0)
   trend_factor DECIMAL(5, 2) DEFAULT 1.0, -- Multiplier for trending products (0.8-1.5)
+  sku VARCHAR(100), -- Stock Keeping Unit identifier
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Product SKU Inventory (per-product stock management)
+CREATE TABLE IF NOT EXISTS product_inventory (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  sku VARCHAR(100) NOT NULL,
+  quantity INTEGER DEFAULT 0,
+  reserved_quantity INTEGER DEFAULT 0, -- Quantity reserved for pending orders
+  reorder_point INTEGER DEFAULT 10, -- Alert when stock falls below this
+  reorder_quantity INTEGER DEFAULT 20, -- Quantity to order when restocking
+  last_restocked_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, product_id, sku)
 );
 
 -- Product budget allocations (per-product budget tracking)
@@ -234,6 +251,9 @@ CREATE INDEX IF NOT EXISTS idx_budget_transactions_user_id ON budget_transaction
 CREATE INDEX IF NOT EXISTS idx_product_performance_user_id ON product_performance(user_id);
 CREATE INDEX IF NOT EXISTS idx_product_performance_product_id ON product_performance(product_id);
 CREATE INDEX IF NOT EXISTS idx_product_performance_date ON product_performance(date);
+CREATE INDEX IF NOT EXISTS idx_product_inventory_user_id ON product_inventory(user_id);
+CREATE INDEX IF NOT EXISTS idx_product_inventory_product_id ON product_inventory(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_inventory_sku ON product_inventory(sku);
 
 -- Enable Row Level Security (RLS) - Optional but recommended for Supabase
 -- ALTER TABLE users ENABLE ROW LEVEL SECURITY;
