@@ -160,7 +160,7 @@ function parseAlibabaResults(html: string, productName: string): ScrapedProduct[
           supplier: 'Supplier',
           rating: 4.5,
           reviews: 0,
-          imageUrl: null
+          imageUrl: undefined
         });
       }
     }
@@ -367,7 +367,7 @@ function parseAliExpressResults(html: string, productName: string): ScrapedProdu
           supplier: 'Seller',
           rating: 4.3,
           reviews: 0,
-          imageUrl: null
+          imageUrl: undefined
         });
       }
     }
