@@ -283,32 +283,114 @@ export async function scrapeAliExpress(
  */
 function parseAliExpressResults(html: string, productName: string): ScrapedProduct[] {
   const products: ScrapedProduct[] = [];
-  const productMatches = html.match(/<div[^>]*class="[^"]*item[^"]*"[^>]*>/gi) || [];
   
-  for (let i = 0; i < Math.min(productMatches.length, 5); i++) {
-    products.push({
-      platform: 'aliexpress',
-      title: `${productName} - Product ${i + 1}`,
-      url: `https://www.aliexpress.com/item/${i}.html`,
-      price: Math.random() * 50 + 5,
-      currency: 'USD',
-      moq: 1,
-      supplier: `Seller ${i + 1}`,
-      rating: 4 + Math.random() * 0.5,
-      reviews: Math.floor(Math.random() * 5000),
-      imageUrl: `https://via.placeholder.com/300?text=${encodeURIComponent(productName)}`
-    });
+  try {
+    // AliExpress embeds product data in JSON or data attributes
+    // Pattern 1: Look for JSON data in script tags
+    const jsonPatterns = [
+      /window\.runParams\s*=\s*({[\s\S]*?});/i,
+      /window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});/i,
+      /"items"\s*:\s*\[([\s\S]*?)\]/i
+    ];
+    
+    for (const pattern of jsonPatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        try {
+          const data = JSON.parse(match[1]);
+          const items = data?.items || data?.mods?.itemList?.content || data?.list || [];
+          
+          for (const item of items.slice(0, 10)) {
+            if (item && (item.title || item.productTitle || item.name)) {
+              const price = parseFloat(
+                item.price?.value || 
+                item.price?.min?.value || 
+                item.price?.max?.value || 
+                item.price || 
+                '0'
+              );
+              
+              products.push({
+                platform: 'aliexpress',
+                title: item.title || item.productTitle || item.name || `${productName} Product`,
+                url: item.url || item.productUrl || `https://www.aliexpress.com/item/${item.productId || ''}.html`,
+                price: price || 0,
+                currency: item.currency || 'USD',
+                moq: 1,
+                supplier: item.storeName || item.sellerName || 'Seller',
+                rating: parseFloat(item.rating || item.starRating || '4.3') || 4.3,
+                reviews: parseInt(item.tradeCount || item.reviewCount || '0') || 0,
+                imageUrl: item.imageUrl || item.image || item.picUrl || null
+              });
+            }
+          }
+          
+          if (products.length > 0) break;
+        } catch (e) {
+          // Continue to next pattern
+        }
+      }
+    }
+    
+    // Pattern 2: Extract from HTML attributes if JSON parsing failed
+    if (products.length === 0) {
+      // Look for product links and titles
+      const productLinkPattern = /<a[^>]*href=["']([^"']*item[^"']*\.html)["'][^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
+      const pricePattern = /["']price["']\s*:\s*["']?(\d+\.?\d*)/gi;
+      
+      const links: string[] = [];
+      const titles: string[] = [];
+      const prices: number[] = [];
+      
+      let match;
+      while ((match = productLinkPattern.exec(html)) !== null && links.length < 10) {
+        if (match[1] && match[2]) {
+          links.push(match[1].startsWith('http') ? match[1] : `https://www.aliexpress.com${match[1]}`);
+          titles.push(match[2].trim());
+        }
+      }
+      
+      while ((match = pricePattern.exec(html)) !== null && prices.length < 10) {
+        const price = parseFloat(match[1]);
+        if (price > 0) prices.push(price);
+      }
+      
+      const maxItems = Math.min(links.length, titles.length, 10);
+      for (let i = 0; i < maxItems; i++) {
+        products.push({
+          platform: 'aliexpress',
+          title: titles[i] || `${productName} - Product ${i + 1}`,
+          url: links[i] || `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(productName)}`,
+          price: prices[i] || 0,
+          currency: 'USD',
+          moq: 1,
+          supplier: 'Seller',
+          rating: 4.3,
+          reviews: 0,
+          imageUrl: null
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing AliExpress HTML:', error);
   }
 
-  return products.length > 0 ? products : [{
+  // If we got real products, return them
+  if (products.length > 0 && products.some(p => p.price > 0 && p.title !== `${productName} - AliExpress`)) {
+    return products;
+  }
+
+  // Fallback: Return search link only (no fake products)
+  return [{
     platform: 'aliexpress',
-    title: `${productName} - AliExpress`,
+    title: `Search ${productName} on AliExpress`,
     url: `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(productName)}`,
     price: 0,
     currency: 'USD',
     moq: 1,
     supplier: 'Multiple Sellers',
-    rating: 4.3
+    rating: 0,
+    reviews: 0
   }];
 }
 
