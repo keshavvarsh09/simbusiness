@@ -121,9 +121,22 @@ export async function GET(request: NextRequest) {
             scrapedProducts = results[0] || [];
             scrapedAliExpress = results[1] || [];
             
-            // Combine all scraped products (only include real products with price > 0)
+            // Combine all scraped products (only include real products with price > 0 and real titles)
             const allScraped = [...scrapedProducts, ...scrapedAliExpress].filter(
-              p => p.price > 0 && p.title && !p.title.includes('Search ') && !p.title.includes('Product Option')
+              p => p.price > 0 && 
+                   p.title && 
+                   p.title.trim().length > 5 &&
+                   !p.title.includes('Search ') && 
+                   !p.title.includes('Product Option') &&
+                   !p.title.includes('Product 1') &&
+                   !p.title.includes('Product 2') &&
+                   !p.title.includes('Product 3') &&
+                   !p.title.includes('Product 4') &&
+                   !p.title.includes('Product 5') &&
+                   !p.title.includes('Listing 1') &&
+                   !p.title.includes('Listing 2') &&
+                   !p.title.match(/Product \d+/i) &&
+                   !p.title.match(/Listing \d+/i)
             );
             
             // Get real prices if available (only from products with actual prices)
@@ -282,7 +295,13 @@ export async function GET(request: NextRequest) {
             suppliers: suppliers,
             // Include only real scraped products (filter out fake/placeholder products)
             scrapedProducts: allScraped.slice(0, 10).filter(
-              p => p.price > 0 && p.title && !p.title.includes('Search ') && !p.title.includes('Product Option')
+              p => p.price > 0 && 
+                   p.title && 
+                   p.title.trim().length > 5 &&
+                   !p.title.includes('Search ') && 
+                   !p.title.includes('Product Option') &&
+                   !p.title.match(/Product \d+/i) &&
+                   !p.title.match(/Listing \d+/i)
             ),
             hasRealData: allScraped.length > 0 && allScraped.some(p => p.price > 0), // Flag to show if real data was fetched
             searchTerms: searchTerms
