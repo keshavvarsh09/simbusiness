@@ -186,7 +186,21 @@ Format as JSON array:
     const timeoutPromise = createTimeout(REQUEST_TIMEOUT_MS);
     const apiPromise = getProductRecommendations(budget, genre);
     
-    return await Promise.race([apiPromise, timeoutPromise]);
+    const response = await Promise.race([apiPromise, timeoutPromise]);
+    
+    // Try to parse JSON if it's a string
+    if (typeof response === 'string') {
+      try {
+        const jsonMatch = response.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      } catch (e) {
+        // If JSON parsing fails, return as is
+      }
+    }
+    
+    return response;
   } catch (error: any) {
     // Priority 3: Try OpenAI as last resort (may require paid tier)
     if (isOpenAIAvailable()) {

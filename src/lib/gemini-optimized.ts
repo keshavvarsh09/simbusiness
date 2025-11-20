@@ -298,8 +298,35 @@ export async function getProductRecommendations(budget: number, genre: string) {
 
   const prompt = `Recommend 10 dropshipping products for budget $${budget}, genre "${genre}".
 
-JSON array:
-[{"name": "string", "category": "string", "estimatedCost": number, "sellingPrice": number, "profitMargin": number, "demand": "high|medium|low", "competition": "high|medium|low", "recommendedMOQ": number, "reason": "string"}]`;
+For each product, provide:
+1. Product name and category
+2. Estimated cost and selling price
+3. Profit margin
+4. Market demand (high/medium/low)
+5. Competition level (high/medium/low)
+6. Recommended MOQ
+7. Search terms for finding on Alibaba, AliExpress, IndiaMart (specific keywords)
+8. Why it's a good choice
+
+**IMPORTANT: Respond ONLY with valid JSON array, no markdown, no code blocks, no explanations before or after.**
+
+JSON array format:
+[
+  {
+    "name": "string",
+    "category": "string",
+    "estimatedCost": number,
+    "sellingPrice": number,
+    "profitMargin": number,
+    "demand": "high|medium|low",
+    "competition": "high|medium|low",
+    "recommendedMOQ": number,
+    "searchTerms": "string (keywords for Alibaba/AliExpress/IndiaMart search)",
+    "reason": "string"
+  }
+]
+
+Generate the recommendations now:`;
 
   try {
     const text = await callGeminiAPI(prompt, { useCache: true, cacheTTL: 30 * 60 * 1000 }); // 30 min cache
