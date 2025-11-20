@@ -237,13 +237,39 @@ Generate the question now:`;
       // Parse AI response (it should be JSON)
       let mcqData;
       try {
-        // Try to extract JSON from markdown code blocks if present
-        const jsonMatch = aiResponse.match(/```json\s*([\s\S]*?)\s*```/) || aiResponse.match(/```\s*([\s\S]*?)\s*```/);
-        const jsonString = jsonMatch ? jsonMatch[1] : aiResponse;
-        mcqData = JSON.parse(jsonString.trim());
+        // Try multiple patterns to extract JSON
+        let jsonString = aiResponse;
+        
+        // Pattern 1: JSON in markdown code blocks
+        const jsonBlockMatch = jsonString.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonBlockMatch) {
+          jsonString = jsonBlockMatch[1];
+        } else {
+          // Pattern 2: Any code block
+          const codeBlockMatch = jsonString.match(/```\s*([\s\S]*?)\s*```/);
+          if (codeBlockMatch) {
+            jsonString = codeBlockMatch[1];
+          } else {
+            // Pattern 3: Find first { and last }
+            const firstBrace = jsonString.indexOf('{');
+            const lastBrace = jsonString.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+              jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+            }
+          }
+        }
+        
+        // Clean up the JSON string
+        jsonString = jsonString.trim();
+        // Remove any leading/trailing whitespace or newlines
+        jsonString = jsonString.replace(/^\s+|\s+$/g, '');
+        
+        mcqData = JSON.parse(jsonString);
       } catch (parseError) {
         // If parsing fails, try to construct MCQ from text response
-        console.error('Failed to parse AI response as JSON:', aiResponse);
+        console.error('Failed to parse AI response as JSON:', parseError);
+        console.error('AI Response was:', aiResponse.substring(0, 500));
+        
         // Fallback: return a default question
         return NextResponse.json({
           success: true,
@@ -267,7 +293,8 @@ Generate the question now:`;
             stepNumber,
             userBudget: userContext.budget,
             productGenre: userContext.productGenre,
-            fallback: true
+            fallback: true,
+            error: 'Failed to parse AI response as JSON'
           }
         });
       }

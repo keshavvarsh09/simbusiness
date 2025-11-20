@@ -103,12 +103,16 @@ export default function BudgetAllocation() {
 
       const data = await response.json();
       if (data.success) {
-        alert(`$${amount} added to your wallet!`);
+        alert(`$${amount} added to your wallet! New balance: $${data.newBudget.toFixed(2)}`);
         setAddAmount('');
         setShowModal(false);
-        fetchBudgetStatus();
+        await fetchBudgetStatus();
+        // Trigger a custom event to notify other components
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('budgetUpdated', { detail: { newBudget: data.newBudget } }));
+        }
       } else {
-        alert(data.error || 'Failed to add funds');
+        alert(data.error || data.details || 'Failed to add funds');
       }
     } catch (error) {
       console.error('Error adding funds:', error);

@@ -124,6 +124,19 @@ export default function Dashboard() {
     }
 
     loadDashboardState();
+    
+    // Listen for budget updates from BudgetAllocation component
+    const handleBudgetUpdate = () => {
+      // Refresh dashboard state to show updated budget
+      loadDashboardState();
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('budgetUpdated', handleBudgetUpdate);
+      return () => {
+        window.removeEventListener('budgetUpdated', handleBudgetUpdate);
+      };
+    }
   }, [router]);
 
   // Save state after changes (debounced)
@@ -175,6 +188,9 @@ export default function Dashboard() {
         setMetrics(stateData.state.metrics);
         setSimulationHistory(stateData.state.simulationHistory);
         setHasProducts(stateData.hasProducts);
+      } else {
+        console.error('Failed to load dashboard state:', stateData.error);
+        alert(`Failed to load dashboard: ${stateData.error || 'Unknown error'}`);
       }
 
       // Load user products for calculations
@@ -260,6 +276,11 @@ export default function Dashboard() {
       return;
     }
     
+    if (userProducts.length === 0) {
+      alert('No active products found. Please activate products in the Products page.');
+      return;
+    }
+    
     setDay(prevDay => prevDay + 1);
     
     // Randomly trigger market events (10% chance each day)
@@ -285,21 +306,37 @@ export default function Dashboard() {
         productAllocations = budgetData.allocations || [];
       }
 
-      // Get seasonality factors
-      const seasonalityResponse = await fetch('/api/products/seasonality', {
-        headers: getAuthHeaders(),
-      });
-      const seasonalityData = await seasonalityResponse.json();
-      if (seasonalityData.success) {
-        seasonalityData.products.forEach((p: any) => {
-          productSeasonality[p.productId] = {
-            seasonality: p.calculatedSeasonality || 1.0,
-            trend: p.currentTrend || 1.0
-          };
+      // Get seasonality factors (optional - if endpoint doesn't exist, use defaults)
+      try {
+        const seasonalityResponse = await fetch('/api/products/seasonality', {
+          headers: getAuthHeaders(),
+        });
+        if (seasonalityResponse.ok) {
+          const seasonalityData = await seasonalityResponse.json();
+          if (seasonalityData.success) {
+            seasonalityData.products.forEach((p: any) => {
+              productSeasonality[p.productId] = {
+                seasonality: p.calculatedSeasonality || 1.0,
+                trend: p.currentTrend || 1.0
+              };
+            });
+          }
+        }
+      } catch (seasonalityError) {
+        // Seasonality endpoint is optional, use default values
+        console.log('Seasonality endpoint not available, using defaults');
+        userProducts.forEach((product) => {
+          if (!productSeasonality[product.id]) {
+            productSeasonality[product.id] = {
+              seasonality: 1.0,
+              trend: 1.0
+            };
+          }
         });
       }
     } catch (error) {
-      console.error('Error fetching budget/seasonality:', error);
+      console.error('Error fetching budget:', error);
+      alert('Failed to fetch budget allocations. Simulation will continue with default values.');
     }
     
     // Calculate total allocated budget for distribution
@@ -391,7 +428,7 @@ export default function Dashboard() {
               const firstSku = inventoryData.inventory.find((inv: any) => inv.availableQuantity > 0);
               if (firstSku) {
                 const deductQty = Math.min(productOrders, firstSku.availableQuantity);
-                await fetch('/api/products/deduct-inventory', {
+                const deductResponse = await fetch('/api/products/deduct-inventory', {
                   method: 'POST',
                   headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -400,16 +437,24 @@ export default function Dashboard() {
                     quantity: deductQty
                   }),
                 });
+                if (!deductResponse.ok) {
+                  console.error('Failed to deduct inventory:', await deductResponse.text());
+                }
+              } else {
+                console.warn(`No available inventory for product ${product.id}, skipping deduction`);
               }
+            } else {
+              console.warn(`No SKU inventory found for product ${product.id}, skipping deduction`);
             }
           } catch (error) {
             console.error('Error deducting inventory:', error);
+            // Don't block simulation if inventory deduction fails
           }
         }
         
-        // Update product performance in database
+        // Update product performance in database (optional endpoint)
         try {
-          await fetch('/api/products/performance', {
+          const perfResponse = await fetch('/api/products/performance', {
             method: 'POST',
             headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -423,8 +468,12 @@ export default function Dashboard() {
               trendApplied: trend
             }),
           });
+          if (!perfResponse.ok) {
+            console.warn('Product performance endpoint not available or failed');
+          }
         } catch (error) {
-          console.error('Error saving product performance:', error);
+          // Performance tracking is optional, don't block simulation
+          console.log('Product performance tracking not available');
         }
       }
     } else {
