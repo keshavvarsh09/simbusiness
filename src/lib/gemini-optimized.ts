@@ -17,33 +17,37 @@ const FALLBACK_MODELS = [
 
 // Rate limiting configuration based on Gemini API documentation
 // Gemini Free Tier: 15 requests per minute (RPM) = 1 request per 4 seconds
-// Gemini Paid Tier: 60+ RPM depending on plan = 1 request per 1 second
-// Using conservative approach: minimum 4 seconds between requests for free tier
+// Using conservative approach: minimum 5 seconds between requests for free tier (safer)
 const RATE_LIMIT_RPM = parseInt(process.env.GEMINI_RATE_LIMIT_RPM || '15');
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MIN_REQUEST_INTERVAL_MS = Math.ceil((60 * 1000) / RATE_LIMIT_RPM); // Minimum time between requests (4 seconds for 15 RPM)
-const REQUEST_COOLDOWN_MS = parseInt(process.env.GEMINI_COOLDOWN_MS || String(MIN_REQUEST_INTERVAL_MS)); // Cooldown between requests
+const REQUEST_COOLDOWN_MS = parseInt(process.env.GEMINI_COOLDOWN_MS || '5000'); // 5 seconds cooldown (conservative)
+
+// Global request tracking to ensure only one request at a time
+let lastRequestTime = 0;
+let activeRequestCount = 0;
+const MAX_CONCURRENT_REQUESTS = 1; // Only one request at a time
 
 // Simple in-memory rate limiter (for serverless, consider Redis in production)
 interface RateLimitEntry {
   count: number;
   resetAt: number;
-  lastRequestTime: number; // Track last request time for cooldown
 }
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
-// Request queue to ensure requests are spaced out
+// Request queue to ensure requests are spaced out and sequential
 interface QueuedRequest {
   resolve: (value: any) => void;
   reject: (error: any) => void;
   execute: () => Promise<any>;
   timestamp: number;
+  retries: number;
 }
 
 const requestQueue: QueuedRequest[] = [];
 let isProcessingQueue = false;
-let lastRequestTime = 0;
+let queueProcessingPromise: Promise<void> | null = null;
 
 // Simple cache for responses (consider Redis for production)
 interface CacheEntry {
@@ -56,88 +60,109 @@ const responseCache = new Map<string, CacheEntry>();
 const DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes default
 
 /**
- * Check rate limit and cooldown
- * Returns the delay needed before making the request (0 if ready)
+ * Check rate limit
  */
-function checkRateLimitWithCooldown(identifier: string = 'default'): { allowed: boolean; delayMs: number } {
+function checkRateLimit(identifier: string = 'default'): { allowed: boolean; waitTime: number } {
   const now = Date.now();
   const entry = rateLimitMap.get(identifier);
-
-  // Check cooldown first (minimum time between requests)
-  const timeSinceLastRequest = now - lastRequestTime;
-  const cooldownDelay = Math.max(0, REQUEST_COOLDOWN_MS - timeSinceLastRequest);
 
   if (!entry || now > entry.resetAt) {
     // Reset or create new entry
     rateLimitMap.set(identifier, {
       count: 1,
-      resetAt: now + RATE_LIMIT_WINDOW_MS,
-      lastRequestTime: now
+      resetAt: now + RATE_LIMIT_WINDOW_MS
     });
-    return { allowed: true, delayMs: cooldownDelay };
+    return { allowed: true, waitTime: 0 };
   }
 
   if (entry.count >= RATE_LIMIT_RPM) {
     // Rate limit exceeded - calculate wait time
     const waitTime = entry.resetAt - now;
-    return { allowed: false, delayMs: waitTime };
+    return { allowed: false, waitTime };
   }
-
-  // Check cooldown for this identifier
-  const timeSinceLastIdRequest = now - entry.lastRequestTime;
-  const idCooldownDelay = Math.max(0, REQUEST_COOLDOWN_MS - timeSinceLastIdRequest);
 
   entry.count++;
-  entry.lastRequestTime = now;
-  
-  return { allowed: true, delayMs: Math.max(cooldownDelay, idCooldownDelay) };
+  return { allowed: true, waitTime: 0 };
 }
 
 /**
- * Wait for cooldown period
+ * Wait for cooldown period (ensures minimum time between requests)
  */
-async function waitForCooldown(delayMs: number): Promise<void> {
-  if (delayMs > 0) {
-    console.log(`[Gemini] Waiting ${delayMs}ms for cooldown...`);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
+async function waitForCooldown(): Promise<void> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  const cooldownNeeded = REQUEST_COOLDOWN_MS - timeSinceLastRequest;
+
+  if (cooldownNeeded > 0) {
+    console.log(`[Gemini] Cooldown: waiting ${cooldownNeeded}ms before next request...`);
+    await new Promise(resolve => setTimeout(resolve, cooldownNeeded));
   }
 }
 
 /**
- * Process request queue with proper spacing
+ * Process request queue sequentially with proper spacing
  */
 async function processRequestQueue(): Promise<void> {
-  if (isProcessingQueue || requestQueue.length === 0) {
+  // Prevent multiple queue processors
+  if (isProcessingQueue) {
     return;
   }
 
   isProcessingQueue = true;
 
   while (requestQueue.length > 0) {
+    // Ensure only one request at a time
+    if (activeRequestCount >= MAX_CONCURRENT_REQUESTS) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      continue;
+    }
+
     const request = requestQueue.shift();
     if (!request) break;
 
+    activeRequestCount++;
+
     try {
-      // Check rate limit and cooldown
-      const { allowed, delayMs } = checkRateLimitWithCooldown('api');
+      // Always wait for cooldown before making request
+      await waitForCooldown();
+
+      // Check rate limit
+      const { allowed, waitTime } = checkRateLimit('api');
       
       if (!allowed) {
         // Rate limit exceeded, wait and re-queue
-        console.log(`[Gemini] Rate limit exceeded, waiting ${delayMs}ms...`);
-        await waitForCooldown(delayMs);
-        requestQueue.unshift(request); // Re-queue at front
+        console.log(`[Gemini] Rate limit exceeded, waiting ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        requestQueue.unshift({ ...request, retries: (request.retries || 0) + 1 }); // Re-queue at front
+        activeRequestCount--;
         continue;
       }
 
-      // Wait for cooldown if needed
-      await waitForCooldown(delayMs);
-
       // Execute request
+      console.log(`[Gemini] Processing request (queue: ${requestQueue.length} remaining)...`);
       lastRequestTime = Date.now();
       const result = await request.execute();
       request.resolve(result);
-    } catch (error) {
-      request.reject(error);
+    } catch (error: any) {
+      // Handle 429 errors by waiting and retrying instead of failing
+      if (error?.message?.includes('429') || error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
+        const retryDelay = Math.min(30000, (request.retries || 0) * 2000 + 5000); // Exponential backoff, max 30s
+        console.log(`[Gemini] 429 error, waiting ${retryDelay}ms before retry (attempt ${(request.retries || 0) + 1})...`);
+        
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        
+        // Re-queue for retry (max 3 retries)
+        if ((request.retries || 0) < 3) {
+          requestQueue.unshift({ ...request, retries: (request.retries || 0) + 1 });
+        } else {
+          request.reject(new Error('Gemini API rate limit exceeded. Please try again in a few minutes.'));
+        }
+      } else {
+        // Other errors - reject immediately
+        request.reject(error);
+      }
+    } finally {
+      activeRequestCount--;
     }
   }
 
@@ -145,7 +170,7 @@ async function processRequestQueue(): Promise<void> {
 }
 
 /**
- * Queue a request to ensure proper spacing
+ * Queue a request to ensure proper spacing and sequential processing
  */
 function queueRequest<T>(execute: () => Promise<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -153,11 +178,16 @@ function queueRequest<T>(execute: () => Promise<T>): Promise<T> {
       resolve,
       reject,
       execute,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      retries: 0
     });
 
     // Start processing queue if not already processing
-    processRequestQueue().catch(console.error);
+    if (!queueProcessingPromise) {
+      queueProcessingPromise = processRequestQueue().finally(() => {
+        queueProcessingPromise = null;
+      });
+    }
   });
 }
 
@@ -268,28 +298,17 @@ async function callGeminiAPI(
       } catch (error: any) {
         lastError = error;
         
-        // Handle 429 (Too Many Requests) with exponential backoff
+        // Handle 429 (Too Many Requests) - throw to let queue handler retry
         if (error?.message?.includes('429') || error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
-          // Check for Retry-After header if available
-          const retryAfter = error?.response?.headers?.get?.('Retry-After') || 
-                            error?.retryAfter || 
-                            retryDelay;
-          
-          const waitTime = parseInt(String(retryAfter)) * 1000 || retryDelay;
-          console.log(`[Gemini] Rate limit hit (429), waiting ${waitTime}ms before retry...`);
-          
-          await waitForCooldown(waitTime);
-          retryDelay *= 2; // Exponential backoff for next retry
-          
-          // Re-queue the request after cooldown
-          continue; // Try same model again after cooldown
+          // Let the queue handler retry this with proper backoff
+          throw error; // Will be caught by queue handler
         }
         
-        // If it's a 503 (overloaded) or 404 (not found), try next model
+        // If it's a 503 (overloaded) or 404 (not found), wait and try next model
         if (error?.message?.includes('503') || error?.message?.includes('overloaded') || 
             error?.message?.includes('404') || error?.message?.includes('not found')) {
-          console.log(`[Gemini] Model ${modelToTry} failed, trying next fallback...`);
-          await waitForCooldown(REQUEST_COOLDOWN_MS); // Wait before trying next model
+          console.log(`[Gemini] Model ${modelToTry} failed, waiting before trying next fallback...`);
+          await waitForCooldown(); // Wait before trying next model
           continue; // Try next model
         }
         
