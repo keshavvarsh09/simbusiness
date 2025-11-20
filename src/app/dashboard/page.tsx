@@ -148,12 +148,27 @@ export default function Dashboard() {
       if (stateData.success) {
         // Always recalculate profit from revenue - expenses to ensure accuracy
         const calculatedProfit = stateData.state.revenue - stateData.state.expenses;
+        
+        // Calculate actual inventory from SKU inventory
+        let actualInventory = stateData.state.inventory;
+        try {
+          const inventoryResponse = await fetch('/api/products/inventory', {
+            headers: getAuthHeaders(),
+          });
+          const inventoryData = await inventoryResponse.json();
+          if (inventoryData.success && inventoryData.inventory) {
+            actualInventory = inventoryData.inventory.reduce((sum: number, inv: any) => sum + inv.availableQuantity, 0);
+          }
+        } catch (error) {
+          console.error('Failed to load inventory:', error);
+        }
+        
         setBusinessStats({
           revenue: stateData.state.revenue,
           expenses: stateData.state.expenses,
           profit: calculatedProfit, // Recalculate to ensure accuracy
           orders: stateData.state.orders,
-          inventory: stateData.state.inventory,
+          inventory: actualInventory, // Use actual SKU inventory
           marketing: stateData.state.marketing
         });
         setDay(stateData.state.day);
@@ -328,7 +343,24 @@ export default function Dashboard() {
         }
         
         // Calculate orders for this product
-        const productOrders = Math.round(productVisitors * productConversionRate);
+        const potentialOrders = Math.round(productVisitors * productConversionRate);
+        
+        // Get available inventory for this product (from SKU inventory)
+        let availableInventory = 0;
+        try {
+          const inventoryResponse = await fetch(`/api/products/inventory?productId=${product.id}`, {
+            headers: getAuthHeaders(),
+          });
+          const inventoryData = await inventoryResponse.json();
+          if (inventoryData.success && inventoryData.inventory) {
+            availableInventory = inventoryData.inventory.reduce((sum: number, inv: any) => sum + inv.availableQuantity, 0);
+          }
+        } catch (error) {
+          console.error('Error fetching inventory:', error);
+        }
+        
+        // Limit orders to available inventory
+        const productOrders = Math.min(potentialOrders, availableInventory);
         const productRevenue = productOrders * product.sellingPrice;
         
         // Calculate costs
@@ -345,6 +377,35 @@ export default function Dashboard() {
         totalRevenue += productRevenue;
         totalExpenses += productExpenses;
         totalOrders += productOrders;
+        
+        // Deduct inventory from SKU inventory
+        if (productOrders > 0) {
+          try {
+            // Get product SKU
+            const inventoryResponse = await fetch(`/api/products/inventory?productId=${product.id}`, {
+              headers: getAuthHeaders(),
+            });
+            const inventoryData = await inventoryResponse.json();
+            if (inventoryData.success && inventoryData.inventory && inventoryData.inventory.length > 0) {
+              // Deduct from first available SKU
+              const firstSku = inventoryData.inventory.find((inv: any) => inv.availableQuantity > 0);
+              if (firstSku) {
+                const deductQty = Math.min(productOrders, firstSku.availableQuantity);
+                await fetch('/api/products/deduct-inventory', {
+                  method: 'POST',
+                  headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    productId: product.id,
+                    sku: firstSku.sku,
+                    quantity: deductQty
+                  }),
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Error deducting inventory:', error);
+          }
+        }
         
         // Update product performance in database
         try {
@@ -405,6 +466,20 @@ export default function Dashboard() {
       returnRate: Math.max(5, Math.min(15, prev.returnRate + (Math.random() - 0.5) * 0.5))
     }));
     
+    // Calculate total inventory from SKU inventory
+    let totalInventory = 0;
+    try {
+      const inventoryResponse = await fetch('/api/products/inventory', {
+        headers: getAuthHeaders(),
+      });
+      const inventoryData = await inventoryResponse.json();
+      if (inventoryData.success && inventoryData.inventory) {
+        totalInventory = inventoryData.inventory.reduce((sum: number, inv: any) => sum + inv.availableQuantity, 0);
+      }
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    }
+    
     setBusinessStats(prev => {
       const newTotalRevenue = prev.revenue + totalRevenue;
       const newTotalExpenses = prev.expenses + finalExpenses;
@@ -419,7 +494,7 @@ export default function Dashboard() {
         expenses: newTotalExpenses,
         profit: newTotalProfit,
         orders: prev.orders + totalOrders,
-        inventory: Math.max(0, prev.inventory - totalOrders),
+        inventory: totalInventory, // Use actual SKU inventory count
         marketing: Math.max(0, prev.marketing - (totalExpenses * 0.1)) // Decrease marketing budget
       };
     });
@@ -429,60 +504,43 @@ export default function Dashboard() {
   const [showBudgetConfirm, setShowBudgetConfirm] = useState(false);
   const [showMarketingConfirm, setShowMarketingConfirm] = useState(false);
 
-  const increaseMarketing = () => {
+  const increaseMarketing = async () => {
     const marketingAmount = 100;
-    const currentProfit = businessStats.revenue - businessStats.expenses;
     
-    if (currentProfit < marketingAmount) {
-      alert(`Insufficient funds. You need $${marketingAmount.toFixed(2)} but only have $${currentProfit.toFixed(2)}.`);
-      return;
-    }
-    
-    setBusinessStats(prev => {
-      const newExpenses = prev.expenses + marketingAmount;
-      const newProfit = prev.revenue - newExpenses;
+    // Check budget from wallet instead of profit
+    try {
+      const budgetResponse = await fetch('/api/budget/allocate', {
+        headers: getAuthHeaders(),
+      });
+      const budgetData = await budgetResponse.json();
       
-      return {
-        ...prev,
-        marketing: prev.marketing + marketingAmount,
-        expenses: newExpenses,
-        profit: newProfit // Recalculate profit correctly
-      };
-    });
+      if (budgetData.success) {
+        const availableBudget = budgetData.budget?.available || 0;
+        
+        if (availableBudget < marketingAmount) {
+          alert(`Insufficient budget. You need $${marketingAmount.toFixed(2)} but only have $${availableBudget.toFixed(2)} available in your wallet.`);
+          return;
+        }
+        
+        // Add funds to marketing budget (this is just increasing the marketing allocation)
+        // The actual spending happens during simulation
+        setBusinessStats(prev => ({
+          ...prev,
+          marketing: prev.marketing + marketingAmount
+        }));
+      } else {
+        alert('Failed to check budget. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error checking budget:', error);
+      alert('Failed to check budget. Please try again.');
+    }
   };
 
-  const restockInventory = () => {
-    const restockAmount = 20;
-    
-    // Calculate restock cost based on actual product costs
-    let restockCost: number;
-    if (userProducts.length > 0) {
-      // Use average cost from actual products
-      const avgCost = userProducts.reduce((sum, p) => sum + p.cost, 0) / userProducts.length;
-      restockCost = restockAmount * avgCost;
-    } else {
-      // Fallback to default
-      restockCost = restockAmount * 15;
-    }
-    
-    const currentProfit = businessStats.revenue - businessStats.expenses;
-    
-    if (currentProfit < restockCost) {
-      alert(`Insufficient funds. You need $${restockCost.toFixed(2)} but only have $${currentProfit.toFixed(2)}.`);
-      return;
-    }
-    
-    setBusinessStats(prev => {
-      const newExpenses = prev.expenses + restockCost;
-      const newProfit = prev.revenue - newExpenses;
-      
-      return {
-        ...prev,
-        inventory: prev.inventory + restockAmount,
-        expenses: newExpenses,
-        profit: newProfit // Recalculate profit correctly
-      };
-    });
+  const restockInventory = async () => {
+    // Restocking is now handled through the ProductInventoryManager component
+    // This function is kept for backward compatibility but redirects to inventory manager
+    alert('Please use the SKU & Inventory Management section below to restock products. This ensures proper SKU tracking and budget deduction.');
   };
 
   const toggleAutoSimulation = () => {
@@ -591,6 +649,12 @@ export default function Dashboard() {
             >
               <FiPackage /> View Products
             </button>
+            <button
+              onClick={() => router.push('/products/dashboard')}
+              className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
+            >
+              <FiActivity /> Product Dashboard
+            </button>
           </div>
         </div>
         
@@ -662,7 +726,7 @@ export default function Dashboard() {
         </div>
 
         {/* SKU & Inventory Management */}
-        <div className="mb-6 sm:mb-8">
+        <div id="inventory-manager" className="mb-6 sm:mb-8">
           <ProductInventoryManager />
         </div>
 
@@ -808,16 +872,14 @@ export default function Dashboard() {
       <ConfirmationDialog
         isOpen={showRestockConfirm}
         title="Restock Inventory"
-        message={`Are you sure you want to restock 20 units? This will cost $${userProducts.length > 0 
-          ? (20 * (userProducts.reduce((sum, p) => sum + p.cost, 0) / userProducts.length)).toFixed(2)
-          : (20 * 15).toFixed(2)
-        } and will be deducted from your profit.`}
-        confirmText="Restock"
+        message="Please use the SKU & Inventory Management section below to restock products. This ensures proper SKU tracking and budget deduction from your wallet."
+        confirmText="Go to Inventory Manager"
         cancelText="Cancel"
         variant="info"
         onConfirm={() => {
-          restockInventory();
           setShowRestockConfirm(false);
+          // Scroll to inventory manager section
+          document.getElementById('inventory-manager')?.scrollIntoView({ behavior: 'smooth' });
         }}
         onCancel={() => setShowRestockConfirm(false)}
       />

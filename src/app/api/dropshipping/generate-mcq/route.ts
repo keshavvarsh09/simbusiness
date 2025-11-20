@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
-import { chatWithGemini } from '@/lib/gemini';
+import { generateChatResponse } from '@/lib/ai-router';
 import { DROPSHIPPING_CHECKLIST } from '@/lib/dropshipping-checklist-data';
 
 export const dynamic = 'force-dynamic';
@@ -195,9 +195,17 @@ Generate the question now:`;
 
       let aiResponse;
       try {
-        aiResponse = await chatWithGemini(prompt, userContext);
-      } catch (geminiError: any) {
-        console.error('Gemini API error:', geminiError);
+        // Use AI router for better fallbacks (Groq -> Gemini -> OpenAI)
+        aiResponse = await generateChatResponse(prompt, {
+          budget: userContext.budget,
+          productGenre: userContext.productGenre,
+          products: [],
+          revenue: 0,
+          expenses: 0,
+          profit: 0
+        });
+      } catch (aiError: any) {
+        console.error('AI API error:', aiError);
         // Fallback to a default question if AI fails
         return NextResponse.json({
           success: true,

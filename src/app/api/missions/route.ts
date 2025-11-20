@@ -208,26 +208,48 @@ export async function PATCH(request: NextRequest) {
       const mission = missionResult.rows[0];
 
       if (action === 'solve') {
-        // Check if user has enough money
-        const businessData = await client.query(
-          'SELECT * FROM business_data WHERE user_id = $1',
+        // Check if user has enough budget in wallet
+        const userResult = await client.query(
+          'SELECT budget FROM users WHERE id = $1',
           [userId]
         );
+        const userBudget = parseFloat(userResult.rows[0]?.budget || '0');
 
-        const cashFlow = businessData.rows[0]?.cash_flow || 0;
-        if (cashFlow < mission.cost_to_solve) {
+        if (userBudget < mission.cost_to_solve) {
           return NextResponse.json(
-            { error: 'Insufficient funds to solve this mission' },
+            { 
+              error: 'Insufficient funds to solve this mission',
+              details: `You need $${mission.cost_to_solve} but only have $${userBudget.toFixed(2)} in your wallet.`
+            },
             { status: 400 }
           );
         }
 
-        // Deduct cost and update mission
+        // Deduct cost from user budget
+        const newBudget = userBudget - mission.cost_to_solve;
+        await client.query(
+          'UPDATE users SET budget = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [newBudget, userId]
+        );
+
+        // Update business_data expenses
         await client.query(
           `UPDATE business_data 
-           SET cash_flow = cash_flow - $1, expenses = expenses + $1
+           SET expenses = expenses + $1, profit = revenue - (expenses + $1), cash_flow = revenue - (expenses + $1)
            WHERE user_id = $2`,
           [mission.cost_to_solve, userId]
+        );
+
+        // Log transaction
+        await client.query(
+          `INSERT INTO budget_transactions (user_id, transaction_type, amount, description, metadata)
+           VALUES ($1, 'spend', $2, $3, $4)`,
+          [
+            userId,
+            mission.cost_to_solve,
+            `Solved mission: ${mission.title}`,
+            JSON.stringify({ missionId, missionTitle: mission.title })
+          ]
         );
       }
 

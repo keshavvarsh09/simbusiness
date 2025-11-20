@@ -134,6 +134,13 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Check user's budget before restocking
+        const userResult = await client.query(
+          'SELECT budget FROM users WHERE id = $1',
+          [userId]
+        );
+        const userBudget = parseFloat(userResult.rows[0]?.budget || '0');
+
         // Get or create inventory record
         const inventoryCheck = await client.query(
           'SELECT id, quantity FROM product_inventory WHERE user_id = $1 AND product_id = $2 AND sku = $3',
@@ -142,6 +149,17 @@ export async function POST(request: NextRequest) {
 
         const restockCost = quantity * productCost;
         const currentQuantity = inventoryCheck.rows[0]?.quantity || 0;
+
+        // Check if user has enough budget
+        if (userBudget < restockCost) {
+          return NextResponse.json(
+            { 
+              error: 'Insufficient budget', 
+              details: `You need $${restockCost.toFixed(2)} but only have $${userBudget.toFixed(2)} available.` 
+            },
+            { status: 400 }
+          );
+        }
 
         // Upsert inventory
         await client.query(
@@ -169,6 +187,13 @@ export async function POST(request: NextRequest) {
           [sku, productId]
         );
 
+        // Deduct from user budget
+        const newBudget = userBudget - restockCost;
+        await client.query(
+          'UPDATE users SET budget = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [newBudget, userId]
+        );
+
         // Log transaction in budget_transactions
         await client.query(
           `INSERT INTO budget_transactions (user_id, transaction_type, amount, description, metadata)
@@ -185,7 +210,8 @@ export async function POST(request: NextRequest) {
           success: true,
           message: `Restocked ${quantity} units of SKU ${sku}`,
           restockCost,
-          newQuantity: currentQuantity + quantity
+          newQuantity: currentQuantity + quantity,
+          newBudget
         });
       }
 

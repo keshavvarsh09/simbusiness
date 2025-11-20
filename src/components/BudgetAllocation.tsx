@@ -353,7 +353,7 @@ export default function BudgetAllocation() {
                     </div>
                     {addAmount && (
                       <div className="text-sm text-gray-700 mt-2">
-                        <strong>New Balance:</strong> ${(budgetStatus?.total || 0 + parseFloat(addAmount) || 0).toFixed(2)}
+                        <strong>New Balance:</strong> ${((budgetStatus?.total || 0) + (parseFloat(addAmount) || 0)).toFixed(2)}
                       </div>
                     )}
                   </div>

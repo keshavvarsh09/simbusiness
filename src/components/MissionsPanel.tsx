@@ -91,9 +91,15 @@ export default function MissionsPanel() {
 
       const data = await response.json();
       if (data.success) {
+        alert(data.message || 'Mission solved successfully!');
         fetchMissions();
+        // Refresh page to update budget display
+        window.location.reload();
       } else {
-        alert(data.error || 'Failed to solve mission');
+        const errorMsg = data.details 
+          ? `${data.error}: ${data.details}` 
+          : (data.error || 'Failed to solve mission');
+        alert(errorMsg);
       }
     } catch (error) {
       alert('Failed to solve mission. Please try again.');
