@@ -652,7 +652,7 @@ const REFLECTION_PROMPTS: Record<number, string[]> = {
     'Which creatives or influencers excite me the most and why?'
   ],
   19: [
-    'How fast can I respond to a frustrated customer with today's workflow?',
+    'How fast can I respond to a frustrated customer with today\'s workflow?',
     'Which part of fulfillment relies on a single person or supplier, and how do I back it up?'
   ],
   20: [

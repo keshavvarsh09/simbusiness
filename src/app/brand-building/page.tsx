@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiInstagram, FiYoutube, FiTiktok, FiTrendingUp, FiBarChart, FiLink } from 'react-icons/fi';
+import { FiInstagram, FiYoutube, FiTrendingUp, FiBarChart, FiLink } from 'react-icons/fi';
+import { FaTiktok } from 'react-icons/fa';
 import { getAuthHeaders, isAuthenticated } from '@/lib/auth';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
@@ -95,7 +96,7 @@ export default function BrandBuildingPage() {
       case 'instagram':
         return <FiInstagram className="text-pink-600" />;
       case 'tiktok':
-        return <FiTiktok className="text-black" />;
+        return <FaTiktok className="text-black" />;
       case 'youtube':
         return <FiYoutube className="text-red-600" />;
     }
@@ -141,7 +142,7 @@ export default function BrandBuildingPage() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <FiTiktok />
+                    <FaTiktok />
                     TikTok
                   </button>
                   <button

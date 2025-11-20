@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
-import { generateMissionsFromEvents, getStandardMissionTemplates } from '@/lib/mission-generator';
+import { generateMissionsFromEvents, getStandardMissionTemplates, getPreGeneratedTimeBoundMissions } from '@/lib/mission-generator';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
