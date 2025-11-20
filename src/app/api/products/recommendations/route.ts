@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         // Fallback to default recommendations if AI fails
         recommendations = [
           {
-            name: `${genre} Product 1`,
+            name: `${genre} Product`,
             category: genre,
             estimatedCost: budget * 0.3,
             sellingPrice: budget * 0.5,

@@ -101,18 +101,22 @@ function parseAlibabaResults(html: string, productName: string): ScrapedProduct[
         
         for (const item of productList.slice(0, 10)) {
           if (item && (item.title || item.name || item.productName)) {
-            products.push({
-              platform: 'alibaba',
-              title: item.title || item.name || item.productName || `${productName} Product`,
-              url: item.url || item.link || `https://www.alibaba.com/product-detail/${item.id || ''}`,
-              price: parseFloat(item.price || item.minPrice || item.priceRange?.min || '0') || 0,
-              currency: item.currency || 'USD',
-              moq: parseInt(item.moq || item.minOrderQuantity || '1') || 1,
-              supplier: item.supplierName || item.companyName || 'Supplier',
-              rating: parseFloat(item.rating || item.starRating || '4.5') || 4.5,
-              reviews: parseInt(item.reviewCount || item.reviews || '0') || 0,
-              imageUrl: item.imageUrl || item.mainImage || item.image || undefined
-            });
+            // Only add products with real titles (not fallback titles)
+            const realTitle = item.title || item.name || item.productName;
+            if (realTitle && realTitle.trim().length > 0) {
+              products.push({
+                platform: 'alibaba',
+                title: realTitle,
+                url: item.url || item.link || `https://www.alibaba.com/product-detail/${item.id || ''}`,
+                price: parseFloat(item.price || item.minPrice || item.priceRange?.min || '0') || 0,
+                currency: item.currency || 'USD',
+                moq: parseInt(item.moq || item.minOrderQuantity || '1') || 1,
+                supplier: item.supplierName || item.companyName || 'Supplier',
+                rating: parseFloat(item.rating || item.starRating || '4.5') || 4.5,
+                reviews: parseInt(item.reviewCount || item.reviews || '0') || 0,
+                imageUrl: item.imageUrl || item.mainImage || item.image || undefined
+              });
+            }
           }
         }
       } catch (e) {
@@ -147,30 +151,42 @@ function parseAlibabaResults(html: string, productName: string): ScrapedProduct[
         }
       }
       
-      // Combine extracted data
+      // Combine extracted data - only if we have real titles
       const maxItems = Math.min(prices.length, titles.length, urls.length, 10);
       for (let i = 0; i < maxItems; i++) {
-        products.push({
-          platform: 'alibaba',
-          title: titles[i] || `${productName} - Product ${i + 1}`,
-          url: urls[i] || `https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(productName)}`,
-          price: prices[i] || 0,
-          currency: 'USD',
-          moq: 1,
-          supplier: 'Supplier',
-          rating: 4.5,
-          reviews: 0,
-          imageUrl: undefined
-        });
+        // Only add if we have a real title (not empty, not generic)
+        if (titles[i] && titles[i].trim().length > 5 && !titles[i].includes('Product ')) {
+          products.push({
+            platform: 'alibaba',
+            title: titles[i],
+            url: urls[i] || `https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(productName)}`,
+            price: prices[i] || 0,
+            currency: 'USD',
+            moq: 1,
+            supplier: 'Supplier',
+            rating: 4.5,
+            reviews: 0,
+            imageUrl: undefined
+          });
+        }
       }
     }
   } catch (error) {
     console.error('Error parsing Alibaba HTML:', error);
   }
 
-  // If we got real products, return them
-  if (products.length > 0 && products.some(p => p.price > 0 && p.title !== `${productName} - Alibaba`)) {
-    return products;
+  // If we got real products (with real titles, not fake ones), return them
+  const realProducts = products.filter(p => 
+    p.price > 0 && 
+    p.title && 
+    p.title.trim().length > 5 &&
+    !p.title.includes('Product ') &&
+    !p.title.includes('Product Option') &&
+    p.title !== `${productName} - Alibaba`
+  );
+  
+  if (realProducts.length > 0) {
+    return realProducts;
   }
 
   // Fallback: Return search link only (no fake products)
@@ -310,18 +326,22 @@ function parseAliExpressResults(html: string, productName: string): ScrapedProdu
                 '0'
               );
               
-              products.push({
-                platform: 'aliexpress',
-                title: item.title || item.productTitle || item.name || `${productName} Product`,
-                url: item.url || item.productUrl || `https://www.aliexpress.com/item/${item.productId || ''}.html`,
-                price: price || 0,
-                currency: item.currency || 'USD',
-                moq: 1,
-                supplier: item.storeName || item.sellerName || 'Seller',
-                rating: parseFloat(item.rating || item.starRating || '4.3') || 4.3,
-                reviews: parseInt(item.tradeCount || item.reviewCount || '0') || 0,
-                imageUrl: item.imageUrl || item.image || item.picUrl || undefined
-              });
+              // Only add products with real titles (not fallback titles)
+              const realTitle = item.title || item.productTitle || item.name;
+              if (realTitle && realTitle.trim().length > 0) {
+                products.push({
+                  platform: 'aliexpress',
+                  title: realTitle,
+                  url: item.url || item.productUrl || `https://www.aliexpress.com/item/${item.productId || ''}.html`,
+                  price: price || 0,
+                  currency: item.currency || 'USD',
+                  moq: 1,
+                  supplier: item.storeName || item.sellerName || 'Seller',
+                  rating: parseFloat(item.rating || item.starRating || '4.3') || 4.3,
+                  reviews: parseInt(item.tradeCount || item.reviewCount || '0') || 0,
+                  imageUrl: item.imageUrl || item.image || item.picUrl || undefined
+                });
+              }
             }
           }
           
@@ -357,27 +377,39 @@ function parseAliExpressResults(html: string, productName: string): ScrapedProdu
       
       const maxItems = Math.min(links.length, titles.length, 10);
       for (let i = 0; i < maxItems; i++) {
-        products.push({
-          platform: 'aliexpress',
-          title: titles[i] || `${productName} - Product ${i + 1}`,
-          url: links[i] || `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(productName)}`,
-          price: prices[i] || 0,
-          currency: 'USD',
-          moq: 1,
-          supplier: 'Seller',
-          rating: 4.3,
-          reviews: 0,
-          imageUrl: undefined
-        });
+        // Only add if we have a real title (not empty, not generic, not "Product X")
+        if (titles[i] && titles[i].trim().length > 5 && !titles[i].includes('Product ')) {
+          products.push({
+            platform: 'aliexpress',
+            title: titles[i],
+            url: links[i] || `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(productName)}`,
+            price: prices[i] || 0,
+            currency: 'USD',
+            moq: 1,
+            supplier: 'Seller',
+            rating: 4.3,
+            reviews: 0,
+            imageUrl: undefined
+          });
+        }
       }
     }
   } catch (error) {
     console.error('Error parsing AliExpress HTML:', error);
   }
 
-  // If we got real products, return them
-  if (products.length > 0 && products.some(p => p.price > 0 && p.title !== `${productName} - AliExpress`)) {
-    return products;
+  // If we got real products (with real titles, not fake ones), return them
+  const realProducts = products.filter(p => 
+    p.price > 0 && 
+    p.title && 
+    p.title.trim().length > 5 &&
+    !p.title.includes('Product ') &&
+    !p.title.includes('Listing ') &&
+    p.title !== `${productName} - AliExpress`
+  );
+  
+  if (realProducts.length > 0) {
+    return realProducts;
   }
 
   // Fallback: Return search link only (no fake products)
