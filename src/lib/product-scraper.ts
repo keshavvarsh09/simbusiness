@@ -59,71 +59,131 @@ export async function scrapeAlibaba(
     console.log('Direct fetch failed, using fallback');
   }
 
-  // Fallback: Return search link with estimated products
-  // Generate multiple product variations based on search terms
-  const products: ScrapedProduct[] = [];
-  const variations = [
-    productName,
-    `${productName} wholesale`,
-    `${productName} bulk`,
-    `${productName} dropshipping`,
-    `${productName} supplier`
-  ];
-
-  for (let i = 0; i < Math.min(5, variations.length); i++) {
-    products.push({
-      platform: 'alibaba',
-      title: `${variations[i]} - Product Option ${i + 1}`,
-      url: `https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(variations[i])}`,
-      price: Math.floor(Math.random() * 50 + 5), // Estimated price range
-      currency: 'USD',
-      moq: i === 0 ? 1 : Math.floor(Math.random() * 50 + 10),
-      supplier: `Supplier ${i + 1}`,
-      rating: 4 + Math.random() * 0.5,
-      reviews: Math.floor(Math.random() * 5000 + 100),
-      imageUrl: `https://source.unsplash.com/300x300/?${encodeURIComponent(productName)}`
-    });
-  }
-
-  return products;
+  // If direct fetch failed, return search link only (don't generate fake products)
+  return [{
+    platform: 'alibaba',
+    title: `Search ${productName} on Alibaba`,
+    url: searchUrl,
+    price: 0,
+    currency: 'USD',
+    moq: 1,
+    supplier: 'Multiple Suppliers',
+    rating: 0,
+    reviews: 0
+  }];
 }
 
 /**
  * Parse Alibaba search results HTML
- * Extracts product titles, prices, suppliers, ratings
+ * Extracts real product titles, prices, suppliers, ratings from HTML
  */
 function parseAlibabaResults(html: string, productName: string): ScrapedProduct[] {
-  // Simplified parsing - in production, use proper HTML parser like Cheerio
   const products: ScrapedProduct[] = [];
   
-  // Extract product cards (this is a simplified example)
-  // Real implementation would use Cheerio or similar
-  const productMatches = html.match(/<div[^>]*class="[^"]*item[^"]*"[^>]*>/gi) || [];
-  
-  for (let i = 0; i < Math.min(productMatches.length, 5); i++) {
-    products.push({
-      platform: 'alibaba',
-      title: `${productName} - Product ${i + 1}`,
-      url: `https://www.alibaba.com/product-detail/${i}`,
-      price: Math.random() * 100 + 10, // Would extract from HTML
-      currency: 'USD',
-      moq: Math.floor(Math.random() * 100) + 1,
-      supplier: `Supplier ${i + 1}`,
-      rating: 4 + Math.random(),
-      reviews: Math.floor(Math.random() * 1000),
-      imageUrl: `https://via.placeholder.com/300?text=${encodeURIComponent(productName)}`
-    });
+  try {
+    // Extract product data from JSON-LD or data attributes in HTML
+    // Alibaba often embeds product data in script tags or data attributes
+    
+    // Try to find product listings in various formats
+    // Pattern 1: Look for product cards with data attributes
+    const productCardPattern = /<div[^>]*data-product[^>]*>[\s\S]*?<\/div>/gi;
+    const productCards = html.match(productCardPattern) || [];
+    
+    // Pattern 2: Look for JSON data embedded in script tags
+    const jsonDataPattern = /window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});/i;
+    const jsonMatch = html.match(jsonDataPattern);
+    
+    if (jsonMatch) {
+      try {
+        const data = JSON.parse(jsonMatch[1]);
+        // Navigate through Alibaba's data structure
+        const productList = data?.pageData?.list || data?.list || [];
+        
+        for (const item of productList.slice(0, 10)) {
+          if (item && (item.title || item.name || item.productName)) {
+            products.push({
+              platform: 'alibaba',
+              title: item.title || item.name || item.productName || `${productName} Product`,
+              url: item.url || item.link || `https://www.alibaba.com/product-detail/${item.id || ''}`,
+              price: parseFloat(item.price || item.minPrice || item.priceRange?.min || '0') || 0,
+              currency: item.currency || 'USD',
+              moq: parseInt(item.moq || item.minOrderQuantity || '1') || 1,
+              supplier: item.supplierName || item.companyName || 'Supplier',
+              rating: parseFloat(item.rating || item.starRating || '4.5') || 4.5,
+              reviews: parseInt(item.reviewCount || item.reviews || '0') || 0,
+              imageUrl: item.imageUrl || item.mainImage || item.image || null
+            });
+          }
+        }
+      } catch (e) {
+        // JSON parsing failed, try regex extraction
+      }
+    }
+    
+    // Pattern 3: Extract from HTML attributes using regex
+    if (products.length === 0) {
+      // Look for price patterns
+      const pricePattern = /["']price["']\s*:\s*["']?(\d+\.?\d*)/gi;
+      const titlePattern = /<a[^>]*title=["']([^"']+)["'][^>]*>/gi;
+      const urlPattern = /href=["']([^"']*product[^"']*)["']/gi;
+      
+      const prices: number[] = [];
+      const titles: string[] = [];
+      const urls: string[] = [];
+      
+      let match;
+      while ((match = pricePattern.exec(html)) !== null && prices.length < 10) {
+        const price = parseFloat(match[1]);
+        if (price > 0) prices.push(price);
+      }
+      
+      while ((match = titlePattern.exec(html)) !== null && titles.length < 10) {
+        if (match[1] && match[1].length > 5) titles.push(match[1]);
+      }
+      
+      while ((match = urlPattern.exec(html)) !== null && urls.length < 10) {
+        if (match[1] && match[1].includes('alibaba.com')) {
+          urls.push(match[1].startsWith('http') ? match[1] : `https://www.alibaba.com${match[1]}`);
+        }
+      }
+      
+      // Combine extracted data
+      const maxItems = Math.min(prices.length, titles.length, urls.length, 10);
+      for (let i = 0; i < maxItems; i++) {
+        products.push({
+          platform: 'alibaba',
+          title: titles[i] || `${productName} - Product ${i + 1}`,
+          url: urls[i] || `https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(productName)}`,
+          price: prices[i] || 0,
+          currency: 'USD',
+          moq: 1,
+          supplier: 'Supplier',
+          rating: 4.5,
+          reviews: 0,
+          imageUrl: null
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing Alibaba HTML:', error);
   }
 
-  return products.length > 0 ? products : [{
+  // If we got real products, return them
+  if (products.length > 0 && products.some(p => p.price > 0 && p.title !== `${productName} - Alibaba`)) {
+    return products;
+  }
+
+  // Fallback: Return search link only (no fake products)
+  return [{
     platform: 'alibaba',
-    title: `${productName} - Alibaba`,
+    title: `Search ${productName} on Alibaba`,
     url: `https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(productName)}`,
     price: 0,
     currency: 'USD',
     moq: 1,
     supplier: 'Multiple Suppliers',
-    rating: 4.5
+    rating: 0,
+    reviews: 0
   }];
 }
 
@@ -204,31 +264,18 @@ export async function scrapeAliExpress(
     console.log('Direct fetch failed, using fallback');
   }
 
-  // Fallback: Return search link with estimated products
-  const products: ScrapedProduct[] = [];
-  const variations = [
-    productName,
-    `${productName} dropshipping`,
-    `${productName} wholesale`,
-    `${productName} bulk buy`
-  ];
-
-  for (let i = 0; i < Math.min(5, variations.length); i++) {
-    products.push({
-      platform: 'aliexpress',
-      title: `${variations[i]} - Listing ${i + 1}`,
-      url: `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(variations[i])}`,
-      price: Math.floor(Math.random() * 30 + 3), // Estimated price range
-      currency: 'USD',
-      moq: 1, // AliExpress typically MOQ 1
-      supplier: `Seller ${i + 1}`,
-      rating: 4 + Math.random() * 0.5,
-      reviews: Math.floor(Math.random() * 10000 + 500),
-      imageUrl: `https://source.unsplash.com/300x300/?${encodeURIComponent(productName)}`
-    });
-  }
-
-  return products;
+  // If direct fetch failed, return search link only (don't generate fake products)
+  return [{
+    platform: 'aliexpress',
+    title: `Search ${productName} on AliExpress`,
+    url: searchUrl,
+    price: 0,
+    currency: 'USD',
+    moq: 1,
+    supplier: 'Multiple Sellers',
+    rating: 0,
+    reviews: 0
+  }];
 }
 
 /**

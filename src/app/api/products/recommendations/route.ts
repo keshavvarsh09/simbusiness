@@ -121,18 +121,24 @@ export async function GET(request: NextRequest) {
             scrapedProducts = results[0] || [];
             scrapedAliExpress = results[1] || [];
             
-            // Combine all scraped products
-            const allScraped = [...scrapedProducts, ...scrapedAliExpress];
+            // Combine all scraped products (only include real products with price > 0)
+            const allScraped = [...scrapedProducts, ...scrapedAliExpress].filter(
+              p => p.price > 0 && p.title && !p.title.includes('Search ') && !p.title.includes('Product Option')
+            );
             
-            // Get real prices if available
+            // Get real prices if available (only from products with actual prices)
             if (allScraped.length > 0) {
               const prices = allScraped
                 .filter(p => p.price > 0)
                 .map(p => p.price);
               
               if (prices.length > 0) {
-                const alibabaPrices = scrapedProducts.filter(p => p.price > 0).map(p => p.price);
-                const aliexpressPrices = scrapedAliExpress.filter(p => p.price > 0).map(p => p.price);
+                const alibabaPrices = scrapedProducts
+                  .filter(p => p.price > 0 && p.title && !p.title.includes('Search '))
+                  .map(p => p.price);
+                const aliexpressPrices = scrapedAliExpress
+                  .filter(p => p.price > 0 && p.title && !p.title.includes('Search '))
+                  .map(p => p.price);
                 
                 realPrices = {
                   alibaba: alibabaPrices.length > 0 ? {
@@ -274,9 +280,11 @@ export async function GET(request: NextRequest) {
               realData: false
             },
             suppliers: suppliers,
-            // Include scraped products for detailed view
-            scrapedProducts: allScraped.slice(0, 10), // Top 10 scraped products from all platforms
-            hasRealData: allScraped.length > 0, // Flag to show if real data was fetched
+            // Include only real scraped products (filter out fake/placeholder products)
+            scrapedProducts: allScraped.slice(0, 10).filter(
+              p => p.price > 0 && p.title && !p.title.includes('Search ') && !p.title.includes('Product Option')
+            ),
+            hasRealData: allScraped.length > 0 && allScraped.some(p => p.price > 0), // Flag to show if real data was fetched
             searchTerms: searchTerms
           };
         })
