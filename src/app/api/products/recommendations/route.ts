@@ -65,21 +65,11 @@ export async function GET(request: NextRequest) {
         );
       } catch (aiError: any) {
         console.error('AI recommendation error:', aiError);
-        // Fallback to default recommendations if AI fails
-        recommendations = [
-          {
-            name: `${genre} Product`,
-            category: genre,
-            estimatedCost: budget * 0.3,
-            sellingPrice: budget * 0.5,
-            profitMargin: 40,
-            demand: 'medium',
-            competition: 'medium',
-            recommendedMOQ: 10,
-            searchTerms: `${genre} dropshipping`,
-            reason: 'Good starting product for your budget'
-          }
-        ];
+        // No fallback - return error if AI fails
+        return NextResponse.json(
+          { error: 'Failed to generate recommendations. Please try again.' },
+          { status: 500 }
+        );
       }
 
       // Convert to array if needed
@@ -92,12 +82,17 @@ export async function GET(request: NextRequest) {
       const hasMore = offset + limit < recsArray.length;
 
       // Fetch real products from web for each recommendation
-      const recommendationsWithLinks = await Promise.all(
+      // Only return recommendations that have real scraped product data
+      const recommendationsWithRealData = await Promise.all(
         paginatedRecs.map(async (rec: any) => {
           const searchTerms = rec.searchTerms || rec.name || '';
+          if (!searchTerms || searchTerms.trim().length === 0) {
+            return null; // Skip if no search terms
+          }
+          
           const links = generateProductSearchLinks(searchTerms, rec.category);
           
-          // Try to fetch real products from web (with timeout to not block)
+          // Fetch real products from web - REQUIRED, no fallback
           let scrapedProducts: any[] = [];
           let scrapedAliExpress: any[] = [];
           let realPrices: any = null;
@@ -110,7 +105,7 @@ export async function GET(request: NextRequest) {
               scrapeAliExpress(searchTerms, false) // false = no API, use direct fetch
             ];
             const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Timeout')), 4000)
+              setTimeout(() => reject(new Error('Timeout')), 8000) // Increased timeout to 8s
             );
             
             const results = await Promise.race([
@@ -138,6 +133,11 @@ export async function GET(request: NextRequest) {
                    !p.title.match(/Product \d+/i) &&
                    !p.title.match(/Listing \d+/i)
             );
+            
+            // CRITICAL: Only proceed if we have real scraped products
+            if (allScraped.length === 0) {
+              return null; // Skip this recommendation if no real products found
+            }
             
             // Get real prices if available (only from products with actual prices)
             if (allScraped.length > 0) {
@@ -176,8 +176,9 @@ export async function GET(request: NextRequest) {
               }
             }
           } catch (error) {
-            // Scraping failed or timed out, use fallback
-            console.log(`Scraping failed for ${searchTerms}, using fallback`);
+            // Scraping failed or timed out - skip this recommendation
+            console.log(`Scraping failed for ${searchTerms}, skipping recommendation`);
+            return null; // Don't show recommendations without real data
           }
           
           // Try to get product image (non-blocking)
@@ -191,47 +192,27 @@ export async function GET(request: NextRequest) {
             // Image fetch failed, use placeholder
           }
           
-          // Build suppliers list from scraped products or fallback
-          const allScraped = [...scrapedProducts, ...scrapedAliExpress];
-          const suppliers = allScraped.length > 0
-            ? allScraped.slice(0, 5).map((sp: any) => ({
-                platform: sp.platform,
-                name: sp.supplier || 'Verified Supplier',
-                url: sp.url || (sp.platform === 'alibaba' ? links.alibaba : links.aliexpress),
-                rating: sp.rating || 4.5,
-                reviews: sp.reviews || 0,
-                verified: true,
-                price: sp.price > 0 ? sp.price : undefined,
-                moq: sp.moq || 1,
-                imageUrl: sp.imageUrl,
-                title: sp.title
-              }))
-            : [
-                {
-                  platform: 'alibaba',
-                  name: 'Verified Suppliers',
-                  url: links.alibaba,
-                  rating: 4.5,
-                  reviews: 1234,
-                  verified: true
-                },
-                {
-                  platform: 'aliexpress',
-                  name: 'Top Rated Sellers',
-                  url: links.aliexpress,
-                  rating: 4.3,
-                  reviews: 5678,
-                  verified: true
-                },
-                {
-                  platform: 'indiamart',
-                  name: 'Trusted Suppliers',
-                  url: links.indiamart,
-                  rating: 4.2,
-                  reviews: 890,
-                  verified: true
-                }
-              ];
+          // Build suppliers list ONLY from scraped products (no fallback)
+          const allScraped = [...scrapedProducts, ...scrapedAliExpress].filter(
+            p => p.price > 0 && p.title && p.title.trim().length > 5
+          );
+          
+          if (allScraped.length === 0) {
+            return null; // Skip if no real products
+          }
+          
+          const suppliers = allScraped.slice(0, 5).map((sp: any) => ({
+            platform: sp.platform,
+            name: sp.supplier || 'Verified Supplier',
+            url: sp.url || (sp.platform === 'alibaba' ? links.alibaba : links.aliexpress),
+            rating: sp.rating || 4.5,
+            reviews: sp.reviews || 0,
+            verified: true,
+            price: sp.price > 0 ? sp.price : undefined,
+            moq: sp.moq || 1,
+            imageUrl: sp.imageUrl,
+            title: sp.title
+          }));
           
           return {
             ...rec,
@@ -250,48 +231,13 @@ export async function GET(request: NextRequest) {
               amazon: links.amazon,
               flipkart: links.flipkart
             },
-            // Use real prices if scraped, otherwise use estimated
+            // Use ONLY real prices from scraped data (no estimated fallbacks)
             prices: realPrices ? {
-              alibaba: realPrices.alibaba || { 
-                min: rec.estimatedCost * 0.8 || 0, 
-                max: rec.estimatedCost * 1.2 || 0, 
-                average: rec.estimatedCost || 0, 
-                currency: 'USD' 
-              },
-              aliexpress: realPrices.aliexpress || { 
-                min: rec.estimatedCost * 0.7 || 0, 
-                max: rec.estimatedCost * 1.1 || 0, 
-                average: rec.estimatedCost * 0.9 || 0, 
-                currency: 'USD' 
-              },
-              indiamart: { 
-                min: (rec.estimatedCost * 50) || 0, 
-                max: (rec.estimatedCost * 100) || 0, 
-                average: (rec.estimatedCost * 75) || 0, 
-                currency: 'INR' 
-              },
-              realData: realPrices.overall ? true : false
-            } : {
-              alibaba: { 
-                min: rec.estimatedCost * 0.8 || 0, 
-                max: rec.estimatedCost * 1.2 || 0, 
-                average: rec.estimatedCost || 0, 
-                currency: 'USD' 
-              },
-              aliexpress: { 
-                min: rec.estimatedCost * 0.7 || 0, 
-                max: rec.estimatedCost * 1.1 || 0, 
-                average: rec.estimatedCost * 0.9 || 0, 
-                currency: 'USD' 
-              },
-              indiamart: { 
-                min: (rec.estimatedCost * 50) || 0, 
-                max: (rec.estimatedCost * 100) || 0, 
-                average: (rec.estimatedCost * 75) || 0, 
-                currency: 'INR' 
-              },
-              realData: false
-            },
+              alibaba: realPrices.alibaba || null,
+              aliexpress: realPrices.aliexpress || null,
+              indiamart: null, // Only show if we have real data
+              realData: true
+            } : null, // Don't show prices if no real data
             suppliers: suppliers,
             // Include only real scraped products (filter out fake/placeholder products)
             scrapedProducts: allScraped.slice(0, 10).filter(
@@ -309,14 +255,31 @@ export async function GET(request: NextRequest) {
         })
       );
 
+      // Filter out null recommendations (ones without real data)
+      const validRecommendations = recommendationsWithRealData.filter((rec: any) => rec !== null);
+
+      if (validRecommendations.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'No real products found. Please try different search terms or check your internet connection.',
+          recommendations: [],
+          pagination: {
+            total: 0,
+            limit,
+            offset,
+            hasMore: false
+          }
+        });
+      }
+
       return NextResponse.json({
         success: true,
-        recommendations: recommendationsWithLinks,
+        recommendations: validRecommendations,
         pagination: {
-          total: recsArray.length,
+          total: validRecommendations.length,
           limit,
           offset,
-          hasMore
+          hasMore: offset + limit < validRecommendations.length
         }
       });
     } finally {
