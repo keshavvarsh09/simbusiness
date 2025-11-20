@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateWithGroq, isGroqAvailable } from './groq';
 
 const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -43,6 +44,7 @@ interface QueuedRequest {
   execute: () => Promise<any>;
   timestamp: number;
   retries: number;
+  prompt?: string; // Store prompt for Groq fallback
 }
 
 const requestQueue: QueuedRequest[] = [];
@@ -144,8 +146,27 @@ async function processRequestQueue(): Promise<void> {
       const result = await request.execute();
       request.resolve(result);
     } catch (error: any) {
-      // Handle 429 errors by waiting and retrying instead of failing
+      // Handle 429 errors - try Groq fallback first, then retry
       if (error?.message?.includes('429') || error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
+        // Try Groq as fallback if available (only on first retry to avoid infinite loops)
+        if (isGroqAvailable() && (request.retries || 0) === 0) {
+          console.log(`[Gemini] Rate limit hit, falling back to Groq API...`);
+          try {
+            // Try to get prompt from request if available, otherwise use generic
+            const fallbackPrompt = request.prompt || 'Please provide the requested information.';
+            const groqResult = await generateWithGroq(fallbackPrompt, {
+              temperature: 0.7,
+              maxTokens: 2048
+            });
+            request.resolve(groqResult);
+            activeRequestCount--;
+            continue;
+          } catch (groqError: any) {
+            console.log(`[Gemini] Groq fallback failed: ${groqError.message}, will retry Gemini...`);
+            // Continue to retry logic below
+          }
+        }
+        
         const retryDelay = Math.min(30000, (request.retries || 0) * 2000 + 5000); // Exponential backoff, max 30s
         console.log(`[Gemini] 429 error, waiting ${retryDelay}ms before retry (attempt ${(request.retries || 0) + 1})...`);
         
@@ -155,7 +176,24 @@ async function processRequestQueue(): Promise<void> {
         if ((request.retries || 0) < 3) {
           requestQueue.unshift({ ...request, retries: (request.retries || 0) + 1 });
         } else {
-          request.reject(new Error('Gemini API rate limit exceeded. Please try again in a few minutes.'));
+          // Final fallback: try Groq one more time if available
+          if (isGroqAvailable()) {
+            console.log(`[Gemini] All retries exhausted, trying Groq as final fallback...`);
+            try {
+              const fallbackPrompt = request.prompt || 'Please provide the requested information.';
+              const groqResult = await generateWithGroq(fallbackPrompt, {
+                temperature: 0.7,
+                maxTokens: 2048
+              });
+              request.resolve(groqResult);
+              activeRequestCount--;
+              continue;
+            } catch (groqError: any) {
+              request.reject(new Error('Gemini API rate limit exceeded and Groq fallback failed. Please try again in a few minutes.'));
+            }
+          } else {
+            request.reject(new Error('Gemini API rate limit exceeded. Please try again in a few minutes.'));
+          }
         }
       } else {
         // Other errors - reject immediately
@@ -172,14 +210,15 @@ async function processRequestQueue(): Promise<void> {
 /**
  * Queue a request to ensure proper spacing and sequential processing
  */
-function queueRequest<T>(execute: () => Promise<T>): Promise<T> {
+function queueRequest<T>(execute: () => Promise<T>, prompt?: string): Promise<T> {
   return new Promise((resolve, reject) => {
     requestQueue.push({
       resolve,
       reject,
       execute,
       timestamp: Date.now(),
-      retries: 0
+      retries: 0,
+      prompt: prompt // Store prompt for Groq fallback
     });
 
     // Start processing queue if not already processing
@@ -265,8 +304,11 @@ async function callGeminiAPI(
     }
   }
 
-  // Queue the request to ensure proper spacing
+  // Queue the request to ensure proper spacing (pass prompt for Groq fallback)
   return queueRequest(async () => {
+    // Store prompt for potential Groq fallback
+    const requestPrompt = prompt;
+    
     // Try primary model first, then fallbacks
     const modelsToTry = [model, ...FALLBACK_MODELS.filter(m => m !== model)];
     let lastError: any = null;
@@ -298,8 +340,31 @@ async function callGeminiAPI(
       } catch (error: any) {
         lastError = error;
         
-        // Handle 429 (Too Many Requests) - throw to let queue handler retry
+        // Handle 429 (Too Many Requests) - try Groq fallback first
         if (error?.message?.includes('429') || error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
+          // Try Groq as fallback if available
+          if (isGroqAvailable()) {
+            console.log(`[Gemini] Rate limit hit, falling back to Groq API...`);
+            try {
+              const groqResult = await generateWithGroq(requestPrompt, {
+                temperature: 0.7,
+                maxTokens: 2048
+              });
+              
+              // Cache the Groq response with Gemini cache key
+              if (useCache) {
+                const cacheKey = generateCacheKey(prompt, context);
+                setCachedResponse(cacheKey, groqResult, cacheTTL);
+              }
+              
+              console.log('[Gemini] Successfully used Groq as fallback');
+              return groqResult;
+            } catch (groqError: any) {
+              console.log(`[Gemini] Groq fallback failed: ${groqError.message}, will retry Gemini...`);
+              // Continue to throw error so queue handler can retry
+            }
+          }
+          
           // Let the queue handler retry this with proper backoff
           throw error; // Will be caught by queue handler
         }
@@ -326,7 +391,29 @@ async function callGeminiAPI(
       }
     }
 
-    // If all models failed, throw the last error
+    // If all models failed, try Groq as final fallback
+    if (lastError && isGroqAvailable()) {
+      console.log(`[Gemini] All models failed, trying Groq as final fallback...`);
+      try {
+        const groqResult = await generateWithGroq(requestPrompt, {
+          temperature: 0.7,
+          maxTokens: 2048
+        });
+        
+        // Cache the Groq response
+        if (useCache) {
+          const cacheKey = generateCacheKey(prompt, context);
+          setCachedResponse(cacheKey, groqResult, cacheTTL);
+        }
+        
+        console.log('[Gemini] Successfully used Groq as final fallback');
+        return groqResult;
+      } catch (groqError: any) {
+        console.error('Groq fallback also failed:', groqError);
+      }
+    }
+
+    // If all models and Groq failed, throw the last error
     if (lastError) {
       console.error('Error calling Gemini API (all models failed):', lastError);
       throw lastError;
