@@ -308,6 +308,7 @@ async function callGeminiAPI(
   return queueRequest(async () => {
     // Store prompt for potential Groq fallback
     const requestPrompt = prompt;
+  }, prompt);
     
     // Try primary model first, then fallbacks
     const modelsToTry = [model, ...FALLBACK_MODELS.filter(m => m !== model)];
