@@ -67,14 +67,35 @@ export default function MissionsPanel() {
 
       const data = await response.json();
       if (data.success) {
-        setMissions(data.missions || []);
+        // Parse impact_on_business if it's a string
+        const missions = (data.missions || []).map((mission: any) => {
+          let impact = mission.impact_on_business;
+          try {
+            if (typeof impact === 'string') {
+              impact = JSON.parse(impact);
+            }
+          } catch (e) {
+            console.warn('Failed to parse impact_on_business:', e);
+            impact = {};
+          }
+          return {
+            ...mission,
+            impact_on_business: impact || {}
+          };
+        });
+        setMissions(missions);
+        console.log(`Loaded ${missions.length} missions`);
       } else {
         console.error('Failed to fetch missions:', data.error);
         setMissions([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch missions:', error);
       setMissions([]);
+      // Show error to user if it's a network error
+      if (error.message?.includes('fetch')) {
+        alert('Failed to connect to server. Please check your connection.');
+      }
     } finally {
       setLoading(false);
     }
@@ -240,8 +261,19 @@ export default function MissionsPanel() {
       </p>
 
       {missions.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>No active missions. Check back soon!</p>
+        <div className="text-center py-8">
+          <p className="text-gray-500 mb-4">No missions found.</p>
+          <div className="flex flex-col gap-2 items-center">
+            <button
+              onClick={handleAutoGenerate}
+              disabled={autoGenerating}
+              className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              <FiRefreshCw className={autoGenerating ? 'animate-spin' : ''} />
+              {autoGenerating ? 'Generating...' : 'Generate Missions Now'}
+            </button>
+            <p className="text-xs text-gray-400 mt-2">Click to generate time-bound missions</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

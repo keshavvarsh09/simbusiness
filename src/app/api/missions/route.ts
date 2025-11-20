@@ -89,13 +89,28 @@ export async function GET(request: NextRequest) {
                 event_source, affected_location, news_url, created_at
          FROM missions
          WHERE user_id = $1
-         ORDER BY created_at DESC`,
+         ORDER BY 
+           CASE status
+             WHEN 'active' THEN 1
+             WHEN 'completed' THEN 2
+             WHEN 'failed' THEN 3
+             ELSE 4
+           END,
+           created_at DESC`,
         [userId]
       );
 
+      // Parse impact_on_business JSON if it's stored as string
+      const missions = result.rows.map((row: any) => ({
+        ...row,
+        impact_on_business: typeof row.impact_on_business === 'string' 
+          ? JSON.parse(row.impact_on_business) 
+          : row.impact_on_business
+      }));
+
       return NextResponse.json({
         success: true,
-        missions: result.rows
+        missions: missions
       });
     } finally {
       client.release();
