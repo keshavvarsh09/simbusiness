@@ -111,7 +111,7 @@ function parseAlibabaResults(html: string, productName: string): ScrapedProduct[
               supplier: item.supplierName || item.companyName || 'Supplier',
               rating: parseFloat(item.rating || item.starRating || '4.5') || 4.5,
               reviews: parseInt(item.reviewCount || item.reviews || '0') || 0,
-              imageUrl: item.imageUrl || item.mainImage || item.image || null
+              imageUrl: item.imageUrl || item.mainImage || item.image || undefined
             });
           }
         }
@@ -320,7 +320,7 @@ function parseAliExpressResults(html: string, productName: string): ScrapedProdu
                 supplier: item.storeName || item.sellerName || 'Seller',
                 rating: parseFloat(item.rating || item.starRating || '4.3') || 4.3,
                 reviews: parseInt(item.tradeCount || item.reviewCount || '0') || 0,
-                imageUrl: item.imageUrl || item.image || item.picUrl || null
+                imageUrl: item.imageUrl || item.image || item.picUrl || undefined
               });
             }
           }
