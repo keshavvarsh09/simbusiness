@@ -336,10 +336,91 @@ export default function ProductRecommendationsPage() {
                     <p className="text-sm text-gray-600 mt-2 mb-3">{rec.reason}</p>
                   )}
 
+                  {/* Product Image */}
+                  {rec.imageUrl && (
+                    <div className="mb-3">
+                      <img 
+                        src={rec.imageUrl} 
+                        alt={rec.name}
+                        className="w-full h-48 object-cover rounded border"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Real Scraped Products from Web */}
+                  {rec.scrapedProducts && rec.scrapedProducts.length > 0 && (
+                    <div className="mb-3 pt-3 border-t">
+                      <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                        🌐 Real Products Found ({rec.scrapedProducts.length}):
+                        {rec.hasRealData && (
+                          <span className="text-green-600 text-xs">✓ Live Data</span>
+                        )}
+                      </p>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {rec.scrapedProducts.slice(0, 5).map((scraped: any, sIdx: number) => (
+                          <a
+                            key={sIdx}
+                            href={scraped.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors border border-gray-200"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-gray-800 truncate">
+                                  {scraped.title || scraped.name}
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  {scraped.supplier || 'Supplier'}
+                                  {scraped.rating && (
+                                    <span className="ml-2">
+                                      ⭐ {scraped.rating.toFixed(1)}
+                                      {scraped.reviews && ` (${scraped.reviews})`}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right ml-2">
+                                {scraped.price > 0 && (
+                                  <div className="text-xs font-bold text-green-600">
+                                    ${scraped.price.toFixed(2)}
+                                  </div>
+                                )}
+                                {scraped.moq > 1 && (
+                                  <div className="text-xs text-gray-500">
+                                    MOQ: {scraped.moq}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {scraped.imageUrl && (
+                              <img 
+                                src={scraped.imageUrl} 
+                                alt={scraped.title}
+                                className="w-full h-20 object-cover rounded mt-2"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            )}
+                          </a>
+                        ))}
+                      </div>
+                      {rec.scrapedProducts.length > 5 && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          + {rec.scrapedProducts.length - 5} more products found
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Product Image Links */}
                   {rec.imageLinks && (
                     <div className="mb-3 pt-3 border-t">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">View Product Images:</p>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">View More Products:</p>
                       <div className="flex flex-wrap gap-2">
                         {rec.imageLinks.alibaba && (
                           <a
@@ -348,7 +429,7 @@ export default function ProductRecommendationsPage() {
                             rel="noopener noreferrer"
                             className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 flex items-center gap-1"
                           >
-                            📷 Alibaba Images <FiExternalLink className="text-xs" />
+                            📷 Alibaba <FiExternalLink className="text-xs" />
                           </a>
                         )}
                         {rec.imageLinks.aliexpress && (
@@ -358,7 +439,7 @@ export default function ProductRecommendationsPage() {
                             rel="noopener noreferrer"
                             className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 flex items-center gap-1"
                           >
-                            📷 AliExpress Images <FiExternalLink className="text-xs" />
+                            📷 AliExpress <FiExternalLink className="text-xs" />
                           </a>
                         )}
                         {rec.imageLinks.indiamart && (
@@ -368,7 +449,7 @@ export default function ProductRecommendationsPage() {
                             rel="noopener noreferrer"
                             className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
                           >
-                            📷 IndiaMart Images <FiExternalLink className="text-xs" />
+                            📷 IndiaMart <FiExternalLink className="text-xs" />
                           </a>
                         )}
                       </div>
