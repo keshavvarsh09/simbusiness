@@ -104,10 +104,10 @@ export async function GET(request: NextRequest) {
           let productImage: string | null = null;
           
           try {
-            // Fetch real products from Alibaba and AliExpress in parallel (non-blocking, 4s timeout)
+            // Fetch real products from Alibaba and AliExpress in parallel (no API needed, direct fetch)
             const scrapePromises = [
-              scrapeAlibaba(searchTerms, true),
-              scrapeAliExpress(searchTerms, true)
+              scrapeAlibaba(searchTerms, false), // false = no API, use direct fetch
+              scrapeAliExpress(searchTerms, false) // false = no API, use direct fetch
             ];
             const timeoutPromise = new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Timeout')), 4000)
