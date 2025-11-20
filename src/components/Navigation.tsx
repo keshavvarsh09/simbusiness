@@ -16,6 +16,7 @@ import {
   FiClock,
   FiAlertTriangle,
   FiTrendingUp,
+  FiTarget,
   FiMenu,
   FiX
 } from 'react-icons/fi';
@@ -46,6 +47,8 @@ export default function Navigation() {
     { href: '/products/analyze', label: 'Analyze Product', icon: FiSearch },
     { href: '/products/recommendations', label: 'Recommendations', icon: FiTrendingUp },
     { href: '/analytics/meta', label: 'Meta Analytics', icon: FiImage },
+    { href: '/ads', label: 'Ads Strategy', icon: FiTarget },
+    { href: '/brand-building', label: 'Brand Building', icon: FiTrendingUp },
   ];
 
   const businessNav = [
