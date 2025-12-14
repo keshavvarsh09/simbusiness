@@ -258,7 +258,7 @@ export default function ProductDashboard() {
         titleFont: {
           family: "'Inter', sans-serif",
           size: 13,
-          weight: 'bold'
+          weight: 'bold' as const
         },
         bodyFont: {
           family: "'Inter', sans-serif",
