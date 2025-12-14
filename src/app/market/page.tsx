@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MarketData } from '@/types';
-import { FiArrowUp, FiArrowDown, FiTrendingUp, FiInfo, FiBarChart2, FiStar, FiShoppingBag, FiClock, FiGlobe, FiActivity } from 'react-icons/fi';
+import { FiArrowUp, FiArrowDown, FiTrendingUp, FiInfo, FiBarChart2, FiStar, FiShoppingBag, FiClock, FiGlobe, FiActivity, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
 import { fetchCategories } from '@/services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -179,8 +179,8 @@ export default function MarketAnalysis() {
             <button
               onClick={() => setActiveTab('overview')}
               className={`pb-4 font-medium text-sm transition-all relative ${activeTab === 'overview'
-                  ? 'text-primary-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'text-primary-600'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
               Market Overview
@@ -194,8 +194,8 @@ export default function MarketAnalysis() {
             <button
               onClick={() => setActiveTab('scenarios')}
               className={`pb-4 font-medium text-sm transition-all relative ${activeTab === 'scenarios'
-                  ? 'text-primary-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'text-primary-600'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
               Business Scenarios
@@ -209,8 +209,8 @@ export default function MarketAnalysis() {
             <button
               onClick={() => setActiveTab('education')}
               className={`pb-4 font-medium text-sm transition-all relative ${activeTab === 'education'
-                  ? 'text-primary-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'text-primary-600'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
               Dropshipping Education
@@ -318,10 +318,10 @@ export default function MarketAnalysis() {
                             </td>
                             <td className="py-3">
                               <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${trend.demand === 'High'
-                                  ? 'bg-green-100 text-green-700'
-                                  : trend.demand === 'Medium'
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : 'bg-red-100 text-red-700'
+                                ? 'bg-green-100 text-green-700'
+                                : trend.demand === 'Medium'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-red-100 text-red-700'
                                 }`}>
                                 {trend.demand}
                               </span>
