@@ -5,7 +5,8 @@
 
 'use client';
 
-import { FiAlertTriangle, FiX } from 'react-icons/fi';
+import { FiAlertTriangle, FiX, FiCheckCircle, FiInfo } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ interface ConfirmationDialogProps {
   cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: 'danger' | 'warning' | 'info' | 'success';
 }
 
 export default function ConfirmationDialog({
@@ -28,61 +29,86 @@ export default function ConfirmationDialog({
   onCancel,
   variant = 'info'
 }: ConfirmationDialogProps) {
-  if (!isOpen) return null;
 
   const variantStyles = {
     danger: {
-      button: 'bg-red-600 hover:bg-red-700',
-      icon: 'text-red-600'
+      button: 'btn-danger',
+      icon: 'text-red-500',
+      bg: 'bg-red-50',
+      Icon: FiAlertTriangle
     },
     warning: {
-      button: 'bg-yellow-600 hover:bg-yellow-700',
-      icon: 'text-yellow-600'
+      button: 'btn-warning',
+      icon: 'text-amber-500',
+      bg: 'bg-amber-50',
+      Icon: FiAlertTriangle
     },
     info: {
-      button: 'bg-blue-600 hover:bg-blue-700',
-      icon: 'text-blue-600'
+      button: 'btn-primary',
+      icon: 'text-blue-500',
+      bg: 'bg-blue-50',
+      Icon: FiInfo
+    },
+    success: {
+      button: 'btn-success',
+      icon: 'text-green-500',
+      bg: 'bg-green-50',
+      Icon: FiCheckCircle
     }
   };
 
   const styles = variantStyles[variant];
+  const Icon = styles.Icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <FiAlertTriangle className={`${styles.icon} flex-shrink-0`} size={24} />
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={onCancel}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="bg-white rounded-2xl shadow-apple-xl w-full max-w-sm p-6 relative z-10"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className={`w-10 h-10 rounded-full ${styles.bg} flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`${styles.icon} text-xl`} />
+              </div>
+              <button
+                onClick={onCancel}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <FiX size={20} />
+              </button>
             </div>
-            <button
-              onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <FiX size={20} />
-            </button>
-          </div>
 
-          <p className="text-gray-600 mb-6">{message}</p>
+            <h3 className="text-title-3 font-bold text-gray-900 mb-2">{title}</h3>
+            <p className="text-body text-gray-500 mb-6">{message}</p>
 
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-            >
-              {cancelText}
-            </button>
-            <button
-              onClick={onConfirm}
-              className={`px-4 py-2 text-white rounded-md ${styles.button}`}
-            >
-              {confirmText}
-            </button>
-          </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={onCancel}
+                className="btn btn-ghost"
+              >
+                {cancelText}
+              </button>
+              <button
+                onClick={onConfirm}
+                className={`btn ${styles.button}`}
+              >
+                {confirmText}
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
-

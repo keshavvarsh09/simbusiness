@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiClock, FiDollarSign, FiAlertTriangle, FiCheckCircle, FiXCircle, FiRefreshCw, FiMapPin, FiExternalLink, FiGlobe } from 'react-icons/fi';
 import { getAuthHeaders } from '@/lib/auth';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Mission {
   id: number;
@@ -28,7 +29,7 @@ export default function MissionsPanel() {
 
   useEffect(() => {
     fetchMissions();
-    
+
     // Check for expired missions periodically
     const fetchInterval = setInterval(() => {
       fetchMissions();
@@ -117,8 +118,8 @@ export default function MissionsPanel() {
         // Refresh page to update budget display
         window.location.reload();
       } else {
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to solve mission');
         alert(errorMsg);
       }
@@ -156,7 +157,7 @@ export default function MissionsPanel() {
           errorMsg += `\n\nHint: ${data.hint}`;
         }
         alert(errorMsg);
-        
+
         // If database not initialized, offer to initialize
         if (data.error === 'Database not initialized' || data.details?.includes('does not exist')) {
           if (confirm('Database needs to be initialized. Would you like to initialize it now?')) {
@@ -204,44 +205,50 @@ export default function MissionsPanel() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <p>Loading missions...</p>
+      <div className="card p-6 animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+        <div className="space-y-4">
+          <div className="h-24 bg-gray-200 rounded-xl"></div>
+          <div className="h-24 bg-gray-200 rounded-xl"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <FiClock className="text-orange-500" />
+    <div className="card">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-title-2 font-bold text-gray-900 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+            <FiClock className="text-orange-500 text-xl" />
+          </div>
           Time-Bound Missions
         </h2>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={handleAutoGenerate}
             disabled={autoGenerating}
-            className="text-sm bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+            className="btn btn-accent text-sm flex items-center gap-2"
           >
             <FiRefreshCw className={autoGenerating ? 'animate-spin' : ''} />
             {autoGenerating ? 'Generating...' : 'Auto-Generate'}
           </button>
           <button
             onClick={async () => {
-              const response = await fetch('/api/missions', { 
-                method: 'POST', 
+              const response = await fetch('/api/missions', {
+                method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({ autoGenerate: false })
               });
@@ -249,161 +256,173 @@ export default function MissionsPanel() {
                 fetchMissions();
               }
             }}
-            className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="btn btn-primary text-sm"
           >
             Manual Mission
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-body text-gray-500 mb-6">
         Remember: Time is money! Solve these problems quickly to avoid losses.
       </p>
 
       {missions.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">No missions found.</p>
-          <div className="flex flex-col gap-2 items-center">
-            <button
-              onClick={handleAutoGenerate}
-              disabled={autoGenerating}
-              className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
-            >
-              <FiRefreshCw className={autoGenerating ? 'animate-spin' : ''} />
-              {autoGenerating ? 'Generating...' : 'Generate Missions Now'}
-            </button>
-            <p className="text-xs text-gray-400 mt-2">Click to generate time-bound missions</p>
+        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <FiClock className="text-gray-400 text-2xl" />
           </div>
+          <h3 className="text-title-3 font-bold text-gray-900 mb-2">No missions found</h3>
+          <p className="text-body text-gray-500 mb-6">Generate time-bound missions to test your skills</p>
+          <button
+            onClick={handleAutoGenerate}
+            disabled={autoGenerating}
+            className="btn btn-primary flex items-center gap-2 mx-auto"
+          >
+            <FiRefreshCw className={autoGenerating ? 'animate-spin' : ''} />
+            {autoGenerating ? 'Generating...' : 'Generate Missions Now'}
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
-          {missions.map((mission) => {
-            const currentTimeRemaining = timeRemaining[mission.id] || getTimeRemaining(mission.deadline);
-            const isExpired = currentTimeRemaining === 'Expired';
-            const impact = mission.impact_on_business || {};
+          <AnimatePresence>
+            {missions.map((mission) => {
+              const currentTimeRemaining = timeRemaining[mission.id] || getTimeRemaining(mission.deadline);
+              const isExpired = currentTimeRemaining === 'Expired';
+              const impact = mission.impact_on_business || {};
 
-            return (
-              <div
-                key={mission.id}
-                className={`border rounded-lg p-4 ${
-                  mission.status === 'active' && !isExpired
-                    ? 'border-orange-300 bg-orange-50'
-                    : mission.status === 'completed'
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-gray-300 bg-gray-50'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg">{mission.title}</h3>
-                      {mission.event_source && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-700">
-                          {mission.event_source === 'news' && <FiGlobe className="inline mr-1" />}
-                          {mission.event_source === 'festival' && '🎉'}
-                          {mission.event_source === 'labour' && '👷'}
-                          {mission.event_source === 'curfew' && '🚫'}
-                          {mission.event_source?.toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                          mission.status
-                        )}`}
-                      >
-                        {mission.status.toUpperCase()}
-                      </span>
-                      {mission.affected_location && (
-                        <span className="flex items-center gap-1 text-xs text-gray-600">
-                          <FiMapPin />
-                          {mission.affected_location}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right ml-4">
-                    <div className={`flex items-center gap-1 text-sm font-bold ${
-                      isExpired ? 'text-red-600' : 'text-orange-600'
-                    }`}>
-                      <FiClock />
-                      {currentTimeRemaining}
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-700 mb-3">{mission.description}</p>
-
-                {mission.news_url && (
-                  <div className="mb-3">
-                    <a
-                      href={mission.news_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                    >
-                      <FiExternalLink />
-                      Read related news article
-                    </a>
-                  </div>
-                )}
-
-                {Object.keys(impact).length > 0 && (
-                  <div className="mb-3 p-2 bg-white rounded text-sm">
-                    <p className="font-medium mb-1">Impact:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(impact).map(([key, value]: [string, any]) => (
+              return (
+                <motion.div
+                  key={mission.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className={`border rounded-2xl p-5 transition-all ${mission.status === 'active' && !isExpired
+                      ? 'border-orange-200 bg-orange-50/30 hover:shadow-md'
+                      : mission.status === 'completed'
+                        ? 'border-green-200 bg-green-50/30'
+                        : 'border-gray-200 bg-gray-50/30'
+                    }`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-bold text-lg text-gray-900">{mission.title}</h3>
+                        {mission.event_source && (
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                            {mission.event_source === 'news' && <FiGlobe className="inline mr-1" />}
+                            {mission.event_source === 'festival' && '🎉'}
+                            {mission.event_source === 'labour' && '👷'}
+                            {mission.event_source === 'curfew' && '🚫'}
+                            {mission.event_source?.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
-                          key={key}
-                          className={`px-2 py-1 rounded ${
-                            value < 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                          }`}
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                            mission.status
+                          )}`}
                         >
-                          {key}: {value > 0 ? '+' : ''}
-                          {value}%
+                          {mission.status.toUpperCase()}
                         </span>
-                      ))}
+                        {mission.affected_location && (
+                          <span className="flex items-center gap-1 text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                            <FiMapPin />
+                            {mission.affected_location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className={`flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-lg ${isExpired ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                        }`}>
+                        <FiClock />
+                        {currentTimeRemaining}
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {mission.status === 'active' && !isExpired && (
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <FiDollarSign />
-                      <span>Cost to solve: ${mission.cost_to_solve}</span>
+                  <p className="text-body text-gray-600 mb-4">{mission.description}</p>
+
+                  {mission.news_url && (
+                    <div className="mb-4">
+                      <a
+                        href={mission.news_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1 hover:underline"
+                      >
+                        <FiExternalLink />
+                        Read related news article
+                      </a>
                     </div>
-                    <button
-                      onClick={() => handleSolve(mission.id)}
-                      disabled={solving === mission.id}
-                      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
-                    >
-                      <FiCheckCircle />
-                      {solving === mission.id ? 'Solving...' : 'Solve Now'}
-                    </button>
-                  </div>
-                )}
+                  )}
 
-                {isExpired && mission.status === 'active' && (
-                  <div className="mt-3 p-2 bg-red-100 rounded text-sm text-red-700 flex items-center gap-2">
-                    <FiAlertTriangle />
-                    Mission expired! This will impact your business.
-                  </div>
-                )}
+                  {Object.keys(impact).length > 0 && (
+                    <div className="mb-4 p-3 bg-white/80 rounded-xl border border-gray-100 text-sm">
+                      <p className="font-medium text-gray-700 mb-2">Business Impact:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(impact).map(([key, value]: [string, any]) => (
+                          <span
+                            key={key}
+                            className={`px-2.5 py-1 rounded-lg font-medium ${value < 0 ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'
+                              }`}
+                          >
+                            {key}: {value > 0 ? '+' : ''}
+                            {value}%
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                {mission.status === 'completed' && (
-                  <div className="mt-3 p-2 bg-green-100 rounded text-sm text-green-700 flex items-center gap-2">
-                    <FiCheckCircle />
-                    Mission completed successfully!
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  {mission.status === 'active' && !isExpired && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200/50">
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                          <FiDollarSign />
+                        </div>
+                        <span>Cost: ${mission.cost_to_solve}</span>
+                      </div>
+                      <button
+                        onClick={() => handleSolve(mission.id)}
+                        disabled={solving === mission.id}
+                        className="btn btn-primary py-2 px-4 text-sm flex items-center gap-2"
+                      >
+                        {solving === mission.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Solving...
+                          </>
+                        ) : (
+                          <>
+                            <FiCheckCircle /> Solve Now
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {isExpired && mission.status === 'active' && (
+                    <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100 text-sm text-red-700 flex items-center gap-2 font-medium">
+                      <FiAlertTriangle className="text-lg" />
+                      Mission expired! This will impact your business.
+                    </div>
+                  )}
+
+                  {mission.status === 'completed' && (
+                    <div className="mt-4 p-3 bg-green-50 rounded-xl border border-green-100 text-sm text-green-700 flex items-center gap-2 font-medium">
+                      <FiCheckCircle className="text-lg" />
+                      Mission completed successfully!
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       )}
     </div>
   );
 }
-

@@ -1,10 +1,6 @@
 import '@/styles/globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import Navigation from '@/components/Navigation';
-import Link from 'next/link';
-
-const inter = Inter({ subsets: ['latin'] });
+import Shell from '@/components/Shell';
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_SITE_TITLE || 'SimBusiness - Dropshipping Business Simulation',
@@ -17,10 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <Navigation />
-        {children}
+    <html lang="en" className="scroll-smooth">
+      <body className="antialiased bg-background text-gray-900">
+        <Shell>
+          {children}
+        </Shell>
       </body>
     </html>
   );

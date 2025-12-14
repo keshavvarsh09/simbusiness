@@ -4,42 +4,137 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 248, 250, 252;
+  --background-rgb: 245, 245, 247; /* Apple's light background #F5F5F7 */
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  overflow-x: hidden;
 }
 
+/* Apple-style glass morphism effect */
 @layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-glass;
+  }
+
+  .glass-dark {
+    @apply bg-black/50 backdrop-blur-xl border border-white/10 shadow-glass;
+  }
+
+  /* Apple-style buttons */
   .btn {
-    @apply px-4 py-2 font-medium rounded-lg transition-all;
+    @apply inline-flex items-center justify-center px-5 py-2.5 font-medium rounded-full transition-all duration-300 ease-out;
+    @apply active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none;
   }
   
   .btn-primary {
-    @apply bg-primary text-white hover:bg-blue-600;
+    @apply bg-primary-500 text-white hover:bg-primary-600;
+    @apply shadow-apple hover:shadow-apple-md;
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0));
   }
   
   .btn-secondary {
-    @apply bg-secondary text-white hover:bg-slate-700;
+    @apply bg-white text-gray-900 hover:bg-gray-50 border border-gray-200;
+    @apply shadow-apple hover:shadow-apple-md;
   }
   
   .btn-accent {
-    @apply bg-accent text-white hover:bg-emerald-600;
+    @apply bg-accent-500 text-white hover:bg-accent-600;
+    @apply shadow-apple hover:shadow-apple-md;
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0));
   }
   
-  .btn-outline {
-    @apply border border-gray-300 bg-transparent hover:bg-gray-100;
+  .btn-ghost {
+    @apply bg-transparent hover:bg-gray-100/50 text-gray-600 hover:text-gray-900;
   }
 
+  /* Apple-style cards */
   .card {
-    @apply bg-white rounded-xl shadow-md p-6;
+    @apply bg-white rounded-2xl shadow-apple p-6;
+    @apply border border-gray-100/50;
+    @apply transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply hover:shadow-apple-lg hover:-translate-y-0.5;
+  }
+
+  /* Apple-style input fields */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200;
+    @apply bg-gray-50/50 text-gray-900 placeholder-gray-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500;
+    @apply transition-all duration-200;
+  }
+
+  /* Apple-style section headers */
+  .section-header {
+    @apply text-title-1 font-bold text-gray-900 mb-2 tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-body text-gray-500 mb-6 leading-relaxed;
+  }
+
+  /* Apple-style divider */
+  .divider {
+    @apply border-t border-gray-200 my-8;
+  }
+
+  /* Apple-style badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border;
+  }
+
+  .badge-primary {
+    @apply bg-primary-50 text-primary-700 border-primary-100;
+  }
+
+  .badge-success {
+    @apply bg-accent-50 text-accent-700 border-accent-100;
+  }
+
+  .badge-warning {
+    @apply bg-orange-50 text-orange-700 border-orange-100;
+  }
+
+  .badge-danger {
+    @apply bg-red-50 text-red-700 border-red-100;
+  }
+
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar (Apple-style) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 } 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FiTrendingUp, FiAlertTriangle, FiBook, FiAward } from 'react-icons/fi';
+import { FiTrendingUp, FiAlertTriangle, FiBook, FiAward, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function BusinessInsights() {
   const [activeInsight, setActiveInsight] = useState<number | null>(null);
@@ -43,32 +44,60 @@ export default function BusinessInsights() {
   };
 
   return (
-    <div className="card bg-white mb-8">
-      <h2 className="text-xl font-semibold mb-4">Real-World Dropshipping Insights</h2>
+    <div className="card bg-white/50 backdrop-blur-sm border-white/60">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
+          <FiBook size={20} />
+        </div>
+        <div>
+          <h2 className="text-title-2 font-bold text-gray-900">Real-World Insights</h2>
+          <p className="text-caption text-gray-500">Learn from industry data</p>
+        </div>
+      </div>
+
       <div className="space-y-3">
         {businessInsights.map((insight, index) => (
-          <div key={index} className="border rounded-lg overflow-hidden">
-            <div 
-              className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+          <motion.div
+            key={index}
+            className={`border rounded-xl overflow-hidden transition-colors duration-200 ${activeInsight === index ? 'bg-white border-blue-100 shadow-sm' : 'bg-white/50 border-transparent hover:bg-white'
+              }`}
+          >
+            <div
+              className="flex items-center justify-between p-4 cursor-pointer"
               onClick={() => toggleInsight(index)}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-gray-100">
+              <div className="flex items-center gap-4">
+                <div className={`p-2 rounded-lg ${activeInsight === index ? 'bg-blue-50' : 'bg-gray-50'}`}>
                   {insight.icon}
                 </div>
-                <span className="font-medium">{insight.title}</span>
+                <span className={`font-medium ${activeInsight === index ? 'text-blue-700' : 'text-gray-700'}`}>
+                  {insight.title}
+                </span>
               </div>
-              <span>{activeInsight === index ? '−' : '+'}</span>
+              <span className="text-gray-400">
+                {activeInsight === index ? <FiChevronUp /> : <FiChevronDown />}
+              </span>
             </div>
-            
-            {activeInsight === index && (
-              <div className="p-3 bg-gray-50 border-t">
-                <p className="text-gray-700">{insight.content}</p>
-              </div>
-            )}
-          </div>
+
+            <AnimatePresence>
+              {activeInsight === index && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="px-4 pb-4 pt-0">
+                    <p className="text-sm text-gray-600 leading-relaxed pl-[3.25rem]">
+                      {insight.content}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         ))}
       </div>
     </div>
   );
-} 
+}

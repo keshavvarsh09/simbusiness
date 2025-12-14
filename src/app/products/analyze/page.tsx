@@ -15,8 +15,8 @@ export default function ProductAnalyzePage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-background pt-20">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <ProductAnalyzer />
       </div>
     </div>

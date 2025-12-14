@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiTrendingUp, FiDollarSign, FiPackage, FiExternalLink, FiPlus, FiCheck, FiStar, FiUsers, FiShield, FiSettings, FiChevronDown } from 'react-icons/fi';
+import { FiTrendingUp, FiDollarSign, FiPackage, FiExternalLink, FiPlus, FiCheck, FiStar, FiUsers, FiShield, FiSettings, FiChevronDown, FiFilter } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductRecommendationsPage() {
   const router = useRouter();
@@ -71,16 +72,16 @@ export default function ProductRecommendationsPage() {
         return;
       }
 
-      const recs = Array.isArray(data.recommendations) 
-        ? data.recommendations 
+      const recs = Array.isArray(data.recommendations)
+        ? data.recommendations
         : (data.recommendations?.recommendations || []);
-      
+
       if (reset) {
         setRecommendations(recs);
       } else {
         setRecommendations(prev => [...prev, ...recs]);
       }
-      
+
       setHasMore(data.pagination?.hasMore || false);
       setOffset(currentOffset + recs.length);
     } catch (err) {
@@ -127,10 +128,10 @@ export default function ProductRecommendationsPage() {
       }));
 
       setShowGenreModal(false);
-      
+
       // Refresh recommendations with new genre
       fetchRecommendations(true);
-      
+
       alert('Product genre updated! Loading new recommendations...');
     } catch (err: any) {
       alert(err.message || 'Failed to update product genre');
@@ -164,8 +165,8 @@ export default function ProductRecommendationsPage() {
 
       if (!response.ok) {
         // Show detailed error message if available
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to add product');
         throw new Error(errorMsg);
       }
@@ -183,445 +184,302 @@ export default function ProductRecommendationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <FiTrendingUp className="text-green-500" />
-              Product Recommendations
+    <div className="min-h-screen bg-background pt-20">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-display-3 font-bold text-gray-900 mb-2 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-accent-50 flex items-center justify-center">
+                <FiTrendingUp className="text-accent-600 text-2xl" />
+              </div>
+              AI Recommendations
             </h1>
-            <div className="flex items-center gap-3">
-              {userProfile && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Genre:</span> {userProfile.productGenre || 'Not set'} | 
-                  <span className="font-medium ml-2">Budget:</span> ${userProfile.budget || 0}
-                </div>
-              )}
-              <button
-                onClick={() => setShowGenreModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 text-sm"
-              >
-                <FiSettings /> Change Interest
-              </button>
-            </div>
+            <p className="text-body text-gray-600">Curated product ideas based on your interests and market trends</p>
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
-              {error}
-            </div>
-          )}
+          <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-apple border border-gray-100">
+            {userProfile && (
+              <div className="hidden sm:block px-3 text-sm text-gray-600 border-r border-gray-200">
+                <span className="font-medium text-gray-900">{userProfile.productGenre || 'All Genres'}</span>
+                <span className="mx-2 text-gray-300">|</span>
+                <span className="font-medium text-gray-900">${userProfile.budget || 0}</span> Budget
+              </div>
+            )}
+            <button
+              onClick={() => setShowGenreModal(true)}
+              className="btn btn-secondary text-sm py-2 px-4 flex items-center gap-2"
+            >
+              <FiSettings className="text-gray-500" /> Preferences
+            </button>
+          </div>
+        </div>
 
-          {loading ? (
-            <p>Loading recommendations...</p>
-          ) : recommendations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recommendations.map((rec, idx) => (
-                <div key={idx} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white">
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-1">{rec.name}</h3>
-                    <p className="text-sm text-gray-600 mb-3 capitalize">{rec.category}</p>
-                  
-                  <div className="space-y-2 mb-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Cost:</span>
-                      <span className="font-bold">${rec.estimatedCost || rec.cost || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Selling Price:</span>
-                      <span className="font-bold">${rec.sellingPrice || rec.price || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Profit Margin:</span>
-                      <span className="font-bold text-green-600">
-                        {rec.profitMargin ? `${rec.profitMargin}%` : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">MOQ:</span>
-                      <span className="font-bold">{rec.recommendedMOQ || rec.moq || 'N/A'}</span>
-                    </div>
-                  </div>
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700">
+            {error}
+          </div>
+        )}
 
-                  <div className="flex gap-2 mb-3">
-                    <span className={`px-2 py-1 rounded text-xs capitalize ${
-                      rec.demand === 'high' ? 'bg-green-100 text-green-700' :
-                      rec.demand === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      Demand: {rec.demand || 'N/A'}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="card h-96 animate-pulse">
+                <div className="h-48 bg-gray-200 rounded-xl mb-4"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : recommendations.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recommendations.map((rec, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="card card-hover flex flex-col h-full"
+              >
+                {/* Product Image */}
+                <div className="relative h-48 mb-4 bg-gray-50 rounded-xl overflow-hidden group">
+                  {rec.imageUrl ? (
+                    <img
+                      src={rec.imageUrl}
+                      alt={rec.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <FiPackage size={48} />
+                    </div>
+                  )}
+
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <span className={`badge ${rec.demand === 'high' ? 'badge-success' :
+                        rec.demand === 'medium' ? 'badge-warning' : 'badge-danger'
+                      }`}>
+                      {rec.demand} demand
                     </span>
-                    <span className={`px-2 py-1 rounded text-xs capitalize ${
-                      rec.competition === 'low' ? 'bg-green-100 text-green-700' :
-                      rec.competition === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      Competition: {rec.competition || 'N/A'}
-                    </span>
-                  </div>
-
-                  {/* Price Comparison */}
-                  {rec.prices && (
-                    <div className="mb-3 pt-3 border-t">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">Price Comparison:</p>
-                      <div className="space-y-1 text-xs">
-                        {rec.prices.alibaba && rec.prices.alibaba.average > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Alibaba:</span>
-                            <span className="font-semibold">
-                              ${rec.prices.alibaba.average.toFixed(2)} {rec.prices.alibaba.currency}
-                            </span>
-                          </div>
-                        )}
-                        {rec.prices.aliexpress && rec.prices.aliexpress.average > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">AliExpress:</span>
-                            <span className="font-semibold">
-                              ${rec.prices.aliexpress.average.toFixed(2)} {rec.prices.aliexpress.currency}
-                            </span>
-                          </div>
-                        )}
-                        {rec.prices.indiamart && rec.prices.indiamart.average > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">IndiaMart:</span>
-                            <span className="font-semibold">
-                              ₹{rec.prices.indiamart.average.toFixed(0)} {rec.prices.indiamart.currency}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Supplier Details */}
-                  {rec.suppliers && rec.suppliers.length > 0 && (
-                    <div className="mb-3 pt-3 border-t">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">Suppliers:</p>
-                      <div className="space-y-2">
-                        {rec.suppliers.map((supplier: any, sIdx: number) => (
-                          <a
-                            key={sIdx}
-                            href={supplier.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs font-medium">{supplier.name}</span>
-                                {supplier.verified && (
-                                  <FiShield className="text-xs text-green-600" title="Verified" />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <FiStar className="text-xs text-yellow-500 fill-yellow-500" />
-                                <span className="text-xs font-semibold">{supplier.rating?.toFixed(1)}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <FiUsers className="text-xs" />
-                                <span>{supplier.reviews?.toLocaleString() || 0} reviews</span>
-                              </div>
-                              <span className="capitalize">{supplier.platform}</span>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {rec.reason && (
-                    <p className="text-sm text-gray-600 mt-2 mb-3">{rec.reason}</p>
-                  )}
-
-                  {/* Product Image */}
-                  {rec.imageUrl && (
-                    <div className="mb-3">
-                      <img 
-                        src={rec.imageUrl} 
-                        alt={rec.name}
-                        className="w-full h-48 object-cover rounded border"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Real Scraped Products from Web */}
-                  {rec.scrapedProducts && rec.scrapedProducts.length > 0 && (
-                    <div className="mb-3 pt-3 border-t">
-                      <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                        🌐 Real Products Found ({rec.scrapedProducts.length}):
-                        {rec.hasRealData && (
-                          <span className="text-green-600 text-xs">✓ Live Data</span>
-                        )}
-                      </p>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {rec.scrapedProducts.slice(0, 5).map((scraped: any, sIdx: number) => (
-                          <a
-                            key={sIdx}
-                            href={scraped.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors border border-gray-200"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium text-gray-800 truncate">
-                                  {scraped.title || scraped.name}
-                                </div>
-                                <div className="text-xs text-gray-600 mt-1">
-                                  {scraped.supplier || 'Supplier'}
-                                  {scraped.rating && (
-                                    <span className="ml-2">
-                                      ⭐ {scraped.rating.toFixed(1)}
-                                      {scraped.reviews && ` (${scraped.reviews})`}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="text-right ml-2">
-                                {scraped.price > 0 && (
-                                  <div className="text-xs font-bold text-green-600">
-                                    ${scraped.price.toFixed(2)}
-                                  </div>
-                                )}
-                                {scraped.moq > 1 && (
-                                  <div className="text-xs text-gray-500">
-                                    MOQ: {scraped.moq}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            {scraped.imageUrl && (
-                              <img 
-                                src={scraped.imageUrl} 
-                                alt={scraped.title}
-                                className="w-full h-20 object-cover rounded mt-2"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            )}
-                          </a>
-                        ))}
-                      </div>
-                      {rec.scrapedProducts.length > 5 && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          + {rec.scrapedProducts.length - 5} more products found
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Product Image Links */}
-                  {rec.imageLinks && (
-                    <div className="mb-3 pt-3 border-t">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">View More Products:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {rec.imageLinks.alibaba && (
-                          <a
-                            href={rec.imageLinks.alibaba}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 flex items-center gap-1"
-                          >
-                            📷 Alibaba <FiExternalLink className="text-xs" />
-                          </a>
-                        )}
-                        {rec.imageLinks.aliexpress && (
-                          <a
-                            href={rec.imageLinks.aliexpress}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 flex items-center gap-1"
-                          >
-                            📷 AliExpress <FiExternalLink className="text-xs" />
-                          </a>
-                        )}
-                        {rec.imageLinks.indiamart && (
-                          <a
-                            href={rec.imageLinks.indiamart}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
-                          >
-                            📷 IndiaMart <FiExternalLink className="text-xs" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Product Links */}
-                  {rec.links && (
-                    <div className="mb-3 pt-3 border-t">
-                      <p className="text-xs text-gray-500 mb-2">Find on:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {rec.links.alibaba && (
-                          <a
-                            href={rec.links.alibaba}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 flex items-center gap-1"
-                          >
-                            Alibaba <FiExternalLink className="text-xs" />
-                          </a>
-                        )}
-                        {rec.links.aliexpress && (
-                          <a
-                            href={rec.links.aliexpress}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 flex items-center gap-1"
-                          >
-                            AliExpress <FiExternalLink className="text-xs" />
-                          </a>
-                        )}
-                        {rec.links.indiamart && (
-                          <a
-                            href={rec.links.indiamart}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
-                          >
-                            IndiaMart <FiExternalLink className="text-xs" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Add to Simulation Button */}
-                  <button
-                    onClick={() => handleAddToSimulation(rec, idx)}
-                    disabled={addingProducts.has(idx) || addedProducts.has(idx)}
-                    className={`w-full py-2 px-4 rounded-md font-medium flex items-center justify-center gap-2 transition-colors ${
-                      addedProducts.has(idx)
-                        ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                        : addingProducts.has(idx)
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                    }`}
-                  >
-                    {addedProducts.has(idx) ? (
-                      <>
-                        <FiCheck /> Added to Simulation
-                      </>
-                    ) : addingProducts.has(idx) ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Adding...
-                      </>
-                    ) : (
-                      <>
-                        <FiPlus /> Add to Simulation
-                      </>
-                    )}
-                  </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500">No recommendations available. Please set your budget and product genre in settings.</p>
-          )}
 
-          {/* See More Button */}
-          {!loading && recommendations.length > 0 && hasMore && (
-            <div className="mt-6 text-center">
-              <button
-                onClick={handleSeeMore}
-                disabled={loadingMore}
-                className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-              >
-                {loadingMore ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <FiChevronDown /> See More Recommendations
-                  </>
-                )}
-              </button>
+                <div className="flex-1 flex flex-col">
+                  <div className="mb-4">
+                    <h3 className="text-title-3 font-bold text-gray-900 mb-1 line-clamp-1" title={rec.name}>{rec.name}</h3>
+                    <p className="text-sm text-gray-500 capitalize flex items-center gap-1">
+                      <FiPackage size={14} /> {rec.category}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Cost</p>
+                      <p className="font-semibold text-gray-900">${rec.estimatedCost || rec.cost || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Selling Price</p>
+                      <p className="font-semibold text-gray-900">${rec.sellingPrice || rec.price || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Margin</p>
+                      <p className="font-bold text-green-600">{rec.profitMargin ? `${rec.profitMargin}%` : 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">MOQ</p>
+                      <p className="font-semibold text-gray-900">{rec.recommendedMOQ || rec.moq || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {rec.reason && (
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-1">{rec.reason}</p>
+                  )}
+
+                  {/* Real Scraped Products Preview */}
+                  {rec.scrapedProducts && rec.scrapedProducts.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Found Online</p>
+                      <div className="flex -space-x-2 overflow-hidden">
+                        {rec.scrapedProducts.slice(0, 4).map((prod: any, i: number) => (
+                          <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden" title={prod.title}>
+                            {prod.imageUrl ? (
+                              <img src={prod.imageUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-400">{i + 1}</div>
+                            )}
+                          </div>
+                        ))}
+                        {rec.scrapedProducts.length > 4 && (
+                          <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+                            +{rec.scrapedProducts.length - 4}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-auto pt-4 border-t border-gray-100 flex gap-2">
+                    <button
+                      onClick={() => handleAddToSimulation(rec, idx)}
+                      disabled={addingProducts.has(idx) || addedProducts.has(idx)}
+                      className={`flex-1 btn text-sm py-2.5 flex items-center justify-center gap-2 ${addedProducts.has(idx)
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : addingProducts.has(idx)
+                            ? 'bg-gray-100 text-gray-400'
+                            : 'btn-primary'
+                        }`}
+                    >
+                      {addedProducts.has(idx) ? (
+                        <>
+                          <FiCheck /> Added
+                        </>
+                      ) : addingProducts.has(idx) ? (
+                        <>
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div> Adding...
+                        </>
+                      ) : (
+                        <>
+                          <FiPlus /> Add to Sim
+                        </>
+                      )}
+                    </button>
+
+                    {/* External Links Dropdown Trigger could go here */}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 card bg-gray-50 border-dashed border-2 border-gray-200">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FiPackage className="text-gray-400 text-2xl" />
             </div>
-          )}
-        </div>
+            <h3 className="text-title-2 font-bold text-gray-900 mb-2">No recommendations found</h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">Try adjusting your preferences to see new product ideas.</p>
+            <button
+              onClick={() => setShowGenreModal(true)}
+              className="btn btn-primary"
+            >
+              <FiSettings className="mr-2" /> Update Preferences
+            </button>
+          </div>
+        )}
+
+        {/* See More Button */}
+        {!loading && recommendations.length > 0 && hasMore && (
+          <div className="mt-12 text-center">
+            <button
+              onClick={handleSeeMore}
+              disabled={loadingMore}
+              className="btn btn-secondary px-8 py-3"
+            >
+              {loadingMore ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                  Loading More...
+                </>
+              ) : (
+                <>
+                  <FiChevronDown className="mr-2" /> Load More Ideas
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Change Interest Modal */}
-      {showGenreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h2 className="text-2xl font-bold mb-4">Change Product Interest</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="productGenre" className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Genre/Category
-                </label>
-                <select
-                  id="productGenre"
-                  value={selectedGenre}
-                  onChange={(e) => setSelectedGenre(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      <AnimatePresence>
+        {showGenreModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              onClick={() => setShowGenreModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-apple-xl w-full max-w-md p-6 relative z-10"
+            >
+              <h2 className="text-title-2 font-bold mb-6">Customize Recommendations</h2>
+
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="productGenre" className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Category
+                  </label>
+                  <div className="relative">
+                    <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <select
+                      id="productGenre"
+                      value={selectedGenre}
+                      onChange={(e) => setSelectedGenre(e.target.value)}
+                      className="input pl-10"
+                    >
+                      <option value="">Select a category</option>
+                      <option value="electronics">Electronics</option>
+                      <option value="fashion">Fashion & Apparel</option>
+                      <option value="home">Home & Kitchen</option>
+                      <option value="beauty">Beauty & Personal Care</option>
+                      <option value="sports">Sports & Outdoors</option>
+                      <option value="toys">Toys & Games</option>
+                      <option value="books">Books & Media</option>
+                      <option value="health">Health & Wellness</option>
+                      <option value="automotive">Automotive</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="customBudget" className="block text-sm font-medium text-gray-700 mb-2">
+                    Budget Limit
+                  </label>
+                  <div className="relative">
+                    <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="number"
+                      id="customBudget"
+                      value={customBudget}
+                      onChange={(e) => setCustomBudget(e.target.value)}
+                      placeholder={userProfile?.budget?.toString() || 'Enter budget'}
+                      min="0"
+                      step="0.01"
+                      className="input pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Leave empty to keep current budget</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => {
+                    setShowGenreModal(false);
+                    setCustomBudget('');
+                  }}
+                  className="flex-1 btn btn-ghost"
                 >
-                  <option value="">Select a category</option>
-                  <option value="electronics">Electronics</option>
-                  <option value="fashion">Fashion & Apparel</option>
-                  <option value="home">Home & Kitchen</option>
-                  <option value="beauty">Beauty & Personal Care</option>
-                  <option value="sports">Sports & Outdoors</option>
-                  <option value="toys">Toys & Games</option>
-                  <option value="books">Books & Media</option>
-                  <option value="health">Health & Wellness</option>
-                  <option value="automotive">Automotive</option>
-                  <option value="other">Other</option>
-                </select>
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateGenre}
+                  className="flex-1 btn btn-primary"
+                >
+                  Update Results
+                </button>
               </div>
-
-              <div>
-                <label htmlFor="customBudget" className="block text-sm font-medium text-gray-700 mb-2">
-                  Budget (Optional - leave empty to keep current)
-                </label>
-                <input
-                  type="number"
-                  id="customBudget"
-                  value={customBudget}
-                  onChange={(e) => setCustomBudget(e.target.value)}
-                  placeholder={userProfile?.budget?.toString() || 'Enter budget'}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleUpdateGenre}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Update & Refresh
-              </button>
-              <button
-                onClick={() => {
-                  setShowGenreModal(false);
-                  setCustomBudget('');
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-

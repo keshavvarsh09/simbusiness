@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BusinessStats } from '@/types';
-import { 
-  FiDollarSign, 
-  FiShoppingCart, 
-  FiTrendingUp, 
-  FiPackage, 
-  FiTarget, 
-  FiPlay, 
-  FiPlus, 
+import {
+  FiDollarSign,
+  FiShoppingCart,
+  FiTrendingUp,
+  FiPackage,
+  FiTarget,
+  FiPlay,
+  FiPlus,
   FiRefreshCw,
   FiAlertCircle,
   FiActivity
@@ -26,6 +26,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { motion } from 'framer-motion';
 import BusinessInsights from '@/components/BusinessInsights';
 import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
@@ -124,13 +125,13 @@ export default function Dashboard() {
     }
 
     loadDashboardState();
-    
+
     // Listen for budget updates from BudgetAllocation component
     const handleBudgetUpdate = () => {
       // Refresh dashboard state to show updated budget
       loadDashboardState();
     };
-    
+
     if (typeof window !== 'undefined') {
       window.addEventListener('budgetUpdated', handleBudgetUpdate);
       return () => {
@@ -161,7 +162,7 @@ export default function Dashboard() {
       if (stateData.success) {
         // Always recalculate profit from revenue - expenses to ensure accuracy
         const calculatedProfit = stateData.state.revenue - stateData.state.expenses;
-        
+
         // Calculate actual inventory from SKU inventory
         let actualInventory = stateData.state.inventory;
         try {
@@ -175,7 +176,7 @@ export default function Dashboard() {
         } catch (error) {
           console.error('Failed to load inventory:', error);
         }
-        
+
         setBusinessStats({
           revenue: stateData.state.revenue,
           expenses: stateData.state.expenses,
@@ -203,7 +204,7 @@ export default function Dashboard() {
           const productsData = await productsResponse.json();
           if (productsData.success && productsData.products.length > 0) {
             setUserProducts(productsData.products);
-            
+
             // Update average order value based on actual products
             if (productsData.averages.sellingPrice > 0) {
               setMetrics(prev => ({
@@ -257,13 +258,13 @@ export default function Dashboard() {
   // Auto-simulation effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (autoSimulate && businessStats.inventory > 0) {
       interval = setInterval(() => {
         simulateDay();
       }, 2000 / simulationSpeed); // Adjust speed based on multiplier
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -275,14 +276,14 @@ export default function Dashboard() {
       alert('Please add products first before running simulation. Go to Products > Recommendations or Analyze Product.');
       return;
     }
-    
+
     if (userProducts.length === 0) {
       alert('No active products found. Please activate products in the Products page.');
       return;
     }
-    
+
     setDay(prevDay => prevDay + 1);
-    
+
     // Randomly trigger market events (10% chance each day)
     if (Math.random() < 0.1) {
       const newEvent = marketEvents[Math.floor(Math.random() * marketEvents.length)];
@@ -291,11 +292,11 @@ export default function Dashboard() {
       // Clear event after a day
       setCurrentEvent(null);
     }
-    
+
     // Fetch product budget allocations and seasonality
     let productAllocations: any[] = [];
     let productSeasonality: Record<number, { seasonality: number; trend: number }> = {};
-    
+
     try {
       // Get budget allocations
       const budgetResponse = await fetch('/api/budget/allocate', {
@@ -338,19 +339,19 @@ export default function Dashboard() {
       console.error('Error fetching budget:', error);
       alert('Failed to fetch budget allocations. Simulation will continue with default values.');
     }
-    
+
     // Calculate total allocated budget for distribution
     const totalAllocated = productAllocations.reduce((sum, a) => sum + a.allocated, 0);
-    
+
     // Base visitors (grows over time)
     const dailyVisitors = 100 + (day / 10);
-    
+
     // Distribute orders across products based on budget allocation and seasonality
     let totalRevenue = 0;
     let totalExpenses = 0;
     let totalOrders = 0;
     const shippingPerOrder = 5;
-    
+
     // If products have budget allocations, distribute orders proportionally
     if (productAllocations.length > 0 && totalAllocated > 0) {
       for (const alloc of productAllocations) {
@@ -359,29 +360,29 @@ export default function Dashboard() {
 
         // Calculate product's share of total budget
         const budgetShare = alloc.allocated / totalAllocated;
-        
+
         // Get seasonality and trend factors
         const seasonality = productSeasonality[product.id]?.seasonality || 1.0;
         const trend = productSeasonality[product.id]?.trend || 1.0;
-        
+
         // Calculate visitors for this product (based on budget allocation)
         const productVisitors = Math.round(dailyVisitors * budgetShare);
-        
+
         // Apply seasonality and trend to conversion rate
         let productConversionRate = (metrics.conversionRate / 100) * seasonality * trend;
-        
+
         // Apply marketing effect (based on allocated budget)
         const marketingEffect = 1 + (alloc.allocated / 1000); // More budget = better marketing
         productConversionRate = productConversionRate * marketingEffect;
-        
+
         // Apply event impacts
         if (currentEvent) {
           productConversionRate = productConversionRate * (1 + (currentEvent.impact.sales / 100));
         }
-        
+
         // Calculate orders for this product
         const potentialOrders = Math.round(productVisitors * productConversionRate);
-        
+
         // Get available inventory for this product (from SKU inventory)
         let availableInventory = 0;
         try {
@@ -395,26 +396,26 @@ export default function Dashboard() {
         } catch (error) {
           console.error('Error fetching inventory:', error);
         }
-        
+
         // Limit orders to available inventory
         const productOrders = Math.min(potentialOrders, availableInventory);
         const productRevenue = productOrders * product.sellingPrice;
-        
+
         // Calculate costs
         const productCost = productOrders * product.cost;
         const productShipping = productOrders * shippingPerOrder;
         const productReturns = productRevenue * (metrics.returnRate / 100) * 0.5;
-        
+
         // Marketing spend from allocated budget (5% daily)
         const productMarketingSpend = Math.min(alloc.allocated * 0.05, alloc.available);
-        
+
         const productExpenses = productCost + productShipping + productReturns + productMarketingSpend;
         const productProfit = productRevenue - productExpenses;
-        
+
         totalRevenue += productRevenue;
         totalExpenses += productExpenses;
         totalOrders += productOrders;
-        
+
         // Deduct inventory from SKU inventory
         if (productOrders > 0) {
           try {
@@ -451,7 +452,7 @@ export default function Dashboard() {
             // Don't block simulation if inventory deduction fails
           }
         }
-        
+
         // Update product performance in database (optional endpoint)
         try {
           const perfResponse = await fetch('/api/products/performance', {
@@ -481,31 +482,31 @@ export default function Dashboard() {
       const selectedProduct = userProducts[Math.floor(Math.random() * userProducts.length)];
       const seasonality = productSeasonality[selectedProduct.id]?.seasonality || 1.0;
       const trend = productSeasonality[selectedProduct.id]?.trend || 1.0;
-      
+
       let conversionRate = (metrics.conversionRate / 100) * seasonality * trend;
       if (currentEvent) {
         conversionRate = conversionRate * (1 + (currentEvent.impact.sales / 100));
       }
-      
+
       const potentialOrders = Math.round(dailyVisitors * conversionRate);
       const availableInventory = businessStats.inventory;
       const actualOrders = Math.min(potentialOrders, availableInventory);
-      
+
       totalRevenue = actualOrders * selectedProduct.sellingPrice;
       const productCost = actualOrders * selectedProduct.cost;
       const shipping = actualOrders * shippingPerOrder;
       const returns = totalRevenue * (metrics.returnRate / 100) * 0.5;
       const marketingSpend = businessStats.marketing * 0.05;
-      
+
       totalExpenses = productCost + shipping + returns + marketingSpend;
       totalOrders = actualOrders;
     }
-    
+
     // Apply event expense impact
     const expenseMultiplier = currentEvent ? (1 + (currentEvent.impact.expenses / 100)) : 1;
     const finalExpenses = totalExpenses * expenseMultiplier;
     const finalProfit = totalRevenue - finalExpenses;
-    
+
     // Update business metrics
     setMetrics(prev => ({
       ...prev,
@@ -514,7 +515,7 @@ export default function Dashboard() {
       averageOrderValue: Math.max(30, Math.min(70, prev.averageOrderValue + (Math.random() - 0.5) * 2)),
       returnRate: Math.max(5, Math.min(15, prev.returnRate + (Math.random() - 0.5) * 0.5))
     }));
-    
+
     // Calculate total inventory from SKU inventory
     let totalInventory = 0;
     try {
@@ -528,16 +529,16 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error fetching inventory:', error);
     }
-    
+
     setBusinessStats(prev => {
       const newTotalRevenue = prev.revenue + totalRevenue;
       const newTotalExpenses = prev.expenses + finalExpenses;
       const newTotalProfit = newTotalRevenue - newTotalExpenses;
-      
+
       setSimulationHistory(prevHistory => ({
         profit: [...prevHistory.profit, newTotalProfit]
       }));
-      
+
       return {
         revenue: newTotalRevenue,
         expenses: newTotalExpenses,
@@ -555,22 +556,22 @@ export default function Dashboard() {
 
   const increaseMarketing = async () => {
     const marketingAmount = 100;
-    
+
     // Check budget from wallet instead of profit
     try {
       const budgetResponse = await fetch('/api/budget/allocate', {
         headers: getAuthHeaders(),
       });
       const budgetData = await budgetResponse.json();
-      
+
       if (budgetData.success) {
         const availableBudget = budgetData.budget?.available || 0;
-        
+
         if (availableBudget < marketingAmount) {
           alert(`Insufficient budget. You need $${marketingAmount.toFixed(2)} but only have $${availableBudget.toFixed(2)} available in your wallet.`);
           return;
         }
-        
+
         // Add funds to marketing budget (this is just increasing the marketing allocation)
         // The actual spending happens during simulation
         setBusinessStats(prev => ({
@@ -628,10 +629,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center pt-20">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary-200 border-t-primary-600 mx-auto mb-4"></div>
+          <p className="text-body text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -644,278 +645,317 @@ export default function Dashboard() {
 
   if (!hasProducts) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-            <div className="flex items-start gap-3">
-              <FiAlertCircle className="text-yellow-600 mt-1 flex-shrink-0" size={24} />
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-yellow-800 mb-2">Add Products First</h2>
-                <p className="text-yellow-700 mb-4">
-                  You need to add products to your catalog before you can run the simulation. 
-                  The simulation uses your actual products to calculate sales, revenue, and profit.
-                </p>
-                <div className="flex gap-3 flex-wrap">
-                  <AddProductForm onSuccess={handleProductAdded} />
-                  <button
-                    onClick={() => router.push('/products/recommendations')}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
-                  >
-                    <FiTrendingUp /> Get AI Recommendations
-                  </button>
-                  <button
-                    onClick={() => router.push('/products/analyze')}
-                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
-                  >
-                    <FiPlus /> Analyze Product
-                  </button>
-                </div>
+      <div className="max-w-3xl mx-auto pt-12">
+        <div className="card bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200/50">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
+                <FiAlertCircle className="text-yellow-600" size={24} />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-title-1 font-bold text-gray-900 mb-2">Add Products First</h2>
+              <p className="text-body text-gray-700 mb-6 leading-relaxed">
+                You need to add products to your catalog before you can run the simulation.
+                The simulation uses your actual products to calculate sales, revenue, and profit.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <AddProductForm onSuccess={handleProductAdded} />
+                <button
+                  onClick={() => router.push('/products/recommendations')}
+                  className="btn btn-primary flex items-center gap-2"
+                >
+                  <FiTrendingUp /> Get AI Recommendations
+                </button>
+                <button
+                  onClick={() => router.push('/products/analyze')}
+                  className="btn btn-accent flex items-center gap-2"
+                >
+                  <FiPlus /> Analyze Product
+                </button>
               </div>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Dashboard Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="flex justify-between items-center mb-4 sm:mb-6 flex-wrap gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold">Business Dashboard</h1>
-          <div className="flex items-center gap-3">
-            {saving && (
-              <span className="text-xs text-gray-500 flex items-center gap-1">
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
-                Saving...
-              </span>
-            )}
-            <AddProductForm onSuccess={handleProductAdded} />
-            <button
-              onClick={() => router.push('/products')}
-              className="text-sm bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 flex items-center gap-2"
-            >
-              <FiPackage /> View Products
-            </button>
-            <button
-              onClick={() => router.push('/products/dashboard')}
-              className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
-            >
-              <FiActivity /> Product Dashboard
-            </button>
-          </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-display-3 font-bold text-gray-900 mb-2">Business Dashboard</h1>
+          <p className="text-body text-gray-600">Monitor your business performance and make data-driven decisions</p>
         </div>
-        
-        {/* Market Event Alert */}
-        {currentEvent && (
-          <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-            <div className="text-yellow-500 mt-1 flex-shrink-0">
-              <FiAlertCircle size={24} />
+        <div className="flex items-center gap-3 flex-wrap">
+          {saving && (
+            <span className="text-sm text-gray-500 flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-200 border-t-primary-600"></div>
+              Saving...
+            </span>
+          )}
+          <AddProductForm onSuccess={handleProductAdded} />
+          <button
+            onClick={() => router.push('/products')}
+            className="btn btn-secondary text-sm flex items-center gap-2"
+          >
+            <FiPackage /> View Products
+          </button>
+          <button
+            onClick={() => router.push('/products/dashboard')}
+            className="btn btn-primary text-sm flex items-center gap-2"
+          >
+            <FiActivity /> Product Dashboard
+          </button>
+        </div>
+      </div>
+
+      {/* Market Event Alert */}
+      {currentEvent && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200/50"
+        >
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
+                <FiAlertCircle className="text-yellow-600" size={24} />
+              </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base sm:text-lg text-yellow-700">{currentEvent.title}</h3>
-              <p className="text-sm sm:text-base text-yellow-600">{currentEvent.description}</p>
-              <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <h3 className="text-title-2 font-bold text-gray-900 mb-2">{currentEvent.title}</h3>
+              <p className="text-body text-gray-700 mb-4">{currentEvent.description}</p>
+              <div className="flex flex-wrap gap-4">
                 {currentEvent.impact.sales !== 0 && (
-                  <span className={`text-xs sm:text-sm font-medium ${currentEvent.impact.sales > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`badge ${currentEvent.impact.sales > 0 ? 'badge-success' : 'badge-danger'}`}>
                     Sales: {currentEvent.impact.sales > 0 ? '+' : ''}{currentEvent.impact.sales}%
                   </span>
                 )}
                 {currentEvent.impact.expenses !== 0 && (
-                  <span className={`text-xs sm:text-sm font-medium ${currentEvent.impact.expenses < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`badge ${currentEvent.impact.expenses < 0 ? 'badge-success' : 'badge-danger'}`}>
                     Expenses: {currentEvent.impact.expenses > 0 ? '+' : ''}{currentEvent.impact.expenses}%
                   </span>
                 )}
               </div>
             </div>
           </div>
-        )}
-        
-        {/* Business Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <StatCard title="Total Revenue" value={`$${businessStats.revenue.toFixed(2)}`} icon={<FiDollarSign className="text-green-500" />} />
-          <StatCard title="Total Expenses" value={`$${businessStats.expenses.toFixed(2)}`} icon={<FiDollarSign className="text-red-500" />} />
-          <StatCard title="Total Profit" value={`$${(businessStats.revenue - businessStats.expenses).toFixed(2)}`} icon={<FiTrendingUp className="text-blue-500" />} />
-          <StatCard title="Orders Fulfilled" value={businessStats.orders.toString()} icon={<FiShoppingCart className="text-purple-500" />} />
-        </div>
+        </motion.div>
+      )}
 
-        {/* Business Metrics */}
-        <div className="card bg-white mb-6 sm:mb-8 p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2">
-            <FiActivity className="text-indigo-500" /> Real-World Metrics
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-center">
-            <div className="p-3">
-              <h3 className="text-gray-600 text-sm">Conversion Rate</h3>
-              <p className="text-2xl font-bold">{metrics.conversionRate.toFixed(1)}%</p>
-              <p className="text-xs text-gray-500">(Industry avg: 1.5-3%)</p>
-            </div>
-            <div className="p-3">
-              <h3 className="text-gray-600 text-sm">Cart Abandonment</h3>
-              <p className="text-2xl font-bold">{metrics.abandonmentRate.toFixed(1)}%</p>
-              <p className="text-xs text-gray-500">(Industry avg: 65-70%)</p>
-            </div>
-            <div className="p-3">
-              <h3 className="text-gray-600 text-sm">Avg. Order Value</h3>
-              <p className="text-2xl font-bold">${metrics.averageOrderValue.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">(Varies by niche)</p>
-            </div>
-            <div className="p-3">
-              <h3 className="text-gray-600 text-sm">Return Rate</h3>
-              <p className="text-2xl font-bold">{metrics.returnRate.toFixed(1)}%</p>
-              <p className="text-xs text-gray-500">(Industry avg: 8-10%)</p>
-            </div>
+      {/* Business Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <StatCard title="Total Revenue" value={`$${businessStats.revenue.toFixed(2)}`} icon={<FiDollarSign className="text-green-500" />} />
+        <StatCard title="Total Expenses" value={`$${businessStats.expenses.toFixed(2)}`} icon={<FiDollarSign className="text-red-500" />} />
+        <StatCard title="Total Profit" value={`$${(businessStats.revenue - businessStats.expenses).toFixed(2)}`} icon={<FiTrendingUp className="text-blue-500" />} />
+        <StatCard title="Orders Fulfilled" value={businessStats.orders.toString()} icon={<FiShoppingCart className="text-purple-500" />} />
+      </div>
+
+      {/* Business Metrics */}
+      <div className="card">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+            <FiActivity className="text-primary-600" size={20} />
+          </div>
+          <h2 className="text-title-1 font-bold text-gray-900">Real-World Metrics</h2>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="text-center p-4 rounded-xl bg-gray-50">
+            <h3 className="text-subhead text-gray-600 mb-2">Conversion Rate</h3>
+            <p className="text-display-3 font-bold text-gray-900 mb-1">{metrics.conversionRate.toFixed(1)}%</p>
+            <p className="text-caption text-gray-500">Industry avg: 1.5-3%</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-gray-50">
+            <h3 className="text-subhead text-gray-600 mb-2">Cart Abandonment</h3>
+            <p className="text-display-3 font-bold text-gray-900 mb-1">{metrics.abandonmentRate.toFixed(1)}%</p>
+            <p className="text-caption text-gray-500">Industry avg: 65-70%</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-gray-50">
+            <h3 className="text-subhead text-gray-600 mb-2">Avg. Order Value</h3>
+            <p className="text-display-3 font-bold text-gray-900 mb-1">${metrics.averageOrderValue.toFixed(2)}</p>
+            <p className="text-caption text-gray-500">Varies by niche</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-gray-50">
+            <h3 className="text-subhead text-gray-600 mb-2">Return Rate</h3>
+            <p className="text-display-3 font-bold text-gray-900 mb-1">{metrics.returnRate.toFixed(1)}%</p>
+            <p className="text-caption text-gray-500">Industry avg: 8-10%</p>
           </div>
         </div>
+      </div>
 
-        {/* Budget Allocation */}
-        <div className="mb-6 sm:mb-8">
-          <BudgetAllocation />
+      {/* Budget Allocation */}
+      <div>
+        <BudgetAllocation />
+      </div>
+
+      {/* SKU & Inventory Management */}
+      <div id="inventory-manager">
+        <ProductInventoryManager />
+      </div>
+
+      {/* Actions Panel */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="card card-hover">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <FiPackage className="text-blue-600" size={20} />
+            </div>
+            <h2 className="text-title-2 font-bold text-gray-900">Inventory Management</h2>
+          </div>
+          <p className="text-body text-gray-600 mb-4">
+            Current Stock: <span className="font-bold text-title-2 text-gray-900">{businessStats.inventory}</span> units
+          </p>
+          <button
+            onClick={() => setShowRestockConfirm(true)}
+            className="btn btn-secondary w-full flex items-center justify-center gap-2"
+            disabled={businessStats.inventory > 50}
+          >
+            <FiRefreshCw /> Restock (20 units)
+          </button>
         </div>
 
-        {/* SKU & Inventory Management */}
-        <div id="inventory-manager" className="mb-6 sm:mb-8">
-          <ProductInventoryManager />
+        <div className="card card-hover">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+              <FiTarget className="text-purple-600" size={20} />
+            </div>
+            <h2 className="text-title-2 font-bold text-gray-900">Marketing</h2>
+          </div>
+          <p className="text-body text-gray-600 mb-4">
+            Current Budget: <span className="font-bold text-title-2 text-gray-900">${businessStats.marketing.toFixed(2)}</span>
+          </p>
+          <button
+            onClick={() => setShowMarketingConfirm(true)}
+            className="btn btn-secondary w-full flex items-center justify-center gap-2"
+          >
+            <FiPlus /> Increase Budget ($100)
+          </button>
         </div>
 
-        {/* Actions Panel */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="card bg-white p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiPackage /> Inventory Management</h2>
-            <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">Current Stock: <span className="font-bold text-base sm:text-lg">{businessStats.inventory}</span> units</p>
-            <button 
-              onClick={() => setShowRestockConfirm(true)}
-              className="btn btn-secondary w-full flex items-center justify-center gap-2 text-sm sm:text-base"
-              disabled={businessStats.inventory > 50}
-            >
-              <FiRefreshCw /> <span className="hidden sm:inline">Restock (20 units)</span><span className="sm:hidden">Restock</span>
-            </button>
+        <div className="card card-hover">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-accent-50 flex items-center justify-center">
+              <FiPlay className="text-accent-600" size={20} />
+            </div>
+            <h2 className="text-title-2 font-bold text-gray-900">Simulation Control</h2>
           </div>
+          <p className="text-body text-gray-600 mb-4">
+            Current Day: <span className="font-bold text-title-2 text-gray-900">{day}</span>
+          </p>
 
-          <div className="card bg-white p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiTarget /> Marketing</h2>
-            <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">Current Budget: <span className="font-bold text-base sm:text-lg">${businessStats.marketing.toFixed(2)}</span></p>
-            <button 
-              onClick={() => setShowMarketingConfirm(true)}
-              className="btn btn-secondary w-full flex items-center justify-center gap-2 text-sm sm:text-base"
-            >
-              <FiPlus /> <span className="hidden sm:inline">Increase Budget ($100)</span><span className="sm:hidden">+$100</span>
-            </button>
-          </div>
-
-          <div className="card bg-white p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2"><FiPlay /> Simulation Control</h2>
-            <p className="mb-2 text-sm sm:text-base text-gray-600">Current Day: <span className="font-bold text-base sm:text-lg">{day}</span></p>
-            
-            <div className="flex items-center mb-3 sm:mb-4">
-              <span className="text-xs sm:text-sm text-gray-600 mr-2">Speed:</span>
-              <div className="flex gap-1">
-                {simulationSpeeds.map((speed) => (
-                  <button
-                    key={speed.value}
-                    onClick={() => changeSimulationSpeed(speed.value)}
-                    className={`px-2 py-1 text-xs rounded-md ${
-                      simulationSpeed === speed.value 
-                        ? 'bg-primary text-white' 
-                        : 'bg-gray-200 text-gray-700'
+          <div className="flex items-center mb-4">
+            <span className="text-subhead text-gray-600 mr-3">Speed:</span>
+            <div className="flex gap-2">
+              {simulationSpeeds.map((speed) => (
+                <button
+                  key={speed.value}
+                  onClick={() => changeSimulationSpeed(speed.value)}
+                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all ${simulationSpeed === speed.value
+                      ? 'bg-primary-600 text-white shadow-apple'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                  >
-                    {speed.label}
-                  </button>
-                ))}
+                >
+                  {speed.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={simulateDay}
+              className="btn btn-accent flex items-center justify-center gap-2"
+              disabled={businessStats.inventory <= 0 || autoSimulate}
+            >
+              <FiPlay /> Next Day
+            </button>
+            <button
+              onClick={toggleAutoSimulation}
+              className={`btn ${autoSimulate ? 'btn-secondary' : 'btn-primary'} flex items-center justify-center gap-2`}
+              disabled={businessStats.inventory <= 0}
+            >
+              {autoSimulate ? 'Pause' : 'Auto-Run'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Products Section */}
+      {userProducts.length > 0 && (
+        <div className="card">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <FiPackage className="text-indigo-600" size={20} />
+              </div>
+              <div>
+                <h2 className="text-title-1 font-bold text-gray-900">Active Products in Simulation</h2>
+                <p className="text-subhead text-gray-600 mt-1">
+                  Revenue and profit are calculated based on these products
+                </p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                onClick={simulateDay}
-                className="btn btn-accent flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
-                disabled={businessStats.inventory <= 0 || autoSimulate}
-              >
-                <FiPlay /> <span className="hidden sm:inline">Next Day</span><span className="sm:hidden">Next</span>
-              </button>
-              <button 
-                onClick={toggleAutoSimulation}
-                className={`btn ${autoSimulate ? 'btn-secondary' : 'btn-primary'} flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base`}
-                disabled={businessStats.inventory <= 0}
-              >
-                {autoSimulate ? 'Pause' : 'Auto-Run'}
-              </button>
-            </div>
+            <button
+              onClick={() => router.push('/products')}
+              className="btn btn-ghost text-sm flex items-center gap-2"
+            >
+              Manage Products <FiPackage size={16} />
+            </button>
           </div>
-        </div>
-
-        {/* Active Products Section */}
-        {userProducts.length > 0 && (
-          <div className="card bg-white mb-6 sm:mb-8 p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-                <FiPackage className="text-indigo-500" /> Active Products in Simulation
-              </h2>
-              <button
-                onClick={() => router.push('/products')}
-                className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                Manage Products <FiPackage size={14} />
-              </button>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              These products are currently being used in your simulation calculations. Revenue and profit are calculated based on these products.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {userProducts.map((product) => {
-                const profitMargin = product.sellingPrice > 0 
-                  ? ((product.sellingPrice - product.cost) / product.sellingPrice * 100).toFixed(1)
-                  : '0';
-                return (
-                  <div key={product.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <h3 className="font-semibold text-base mb-2 truncate" title={product.name}>{product.name}</h3>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Category:</span>
-                        <span className="font-medium capitalize">{product.category}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Cost:</span>
-                        <span className="font-medium text-green-600">${product.cost.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Price:</span>
-                        <span className="font-medium text-blue-600">${product.sellingPrice.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Profit Margin:</span>
-                        <span className={`font-medium ${parseFloat(profitMargin) > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {profitMargin}%
-                        </span>
-                      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userProducts.map((product) => {
+              const profitMargin = product.sellingPrice > 0
+                ? ((product.sellingPrice - product.cost) / product.sellingPrice * 100).toFixed(1)
+                : '0';
+              return (
+                <div key={product.id} className="p-4 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all">
+                  <h3 className="font-semibold text-title-3 mb-3 truncate" title={product.name}>{product.name}</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Category:</span>
+                      <span className="font-medium capitalize text-gray-900">{product.category}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Cost:</span>
+                      <span className="font-medium text-accent-600">${product.cost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Price:</span>
+                      <span className="font-medium text-primary-600">${product.sellingPrice.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="text-gray-600">Profit Margin:</span>
+                      <span className={`font-bold ${parseFloat(profitMargin) > 0 ? 'text-accent-600' : 'text-red-600'}`}>
+                        {profitMargin}%
+                      </span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-
-        {/* Profit Chart */}
-        {simulationHistory.profit.length > 0 && (
-          <div className="card bg-white mb-6 sm:mb-8 p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Profit Trend</h2>
-            <div className="overflow-x-auto">
-              <Line options={chartOptions} data={chartData} />
-            </div>
-          </div>
-        )}
-
-        {/* Business Insights */}
-        <BusinessInsights />
-
-        {/* Ad Metrics Checker */}
-        <div className="mt-6">
-          <AdMetricsChecker />
         </div>
-      </main>
+      )}
+
+      {/* Profit Chart */}
+      {simulationHistory.profit.length > 0 && (
+        <div className="card">
+          <h2 className="text-title-1 font-bold text-gray-900 mb-6">Profit Trend</h2>
+          <div className="overflow-x-auto">
+            <Line options={chartOptions} data={chartData} />
+          </div>
+        </div>
+      )}
+
+      {/* Business Insights */}
+      <BusinessInsights />
+
+      {/* Ad Metrics Checker */}
+      <div className="mt-6">
+        <AdMetricsChecker />
+      </div>
 
       {/* Confirmation Dialogs */}
       <ConfirmationDialog
@@ -950,15 +990,22 @@ export default function Dashboard() {
   );
 }
 
-// Stat Card Component
+// Stat Card Component - Apple Style
 function StatCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="card bg-white p-5 flex items-center gap-4">
-      <div className="text-3xl p-3 bg-gray-100 rounded-lg">{icon}</div>
-      <div>
-        <h3 className="text-gray-500 text-sm uppercase tracking-wide">{title}</h3>
-        <p className="text-2xl font-bold text-gray-800">{value}</p>
+    <motion.div
+      whileHover={{ y: -4 }}
+      className="card card-hover"
+    >
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0">
+          <div className="text-2xl">{icon}</div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-subhead text-gray-600 mb-1 truncate">{title}</h3>
+          <p className="text-title-1 font-bold text-gray-900 truncate">{value}</p>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
-} 
+}

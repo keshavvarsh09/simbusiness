@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  FiPackage, 
-  FiDollarSign, 
-  FiTrendingUp, 
+import {
+  FiPackage,
+  FiDollarSign,
+  FiTrendingUp,
   FiTrendingDown,
   FiBarChart,
   FiShoppingCart,
   FiAlertCircle,
   FiCheckCircle,
-  FiRefreshCw
+  FiRefreshCw,
+  FiFilter
 } from 'react-icons/fi';
 import { getAuthHeaders, isAuthenticated } from '@/lib/auth';
 import { Line, Bar } from 'react-chartjs-2';
@@ -26,6 +27,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { motion } from 'framer-motion';
 
 ChartJS.register(
   CategoryScale,
@@ -133,10 +135,10 @@ export default function ProductDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading product dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-body text-gray-600">Loading product dashboard...</p>
         </div>
       </div>
     );
@@ -144,17 +146,19 @@ export default function ProductDashboard() {
 
   if (products.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-            <FiAlertCircle className="text-yellow-600 mx-auto mb-4" size={48} />
-            <h2 className="text-xl font-bold text-yellow-800 mb-2">No Products Found</h2>
-            <p className="text-yellow-700 mb-4">
-              Add products to your catalog to view the product dashboard.
+      <div className="min-h-screen bg-background pt-20">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+          <div className="card bg-yellow-50 border-yellow-200 text-center py-12">
+            <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FiAlertCircle className="text-yellow-600 text-3xl" />
+            </div>
+            <h2 className="text-title-2 font-bold text-yellow-900 mb-2">No Products Found</h2>
+            <p className="text-body text-yellow-800 mb-6 max-w-md mx-auto">
+              Add products to your catalog to view the product dashboard and track inventory.
             </p>
             <button
               onClick={() => router.push('/products')}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+              className="btn btn-primary"
             >
               Go to Products
             </button>
@@ -164,7 +168,7 @@ export default function ProductDashboard() {
     );
   }
 
-  const filteredInventory = selectedProduct 
+  const filteredInventory = selectedProduct
     ? inventory.filter(inv => inv.productId === selectedProduct)
     : inventory;
 
@@ -193,21 +197,24 @@ export default function ProductDashboard() {
         data: filteredPerformance.map(p => p.revenue),
         borderColor: 'rgb(34, 197, 94)',
         backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        tension: 0.1
+        tension: 0.4,
+        fill: true
       },
       {
         label: 'Expenses',
         data: filteredPerformance.map(p => p.expenses),
         borderColor: 'rgb(239, 68, 68)',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        tension: 0.1
+        tension: 0.4,
+        fill: true
       },
       {
         label: 'Profit',
         data: filteredPerformance.map(p => p.profit),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.1
+        tension: 0.4,
+        fill: true
       }
     ]
   };
@@ -218,177 +225,281 @@ export default function ProductDashboard() {
       {
         label: 'Orders',
         data: filteredPerformance.map(p => p.orders),
-        backgroundColor: 'rgba(139, 92, 246, 0.5)',
+        backgroundColor: 'rgba(139, 92, 246, 0.6)',
         borderColor: 'rgb(139, 92, 246)',
+        borderWidth: 1,
+        borderRadius: 8,
       }
     ]
   };
 
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          usePointStyle: true,
+          font: {
+            family: "'Inter', sans-serif",
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        titleColor: '#1f2937',
+        bodyColor: '#4b5563',
+        borderColor: '#e5e7eb',
+        borderWidth: 1,
+        padding: 12,
+        boxPadding: 4,
+        usePointStyle: true,
+        titleFont: {
+          family: "'Inter', sans-serif",
+          size: 13,
+          weight: 'bold'
+        },
+        bodyFont: {
+          family: "'Inter', sans-serif",
+          size: 12
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 11
+          }
+        }
+      },
+      y: {
+        grid: {
+          color: '#f3f4f6'
+        },
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 11
+          }
+        }
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <FiBarChart className="text-blue-600" />
-            Product Dashboard
-          </h1>
+    <div className="min-h-screen bg-background pt-20">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-display-3 font-bold text-gray-900 mb-2 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-primary-50 flex items-center justify-center">
+                <FiBarChart className="text-primary-600 text-2xl" />
+              </div>
+              Product Dashboard
+            </h1>
+            <p className="text-body text-gray-600">Overview of your inventory performance and metrics</p>
+          </div>
           <button
             onClick={loadData}
-            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+            className="btn btn-secondary flex items-center gap-2"
           >
             <FiRefreshCw />
-            Refresh
+            Refresh Data
           </button>
         </div>
 
         {/* Product Selector */}
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Filter by Product
-          </label>
-          <select
-            value={selectedProduct || ''}
-            onChange={(e) => setSelectedProduct(e.target.value ? parseInt(e.target.value) : null)}
-            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">All Products</option>
-            {products.map(product => (
-              <option key={product.id} value={product.id}>
-                {product.name}
-              </option>
-            ))}
-          </select>
+        <div className="mb-8">
+          <div className="relative max-w-xs">
+            <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <select
+              value={selectedProduct || ''}
+              onChange={(e) => setSelectedProduct(e.target.value ? parseInt(e.target.value) : null)}
+              className="input pl-10"
+            >
+              <option value="">All Products</option>
+              {products.map(product => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <motion.div
+            whileHover={{ y: -4 }}
+            className="card card-hover p-6"
+          >
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Inventory Value</p>
-                <p className="text-2xl font-bold text-gray-800">${totalInventoryValue.toFixed(2)}</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">Inventory Value</p>
+                <p className="text-title-2 font-bold text-gray-900">${totalInventoryValue.toFixed(2)}</p>
               </div>
-              <FiPackage className="text-blue-600 text-3xl" />
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <FiDollarSign size={20} />
+              </div>
             </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -4 }}
+            className="card card-hover p-6"
+          >
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Available Units</p>
-                <p className="text-2xl font-bold text-green-600">{totalAvailableQuantity}</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">Available Units</p>
+                <p className="text-title-2 font-bold text-green-600">{totalAvailableQuantity}</p>
               </div>
-              <FiCheckCircle className="text-green-600 text-3xl" />
+              <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                <FiCheckCircle size={20} />
+              </div>
             </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -4 }}
+            className="card card-hover p-6"
+          >
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Low Stock Items</p>
-                <p className="text-2xl font-bold text-red-600">{lowStockCount}</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">Low Stock Items</p>
+                <p className="text-title-2 font-bold text-red-600">{lowStockCount}</p>
               </div>
-              <FiAlertCircle className="text-red-600 text-3xl" />
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                <FiAlertCircle size={20} />
+              </div>
             </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -4 }}
+            className="card card-hover p-6"
+          >
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-                <p className="text-2xl font-bold text-purple-600">{totalOrders}</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">Total Orders</p>
+                <p className="text-title-2 font-bold text-purple-600">{totalOrders}</p>
               </div>
-              <FiShoppingCart className="text-purple-600 text-3xl" />
+              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+                <FiShoppingCart size={20} />
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Performance Metrics */}
         {filteredPerformance.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <FiTrendingUp className="text-green-600" />
-                <h3 className="text-lg font-semibold">Total Revenue</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="card p-6 bg-gradient-to-br from-green-50 to-white border-green-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-green-100 rounded-lg text-green-600">
+                  <FiTrendingUp size={20} />
+                </div>
+                <h3 className="text-title-3 font-semibold text-gray-900">Total Revenue</h3>
               </div>
-              <p className="text-3xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
+              <p className="text-display-3 font-bold text-green-700">${totalRevenue.toFixed(2)}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <FiTrendingDown className="text-red-600" />
-                <h3 className="text-lg font-semibold">Total Expenses</h3>
+
+            <div className="card p-6 bg-gradient-to-br from-red-50 to-white border-red-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-red-100 rounded-lg text-red-600">
+                  <FiTrendingDown size={20} />
+                </div>
+                <h3 className="text-title-3 font-semibold text-gray-900">Total Expenses</h3>
               </div>
-              <p className="text-3xl font-bold text-red-600">${totalExpenses.toFixed(2)}</p>
+              <p className="text-display-3 font-bold text-red-700">${totalExpenses.toFixed(2)}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <FiDollarSign className="text-blue-600" />
-                <h3 className="text-lg font-semibold">Total Profit</h3>
+
+            <div className="card p-6 bg-gradient-to-br from-blue-50 to-white border-blue-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <FiDollarSign size={20} />
+                </div>
+                <h3 className="text-title-3 font-semibold text-gray-900">Total Profit</h3>
               </div>
-              <p className="text-3xl font-bold text-blue-600">${totalProfit.toFixed(2)}</p>
+              <p className="text-display-3 font-bold text-blue-700">${totalProfit.toFixed(2)}</p>
             </div>
           </div>
         )}
 
         {/* Charts */}
         {filteredPerformance.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Revenue vs Expenses vs Profit</h3>
-              <Line data={revenueChartData} options={{ responsive: true }} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="card p-6">
+              <h3 className="text-title-3 font-bold text-gray-900 mb-6">Financial Overview</h3>
+              <div className="h-80">
+                <Line data={revenueChartData} options={chartOptions} />
+              </div>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Orders Over Time</h3>
-              <Bar data={ordersChartData} options={{ responsive: true }} />
+            <div className="card p-6">
+              <h3 className="text-title-3 font-bold text-gray-900 mb-6">Order Volume</h3>
+              <div className="h-80">
+                <Bar data={ordersChartData} options={chartOptions} />
+              </div>
             </div>
           </div>
         )}
 
         {/* SKU Inventory Table */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <FiPackage />
-            SKU Inventory Details
-          </h3>
+        <div className="card overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h3 className="text-title-3 font-bold text-gray-900 flex items-center gap-2">
+              <FiPackage className="text-gray-400" />
+              SKU Inventory Details
+            </h3>
+          </div>
+
           {filteredInventory.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Product</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">SKU</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Available</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Reserved</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Total</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Value</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="text-left py-4 px-6 font-semibold text-gray-600 text-sm">Product</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-600 text-sm">SKU</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-600 text-sm">Available</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-600 text-sm">Reserved</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-600 text-sm">Total</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-600 text-sm">Value</th>
+                    <th className="text-center py-4 px-6 font-semibold text-gray-600 text-sm">Status</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {filteredInventory.map((item) => (
-                    <tr key={item.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">{item.productName}</td>
-                      <td className="py-3 px-4">
-                        <span className="font-mono bg-gray-100 px-2 py-1 rounded text-sm">
+                    <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 px-6 font-medium text-gray-900">{item.productName}</td>
+                      <td className="py-4 px-6">
+                        <span className="font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
                           {item.sku}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-4 px-6 text-right">
                         <span className={`font-semibold ${item.availableQuantity <= item.reorderPoint ? 'text-red-600' : 'text-green-600'}`}>
                           {item.availableQuantity}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right text-orange-600">
+                      <td className="py-4 px-6 text-right text-orange-600 font-medium">
                         {item.reservedQuantity}
                       </td>
-                      <td className="py-3 px-4 text-right">{item.quantity}</td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-4 px-6 text-right text-gray-600">{item.quantity}</td>
+                      <td className="py-4 px-6 text-right font-medium text-gray-900">
                         ${(item.quantity * item.productCost).toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-4 px-6 text-center">
                         {item.needsRestock ? (
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             Low Stock
                           </span>
                         ) : (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             In Stock
                           </span>
                         )}
@@ -399,9 +510,12 @@ export default function ProductDashboard() {
               </table>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <FiPackage className="mx-auto text-4xl mb-2 text-gray-400" />
-              <p>No inventory records found. Set up SKUs for your products to track inventory.</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FiPackage className="text-gray-400 text-2xl" />
+              </div>
+              <h3 className="text-title-3 font-bold text-gray-900 mb-2">No Inventory Records</h3>
+              <p className="text-body text-gray-500">Set up SKUs for your products to track inventory.</p>
             </div>
           )}
         </div>
@@ -409,4 +523,3 @@ export default function ProductDashboard() {
     </div>
   );
 }
-

@@ -7,6 +7,7 @@ import { getAuthHeaders } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { motion } from 'framer-motion';
 import { ProductCardSkeleton } from '@/components/SkeletonLoader';
 import AddProductForm from '@/components/AddProductForm';
 
@@ -43,18 +44,18 @@ export default function ProductsPage() {
   const loadProducts = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const categoryParam = selectedCategory && selectedCategory !== 'all' 
-        ? `?category=${encodeURIComponent(selectedCategory)}` 
+      const categoryParam = selectedCategory && selectedCategory !== 'all'
+        ? `?category=${encodeURIComponent(selectedCategory)}`
         : '';
-      
+
       const response = await fetch(`/api/products/list${categoryParam}`, {
         headers: getAuthHeaders(),
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to load products');
       }
@@ -62,7 +63,7 @@ export default function ProductsPage() {
       if (data.success) {
         setProducts(data.products || []);
         setCategories(data.categories || []);
-        
+
         // Track which products are active in dashboard
         const activeSet = new Set<string>(
           (data.products || [])
@@ -185,14 +186,14 @@ export default function ProductsPage() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         // Check if it's a "table does not exist" error and offer to initialize database
         if (data.error?.includes('Table does not exist') || data.error?.includes('does not exist')) {
           const shouldInit = confirm(
             `${data.error}\n\n${data.hint || 'Would you like to initialize the database now? This will create all required tables.'}`
           );
-          
+
           if (shouldInit) {
             try {
               setAddingToDashboard(true);
@@ -200,9 +201,9 @@ export default function ProductsPage() {
                 method: 'GET',
                 headers: getAuthHeaders(),
               });
-              
+
               const initData = await initResponse.json();
-              
+
               if (initData.success) {
                 alert('Database initialized successfully! Please try adding products to dashboard again.');
                 // Retry the original operation
@@ -219,22 +220,22 @@ export default function ProductsPage() {
           }
           return;
         }
-        
+
         // Check if it's a schema error and offer to run migration
         if (data.error?.includes('schema') || data.error?.includes('column') || data.migrationEndpoint) {
           const shouldMigrate = confirm(
             `${data.error}: ${data.details || ''}\n\n${data.hint || 'Would you like to run the database migration now?'}`
           );
-          
+
           if (shouldMigrate) {
             try {
               const migrateResponse = await fetch('/api/migrate', {
                 method: 'POST',
                 headers: getAuthHeaders(),
               });
-              
+
               const migrateData = await migrateResponse.json();
-              
+
               if (migrateData.success) {
                 alert('Migration successful! Please try adding products to dashboard again.');
                 // Retry the original operation
@@ -248,10 +249,10 @@ export default function ProductsPage() {
           }
           return;
         }
-        
+
         // Show detailed error message if available
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to add products to dashboard');
         if (data.hint) {
           alert(`${errorMsg}\n\n${data.hint}`);
@@ -260,7 +261,7 @@ export default function ProductsPage() {
         }
         return;
       }
-      
+
       if (data.success) {
         // Update active products set
         setActiveProducts(prev => {
@@ -270,8 +271,8 @@ export default function ProductsPage() {
         });
         alert(`${data.updated} product(s) added to dashboard! They will now be used in revenue calculations.`);
       } else {
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to add products to dashboard');
         alert(errorMsg);
       }
@@ -300,14 +301,14 @@ export default function ProductsPage() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         // Check if it's a "table does not exist" error and offer to initialize database
         if (data.error?.includes('Table does not exist') || data.error?.includes('does not exist')) {
           const shouldInit = confirm(
             `${data.error}\n\n${data.hint || 'Would you like to initialize the database now? This will create all required tables.'}`
           );
-          
+
           if (shouldInit) {
             try {
               setAddingToDashboard(true);
@@ -315,9 +316,9 @@ export default function ProductsPage() {
                 method: 'GET',
                 headers: getAuthHeaders(),
               });
-              
+
               const initData = await initResponse.json();
-              
+
               if (initData.success) {
                 alert('Database initialized successfully! Please try removing products from dashboard again.');
                 // Retry the original operation
@@ -334,22 +335,22 @@ export default function ProductsPage() {
           }
           return;
         }
-        
+
         // Check if it's a schema error and offer to run migration
         if (data.error?.includes('schema') || data.error?.includes('column') || data.migrationEndpoint) {
           const shouldMigrate = confirm(
             `${data.error}: ${data.details || ''}\n\n${data.hint || 'Would you like to run the database migration now?'}`
           );
-          
+
           if (shouldMigrate) {
             try {
               const migrateResponse = await fetch('/api/migrate', {
                 method: 'POST',
                 headers: getAuthHeaders(),
               });
-              
+
               const migrateData = await migrateResponse.json();
-              
+
               if (migrateData.success) {
                 alert('Migration successful! Please try removing products from dashboard again.');
                 // Retry the original operation
@@ -363,10 +364,10 @@ export default function ProductsPage() {
           }
           return;
         }
-        
+
         // Show detailed error message if available
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to remove products from dashboard');
         if (data.hint) {
           alert(`${errorMsg}\n\n${data.hint}`);
@@ -375,7 +376,7 @@ export default function ProductsPage() {
         }
         return;
       }
-      
+
       if (data.success) {
         // Update active products set
         setActiveProducts(prev => {
@@ -385,8 +386,8 @@ export default function ProductsPage() {
         });
         alert(`${data.updated} product(s) removed from dashboard.`);
       } else {
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to remove products from dashboard');
         alert(errorMsg);
       }
@@ -398,59 +399,69 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background pt-20">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <Breadcrumbs />
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
-          <h1 className="text-3xl font-bold text-gray-800">Product Catalog</h1>
-          <div className="flex gap-2">
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-display-3 font-bold text-gray-900 mb-2">Product Catalog</h1>
+            <p className="text-body text-gray-600">Manage and analyze your product portfolio</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
             <AddProductForm onSuccess={loadProducts} />
             <button
               onClick={() => router.push('/products/analyze')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+              className="btn btn-primary flex items-center gap-2"
             >
               <FiPlus /> Analyze Product
             </button>
             <button
               onClick={() => router.push('/products/recommendations')}
-              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center gap-2"
+              className="btn btn-accent flex items-center gap-2"
             >
               <FiTrendingUp /> Get Recommendations
             </button>
           </div>
         </div>
-        
+
         {/* Info banner */}
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-gray-700 flex items-center gap-2">
-            <FiAlertCircle className="text-blue-600" />
-            <span>
-              <strong>Your Products:</strong> This shows products you've analyzed or added from recommendations. 
-              {products.length === 0 && (
-                <span className="ml-2">
-                  <a href="/products/analyze" className="text-blue-600 hover:underline">Analyze your first product</a> or 
-                  <a href="/products/recommendations" className="text-blue-600 hover:underline ml-1">get AI recommendations</a>.
-                </span>
-              )}
-            </span>
-          </p>
+        <div className="mb-8 card bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200/50">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
+                <FiAlertCircle className="text-primary-600" size={20} />
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="text-body text-gray-700">
+                <strong className="text-gray-900">Your Products:</strong> This shows products you've analyzed or added from recommendations.
+                {products.length === 0 && (
+                  <span className="ml-2">
+                    <a href="/products/analyze" className="text-primary-600 hover:text-primary-700 font-medium">Analyze your first product</a> or
+                    <a href="/products/recommendations" className="text-primary-600 hover:text-primary-700 font-medium ml-1">get AI recommendations</a>.
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
-        
+
         {/* Category filter */}
         {categories.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <FiFilter className="text-gray-500" />
-              <h3 className="font-medium">Filter by Category:</h3>
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <FiFilter className="text-gray-500" size={18} />
+              <h3 className="text-title-3 font-semibold text-gray-900">Filter by Category</h3>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => handleCategoryChange('all')} 
-                className={`px-3 py-1 text-sm rounded-full ${
-                  selectedCategory === 'all' || !selectedCategory 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                onClick={() => handleCategoryChange('all')}
+                className={`px-4 py-2 text-sm rounded-xl font-medium transition-all ${selectedCategory === 'all' || !selectedCategory
+                    ? 'bg-primary-600 text-white shadow-apple'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  }`}
               >
                 All Products
               </button>
@@ -458,11 +469,10 @@ export default function ProductsPage() {
                 <button
                   key={category}
                   onClick={() => handleCategoryChange(category)}
-                  className={`px-3 py-1 text-sm rounded-full ${
-                    selectedCategory === category 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all ${selectedCategory === category
+                      ? 'bg-primary-600 text-white shadow-apple'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    }`}
                 >
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </button>
@@ -470,40 +480,42 @@ export default function ProductsPage() {
             </div>
           </div>
         )}
-        
-            {/* Loading and error states */}
-            {isLoading && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
-                ))}
-              </div>
-            )}
-        
+
+        {/* Loading and error states */}
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
+
         {error && (
           <div className="text-center py-10">
             <div className="text-red-600">{error}</div>
           </div>
         )}
-        
+
         {/* Empty state */}
         {!isLoading && !error && products.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-lg border-2 border-dashed border-gray-300">
-            <FiBox className="mx-auto text-gray-400 mb-4" size={64} />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Products Yet</h3>
-            <p className="text-gray-500 mb-6">
+          <div className="text-center py-20 card bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-200">
+            <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-6">
+              <FiBox className="text-gray-400" size={40} />
+            </div>
+            <h3 className="text-title-1 font-bold text-gray-900 mb-3">No Products Yet</h3>
+            <p className="text-body text-gray-600 mb-8 max-w-md mx-auto">
               Start building your product catalog by analyzing products or getting AI recommendations.
             </p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-wrap gap-4 justify-center">
               <button
                 onClick={() => router.push('/products/analyze')}
-                className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                className="btn btn-primary flex items-center gap-2"
               >
                 <FiPlus /> Analyze Product
               </button>
               <button
                 onClick={() => router.push('/products/recommendations')}
-                className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 flex items-center gap-2"
+                className="btn btn-accent flex items-center gap-2"
               >
                 <FiStar /> Get Recommendations
               </button>
@@ -513,29 +525,29 @@ export default function ProductsPage() {
 
         {/* Selection and Dashboard Controls */}
         {!isLoading && !error && products.length > 0 && (
-          <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3">
+          <div className="mb-8 card">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={selectAllProducts}
-                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center gap-2"
+                  className="btn btn-secondary text-sm flex items-center gap-2"
                 >
                   <FiCheck />
                   {selectedProducts.size === products.length ? 'Deselect All' : 'Select All'}
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-body text-gray-600">
                   {selectedProducts.size} of {products.length} selected
                 </span>
-                <span className="text-xs text-gray-500">
-                  ({activeProducts.size} active in dashboard)
+                <span className="badge badge-primary">
+                  {activeProducts.size} active in dashboard
                 </span>
               </div>
               {selectedProducts.size > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={handleAddToDashboard}
                     disabled={addingToDashboard}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm"
+                    className="btn btn-accent text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     <FiPlus />
                     {addingToDashboard ? 'Adding...' : 'Add to Dashboard'}
@@ -543,14 +555,14 @@ export default function ProductsPage() {
                   <button
                     onClick={handleRemoveFromDashboard}
                     disabled={addingToDashboard}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 text-sm"
+                    className="btn bg-red-50 text-red-600 hover:bg-red-100 text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     Remove from Dashboard
                   </button>
                   <button
                     onClick={handleSimulateProducts}
                     disabled={simulating}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 text-sm"
+                    className="btn btn-primary text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     <FiBarChart />
                     {simulating ? 'Simulating...' : 'Simulate'}
@@ -565,8 +577,8 @@ export default function ProductsPage() {
         {!isLoading && !error && products.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
-              <ProductCard 
-                key={product.id} 
+              <ProductCard
+                key={product.id}
                 product={product}
                 isSelected={selectedProducts.has(product.id)}
                 onSelect={() => toggleProductSelection(product.id)}
@@ -602,13 +614,13 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
     // Try to fetch image from source URL
     if (!imageUrl && product.sourceUrl) {
       // For Alibaba/AliExpress/IndiaMart, show link button instead of fetching
-      if (product.sourceUrl.includes('alibaba.com') || 
-          product.sourceUrl.includes('aliexpress.com') || 
-          product.sourceUrl.includes('indiamart.com')) {
+      if (product.sourceUrl.includes('alibaba.com') ||
+        product.sourceUrl.includes('aliexpress.com') ||
+        product.sourceUrl.includes('indiamart.com')) {
         setImageLoading(false);
         return;
       }
-      
+
       // Try fetching via API for other URLs
       fetch(`/api/products/fetch-image?url=${encodeURIComponent(product.sourceUrl)}`)
         .then(res => res.json())
@@ -643,42 +655,46 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
   };
 
   return (
-    <div className={`card bg-white overflow-hidden shadow-sm hover:shadow-md transition-all relative ${isSelected ? 'ring-2 ring-indigo-500' : ''} ${isActiveInDashboard ? 'border-l-4 border-l-green-500' : ''}`}>
+    <motion.div
+      whileHover={{ y: -4 }}
+      className={`card card-hover overflow-hidden relative group ${isSelected ? 'ring-2 ring-primary-500' : ''} ${isActiveInDashboard ? 'border-l-4 border-l-accent-500' : ''}`}>
       {/* Selection Checkbox */}
       {onSelect && (
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
-            onClick={onSelect}
-            className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
-              isSelected 
-                ? 'bg-indigo-600 border-indigo-600 text-white' 
-                : 'bg-white border-gray-300 hover:border-indigo-500'
-            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect();
+            }}
+            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
+                ? 'bg-primary-500 border-primary-500 text-white scale-110'
+                : 'bg-white/80 backdrop-blur-sm border-gray-300 hover:border-primary-500'
+              }`}
           >
             {isSelected && <FiCheck size={14} />}
           </button>
         </div>
       )}
-      
+
       {/* Active in Dashboard Badge */}
       {isActiveInDashboard && (
-        <div className="absolute top-2 left-2 z-10">
-          <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-medium">
-            Active in Dashboard
+        <div className="absolute top-3 left-3 z-10">
+          <span className="badge badge-success shadow-sm backdrop-blur-md bg-white/90">
+            Active
           </span>
         </div>
       )}
 
-      <div className="bg-gray-100 h-40 flex items-center justify-center relative">
+      <div className="bg-gray-50 h-48 flex items-center justify-center relative p-4 group-hover:bg-gray-100/50 transition-colors duration-300">
         {imageLoading ? (
           <div className="animate-pulse flex items-center justify-center">
-            <div className="w-16 h-16 bg-gray-300 rounded"></div>
+            <div className="w-16 h-16 bg-gray-200 rounded-2xl"></div>
           </div>
         ) : imageUrl ? (
           <img
             src={imageUrl}
             alt={product.name}
-            className="w-full h-full object-contain p-2"
+            className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
             onError={() => {
               setImageUrl(null);
               setImageLoading(false);
@@ -686,11 +702,16 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
           />
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <FiBox size={48} className="text-gray-400" />
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
+              <FiBox size={32} className="text-gray-400" />
+            </div>
             {product.sourceUrl && (
               <button
-                onClick={() => setShowImageLinks(!showImageLinks)}
-                className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowImageLinks(!showImageLinks);
+                }}
+                className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 mt-2"
               >
                 <FiImage size={12} />
                 View Images
@@ -698,20 +719,20 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
             )}
           </div>
         )}
-        
+
         {/* Image Links Dropdown */}
         {showImageLinks && product.sourceUrl && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-2">
-            <div className="flex flex-wrap gap-1 justify-center">
+          <div className="absolute bottom-2 left-2 right-2 bg-white/90 backdrop-blur-xl p-2 rounded-xl shadow-apple-lg border border-gray-100 z-20">
+            <div className="flex flex-wrap gap-2 justify-center">
               {product.sourceUrl.includes('alibaba') && (
                 <a
                   href={product.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs px-2 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-1"
+                  className="text-xs px-2.5 py-1.5 bg-[#FF6A00] text-white rounded-lg hover:bg-[#E65F00] flex items-center gap-1.5 transition-colors font-medium w-full justify-center"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <FiExternalLink size={10} /> Alibaba
+                  <FiExternalLink size={12} /> Alibaba
                 </a>
               )}
               {product.sourceUrl.includes('aliexpress') && (
@@ -719,10 +740,10 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
                   href={product.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 flex items-center gap-1"
+                  className="text-xs px-2.5 py-1.5 bg-[#FF4747] text-white rounded-lg hover:bg-[#E63E3E] flex items-center gap-1.5 transition-colors font-medium w-full justify-center"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <FiExternalLink size={10} /> AliExpress
+                  <FiExternalLink size={12} /> AliExpress
                 </a>
               )}
               {product.sourceUrl.includes('indiamart') && (
@@ -730,83 +751,80 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
                   href={product.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                  className="text-xs px-2.5 py-1.5 bg-[#2E3192] text-white rounded-lg hover:bg-[#26287A] flex items-center gap-1.5 transition-colors font-medium w-full justify-center"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <FiExternalLink size={10} /> IndiaMart
+                  <FiExternalLink size={12} /> IndiaMart
                 </a>
               )}
             </div>
           </div>
         )}
       </div>
-      <div className="p-4">
-        <h3 className="text-lg font-semibold mb-1 truncate" title={product.name}>{product.name}</h3>
-        <p className="text-sm text-gray-500 mb-2 flex items-center gap-1">
-          <FiTag size={14}/> {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
-        </p>
-        
-        <div className="space-y-2 mb-3">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-green-600 font-medium flex items-center gap-1">
-              <FiDollarSign size={14}/> Cost: ${product.cost.toFixed(2)}
-            </span>
-            <span className="text-blue-600 font-medium flex items-center gap-1">
-              <FiDollarSign size={14}/> Price: ${product.potentialPrice.toFixed(2)}
-            </span>
-          </div>
 
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span>Profit: {profitMargin}%</span>
-            <span className="flex items-center gap-1">
-              <FiStar size={14} className="text-yellow-400"/> {product.rating.toFixed(1)}
+      <div className="p-5">
+        <div className="mb-3">
+          <h3 className="text-title-3 font-semibold text-gray-900 mb-1 truncate leading-tight" title={product.name}>{product.name}</h3>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+              {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
             </span>
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <FiStar size={12} className="text-yellow-400 fill-current" />
+              <span>{product.rating.toFixed(1)}</span>
+            </div>
           </div>
-
-          {product.moq && product.moq > 0 && (
-            <p className="text-xs text-gray-500">MOQ: {product.moq} units</p>
-          )}
-          
-          {product.vendorPlatform && (
-            <p className="text-xs text-gray-500">Source: {product.vendorPlatform}</p>
-          )}
         </div>
 
-        {product.sourceUrl && (
-          <a
-            href={product.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-600 hover:underline block mb-2 flex items-center gap-1"
-          >
-            <FiExternalLink size={12} /> View Original Product
-          </a>
-        )}
+        <div className="space-y-3">
+          <div className="flex justify-between items-end">
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Cost</p>
+              <p className="text-body font-semibold text-gray-900">${product.cost.toFixed(2)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500 mb-0.5">Potential</p>
+              <p className="text-body font-bold text-primary-600">${product.potentialPrice.toFixed(2)}</p>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
+            <span className={`text-xs font-medium px-2 py-1 rounded-lg ${Number(profitMargin) > 50 ? 'bg-green-50 text-green-700' :
+                Number(profitMargin) > 30 ? 'bg-blue-50 text-blue-700' :
+                  'bg-gray-50 text-gray-700'
+              }`}>
+              {profitMargin}% Margin
+            </span>
+
+            {product.sourceUrl && (
+              <a
+                href={product.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-primary-600 transition-colors p-1"
+                onClick={(e) => e.stopPropagation()}
+                title="View Source"
+              >
+                <FiExternalLink size={16} />
+              </a>
+            )}
+          </div>
+        </div>
 
         {/* AI Performance Analysis */}
-        <div className="mt-3 pt-3 border-t">
+        <div className="mt-3 pt-3 border-t border-gray-100">
           {performance ? (
             <div className="space-y-2">
               <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${getPerformanceColor(performance.performance)}`}>
                 {performance.performance?.toUpperCase() || 'MODERATE'}
               </div>
-              <p className="text-xs text-gray-600">{performance.description}</p>
+              <p className="text-xs text-gray-600 line-clamp-2">{performance.description}</p>
               {performance.strengths && performance.strengths.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-green-700 mb-1">Strengths:</p>
                   <ul className="text-xs text-gray-600 list-disc list-inside">
-                    {performance.strengths.map((s: string, i: number) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {performance.risks && performance.risks.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-red-700 mb-1">Risks:</p>
-                  <ul className="text-xs text-gray-600 list-disc list-inside">
-                    {performance.risks.map((r: string, i: number) => (
-                      <li key={i}>{r}</li>
+                    {performance.strengths.slice(0, 2).map((s: string, i: number) => (
+                      <li key={i} className="truncate">{s}</li>
                     ))}
                   </ul>
                 </div>
@@ -814,9 +832,12 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
             </div>
           ) : onLoadPerformance ? (
             <button
-              onClick={onLoadPerformance}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLoadPerformance();
+              }}
               disabled={loadingPerformance}
-              className="w-full text-xs px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full text-xs px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
             >
               {loadingPerformance ? (
                 <>
@@ -826,13 +847,13 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
               ) : (
                 <>
                   <FiBarChart size={12} />
-                  Get AI Performance Analysis
+                  Get AI Analysis
                 </>
               )}
             </button>
           ) : null}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
-} 
+}
