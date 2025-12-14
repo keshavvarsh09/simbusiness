@@ -172,7 +172,7 @@ export default function Suppliers() {
             </div>
             <h2 className="text-title-2 font-bold text-gray-900 mb-2">No Suppliers Yet</h2>
             <p className="text-body text-gray-500 mb-8">
-              Add products to your catalog first, then we'll generate AI-powered supplier recommendations for you.
+              Add products to your catalog first, then we&apos;ll generate AI-powered supplier recommendations for you.
             </p>
             <button
               onClick={() => router.push('/products/recommendations')}
@@ -206,7 +206,7 @@ export default function Suppliers() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 className="text-title-2 font-bold flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${riskFactorType === 'high' ? 'bg-red-50 text-red-500' :
-                  riskFactorType === 'medium' ? 'bg-yellow-50 text-yellow-500' : 'bg-green-50 text-green-500'
+                riskFactorType === 'medium' ? 'bg-yellow-50 text-yellow-500' : 'bg-green-50 text-green-500'
                 }`}>
                 <FiAlertTriangle size={20} />
               </div>
@@ -247,7 +247,7 @@ export default function Suppliers() {
             {supplierRiskFactors[riskFactorType].map((factor, index) => (
               <div key={index} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm">
                 <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${riskFactorType === 'high' ? 'bg-red-100 text-red-600' :
-                    riskFactorType === 'medium' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'
+                  riskFactorType === 'medium' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'
                   }`}>
                   {riskFactorType === 'low' ? <FiCheck size={12} /> : <FiAlertTriangle size={12} />}
                 </div>
@@ -546,7 +546,7 @@ export default function Suppliers() {
                         <div className="w-full bg-white rounded-full h-2 border border-blue-100">
                           <div
                             className={`h-full rounded-full ${selectedSupplier.rating >= 4.5 ? 'bg-green-500' :
-                                selectedSupplier.rating >= 4.0 ? 'bg-yellow-500' : 'bg-red-500'
+                              selectedSupplier.rating >= 4.0 ? 'bg-yellow-500' : 'bg-red-500'
                               }`}
                             style={{ width: `${(selectedSupplier.rating / 5 * 100).toFixed(0)}%` }}
                           ></div>

@@ -56,7 +56,7 @@ export default function AdsPage() {
         productData = JSON.parse(productInfo);
       } catch {
         // If not JSON, try to find matching product
-        const matchingProduct = userProducts.find(p => 
+        const matchingProduct = userProducts.find(p =>
           p.name.toLowerCase().includes(productInfo.toLowerCase())
         );
         if (matchingProduct) {
@@ -71,8 +71,8 @@ export default function AdsPage() {
         }
       }
 
-      const endpoint = platform === 'meta' 
-        ? '/api/ads/meta-strategy' 
+      const endpoint = platform === 'meta'
+        ? '/api/ads/meta-strategy'
         : '/api/ads/google-strategy';
 
       const response = await fetch(endpoint, {
@@ -93,8 +93,8 @@ export default function AdsPage() {
         }
         setStrategy(formattedStrategy);
       } else {
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to generate strategy');
         setError(errorMsg);
       }
@@ -137,22 +137,20 @@ export default function AdsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPlatform('meta')}
-                    className={`flex-1 px-4 py-2 rounded-md font-medium ${
-                      platform === 'meta'
+                    className={`flex-1 px-4 py-2 rounded-md font-medium ${platform === 'meta'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     <FiFacebook className="inline mr-2" />
                     Meta (Facebook/Instagram)
                   </button>
                   <button
                     onClick={() => setPlatform('google')}
-                    className={`flex-1 px-4 py-2 rounded-md font-medium ${
-                      platform === 'google'
+                    className={`flex-1 px-4 py-2 rounded-md font-medium ${platform === 'google'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     <FiSearch className="inline mr-2" />
                     Google Ads
@@ -341,7 +339,7 @@ export default function AdsPage() {
                 <FiTarget className="mx-auto text-gray-400 mb-4" size={64} />
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">No Strategy Generated Yet</h3>
                 <p className="text-gray-500">
-                  Fill in the form on the left and click "Generate Strategy" to get AI-powered advertising recommendations.
+                  Fill in the form on the left and click &quot;Generate Strategy&quot; to get AI-powered advertising recommendations.
                 </p>
               </div>
             )}

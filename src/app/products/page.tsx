@@ -436,7 +436,7 @@ export default function ProductsPage() {
             </div>
             <div className="flex-1">
               <p className="text-body text-gray-700">
-                <strong className="text-gray-900">Your Products:</strong> This shows products you've analyzed or added from recommendations.
+                <strong className="text-gray-900">Your Products:</strong> This shows products you&apos;ve analyzed or added from recommendations.
                 {products.length === 0 && (
                   <span className="ml-2">
                     <a href="/products/analyze" className="text-primary-600 hover:text-primary-700 font-medium">Analyze your first product</a> or
@@ -459,8 +459,8 @@ export default function ProductsPage() {
               <button
                 onClick={() => handleCategoryChange('all')}
                 className={`px-4 py-2 text-sm rounded-xl font-medium transition-all ${selectedCategory === 'all' || !selectedCategory
-                    ? 'bg-primary-600 text-white shadow-apple'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  ? 'bg-primary-600 text-white shadow-apple'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
               >
                 All Products
@@ -470,8 +470,8 @@ export default function ProductsPage() {
                   key={category}
                   onClick={() => handleCategoryChange(category)}
                   className={`px-4 py-2 text-sm rounded-xl font-medium transition-all ${selectedCategory === category
-                      ? 'bg-primary-600 text-white shadow-apple'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    ? 'bg-primary-600 text-white shadow-apple'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                     }`}
                 >
                   {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -667,8 +667,8 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
               onSelect();
             }}
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
-                ? 'bg-primary-500 border-primary-500 text-white scale-110'
-                : 'bg-white/80 backdrop-blur-sm border-gray-300 hover:border-primary-500'
+              ? 'bg-primary-500 border-primary-500 text-white scale-110'
+              : 'bg-white/80 backdrop-blur-sm border-gray-300 hover:border-primary-500'
               }`}
           >
             {isSelected && <FiCheck size={14} />}
@@ -790,8 +790,8 @@ function ProductCard({ product, isSelected = false, onSelect, performance, loadi
 
           <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
             <span className={`text-xs font-medium px-2 py-1 rounded-lg ${Number(profitMargin) > 50 ? 'bg-green-50 text-green-700' :
-                Number(profitMargin) > 30 ? 'bg-blue-50 text-blue-700' :
-                  'bg-gray-50 text-gray-700'
+              Number(profitMargin) > 30 ? 'bg-blue-50 text-blue-700' :
+                'bg-gray-50 text-gray-700'
               }`}>
               {profitMargin}% Margin
             </span>

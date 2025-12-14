@@ -676,7 +676,7 @@ export default function MarketAnalysis() {
 
                 <div className="bg-gray-50 p-5 rounded-xl border border-gray-200">
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Daily Tip</h4>
-                  <p className="text-gray-900 font-medium italic">"{marketingTips[Math.floor(Math.random() * marketingTips.length)]}"</p>
+                  <p className="text-gray-900 font-medium italic">&quot;{marketingTips[Math.floor(Math.random() * marketingTips.length)]}&quot;</p>
                 </div>
               </div>
             </motion.div>

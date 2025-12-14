@@ -21,10 +21,10 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     setIsSubmitting(false);
     setIsSubmitted(true);
   };
@@ -59,13 +59,13 @@ export default function Contact() {
                 Get in Touch
               </h1>
               <p className="mt-4 text-xl text-gray-500">
-                We'd love to hear from you. Fill out the form below and we'll get back to you as soon as possible.
+                We&apos;d love to hear from you. Fill out the form below and we&apos;ll get back to you as soon as possible.
               </p>
             </motion.div>
 
             <div className="bg-white shadow-xl rounded-lg overflow-hidden">
               <div className="md:flex">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
@@ -107,8 +107,8 @@ export default function Contact() {
                       </div>
                     </motion.div>
                   </motion.div>
-                  
-                  <motion.div 
+
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8, duration: 0.5 }}
@@ -134,8 +134,8 @@ export default function Contact() {
                     </div>
                   </motion.div>
                 </motion.div>
-                
-                <motion.div 
+
+                <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
@@ -143,7 +143,7 @@ export default function Contact() {
                 >
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                      <motion.div 
+                      <motion.div
                         variants={item}
                         initial="hidden"
                         animate="show"
@@ -159,8 +159,8 @@ export default function Contact() {
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         />
                       </motion.div>
-                      
-                      <motion.div 
+
+                      <motion.div
                         variants={item}
                         initial="hidden"
                         animate="show"
@@ -179,7 +179,7 @@ export default function Contact() {
                       </motion.div>
                     </div>
 
-                    <motion.div 
+                    <motion.div
                       variants={item}
                       initial="hidden"
                       animate="show"
@@ -203,7 +203,7 @@ export default function Contact() {
                       </select>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                       variants={item}
                       initial="hidden"
                       animate="show"
@@ -221,7 +221,7 @@ export default function Contact() {
                       />
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                       variants={item}
                       initial="hidden"
                       animate="show"
@@ -263,7 +263,7 @@ export default function Contact() {
             </div>
             <h2 className="text-3xl font-extrabold text-gray-900">Message Sent!</h2>
             <p className="mt-4 text-lg text-gray-500">
-              Thank you for reaching out. We've received your message and will get back to you as soon as possible.
+              Thank you for reaching out. We&apos;ve received your message and will get back to you as soon as possible.
             </p>
             <div className="mt-8">
               <button

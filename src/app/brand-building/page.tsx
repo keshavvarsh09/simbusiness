@@ -68,7 +68,7 @@ export default function BrandBuildingPage() {
         // Ensure analysis is properly formatted
         let formattedAnalysis = data.analysis;
         if (typeof formattedAnalysis === 'string') {
-          formattedAnalysis = { 
+          formattedAnalysis = {
             performance: 'needs_improvement',
             detailedAnalysis: formattedAnalysis,
             strengths: [],
@@ -79,8 +79,8 @@ export default function BrandBuildingPage() {
         }
         setAnalysis(formattedAnalysis);
       } else {
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : (data.error || 'Failed to analyze content');
         setError(errorMsg);
       }
@@ -125,33 +125,30 @@ export default function BrandBuildingPage() {
                 <div className="space-y-2">
                   <button
                     onClick={() => setPlatform('instagram')}
-                    className={`w-full px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 ${
-                      platform === 'instagram'
+                    className={`w-full px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 ${platform === 'instagram'
                         ? 'bg-pink-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     <FiInstagram />
                     Instagram
                   </button>
                   <button
                     onClick={() => setPlatform('tiktok')}
-                    className={`w-full px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 ${
-                      platform === 'tiktok'
+                    className={`w-full px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 ${platform === 'tiktok'
                         ? 'bg-black text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     <FaTiktok />
                     TikTok
                   </button>
                   <button
                     onClick={() => setPlatform('youtube')}
-                    className={`w-full px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 ${
-                      platform === 'youtube'
+                    className={`w-full px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 ${platform === 'youtube'
                         ? 'bg-red-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     <FiYoutube />
                     YouTube
@@ -262,20 +259,18 @@ export default function BrandBuildingPage() {
                 <div className="space-y-4">
                   {/* Performance Status */}
                   {analysis.performance && (
-                    <div className={`p-4 rounded-lg border-2 ${
-                      analysis.performance === 'excellent' ? 'bg-green-50 border-green-200' :
-                      analysis.performance === 'good' ? 'bg-blue-50 border-blue-200' :
-                      analysis.performance === 'needs_improvement' ? 'bg-yellow-50 border-yellow-200' :
-                      'bg-red-50 border-red-200'
-                    }`}>
+                    <div className={`p-4 rounded-lg border-2 ${analysis.performance === 'excellent' ? 'bg-green-50 border-green-200' :
+                        analysis.performance === 'good' ? 'bg-blue-50 border-blue-200' :
+                          analysis.performance === 'needs_improvement' ? 'bg-yellow-50 border-yellow-200' :
+                            'bg-red-50 border-red-200'
+                      }`}>
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-gray-800">Performance Status</span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          analysis.performance === 'excellent' ? 'bg-green-600 text-white' :
-                          analysis.performance === 'good' ? 'bg-blue-600 text-white' :
-                          analysis.performance === 'needs_improvement' ? 'bg-yellow-600 text-white' :
-                          'bg-red-600 text-white'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${analysis.performance === 'excellent' ? 'bg-green-600 text-white' :
+                            analysis.performance === 'good' ? 'bg-blue-600 text-white' :
+                              analysis.performance === 'needs_improvement' ? 'bg-yellow-600 text-white' :
+                                'bg-red-600 text-white'
+                          }`}>
                           {analysis.performance.toUpperCase().replace('_', ' ')}
                         </span>
                       </div>
@@ -354,7 +349,7 @@ export default function BrandBuildingPage() {
                 <FiTrendingUp className="mx-auto text-gray-400 mb-4" size={64} />
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">No Analysis Yet</h3>
                 <p className="text-gray-500">
-                  Enter a content URL and click "Analyze Content" to get AI-powered performance insights and recommendations.
+                  Enter a content URL and click &quot;Analyze Content&quot; to get AI-powered performance insights and recommendations.
                 </p>
               </div>
             )}
