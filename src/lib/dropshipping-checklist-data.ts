@@ -43,7 +43,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     resources: [
       { title: 'SMART Goals Template (HubSpot)', url: 'https://blog.hubspot.com/marketing/smart-goals', type: 'article' },
       { title: 'Time Management for Entrepreneurs (Forbes)', url: 'https://www.forbes.com/advisor/business/time-management-tips/', type: 'article' }
-    ]
+    ],
+    mcq: {
+      question: 'You want to start dropshipping but only have 10 hours per week available. Your income goal is $5,000/month within 6 months. Which approach is most realistic?',
+      options: [
+        'Launch 10 products across 5 different niches to maximize chances',
+        'Focus on 1-2 products in a single niche, automate what you can, and reinvest early profits',
+        'Hire a team immediately to handle everything while you keep your day job',
+        'Skip marketing entirely and rely on organic search traffic only'
+      ],
+      correctAnswer: 'b',
+      feedback: {
+        correct: 'Smart choice! With limited time, focus beats spread. The 80/20 rule applies: 80% of results come from 20% of efforts. One winning product can generate your entire income goal.',
+        incorrect: 'With only 10 hours/week, spreading too thin or skipping marketing will slow you down. Focus on 1-2 products, automate order processing, and use targeted paid ads.',
+        explanation: '**Time-Limited Dropshipping Strategy:**\n\n**10 hours/week breakdown:**\n- 3 hours: Marketing & ads management\n- 2 hours: Customer support\n- 2 hours: Product research & optimization\n- 2 hours: Order processing & supplier communication\n- 1 hour: Analytics review\n\n**Key automation tools:**\n- DSers/Oberlo: Auto-fulfill orders\n- Helpdesk: Template responses\n- Email: Abandoned cart sequences\n\n**Focus strategy:** One winning product at $50 margin × 100 orders/month = $5,000. Much easier than spreading across multiple products.'
+      }
+    }
   },
   {
     stepNumber: 2,
@@ -93,7 +108,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     resources: [
       { title: 'Google Trends', url: 'https://trends.google.com', type: 'external' },
       { title: 'Competitor Analysis Guide (Shopify)', url: 'https://www.shopify.com/blog/competitor-analysis', type: 'article' }
-    ]
+    ],
+    mcq: {
+      question: 'You found a product with 50,000 monthly searches on Google, but Google Trends shows a sharp decline over the last 6 months. Your competitor analysis shows 20+ stores selling it. What should you do?',
+      options: [
+        'Jump in quickly before the trend dies completely - there is still demand',
+        'Avoid this product - declining trend + high competition = tough market',
+        'Lower your prices significantly to compete with existing stores',
+        'The search volume is high enough, trend data is not reliable'
+      ],
+      correctAnswer: 'b',
+      feedback: {
+        correct: 'Excellent judgment! A declining trend with high competition is a recipe for losses. Late entrants pay high ad costs while margins shrink. Look for rising or stable trends with moderate competition.',
+        incorrect: 'Chasing declining trends is one of the biggest dropshipping mistakes. Even with high search volume, if demand is falling, you are fighting for a shrinking pie against established competitors.',
+        explanation: '**Market Validation Framework:**\n\n**Green Flags (Go):**\n- Google Trends: Rising or stable line\n- Search volume: 10K-100K monthly\n- Competition: 5-15 stores (room to differentiate)\n- Profit margin: 30%+ after ads\n\n**Red Flags (Avoid):**\n- Declining trend over 6+ months\n- 20+ competitors with similar products\n- Race-to-bottom pricing\n- Seasonal products past their peak\n\n**Validation checklist:**\n1. Google Trends: Stable or rising? ✓/✗\n2. Competition scan: Can you differentiate? ✓/✗\n3. Profit math: 30%+ margin after CAC? ✓/✗\n4. Customer demand: Real pain point? ✓/✗\n\nNeed 4/4 green to proceed.'
+      }
+    }
   },
 
   // Section B: Legal, Admin & Brand Foundation
@@ -144,7 +174,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     resources: [
       { title: 'USPTO Trademark Search', url: 'https://www.uspto.gov/trademarks/search', type: 'tool' },
       { title: 'Trademark Basics Guide (USPTO)', url: 'https://www.uspto.gov', type: 'guide' }
-    ]
+    ],
+    mcq: {
+      question: 'You\'ve been running your store "TechGadgets Pro" for 3 months with $15K revenue. Today you received a cease-and-desist letter from "TechGadgetsPro LLC" claiming trademark infringement. What\'s your best course of action?',
+      options: [
+        'Ignore it - you started your business first',
+        'Immediately rebrand to a new unique name and consult a lawyer',
+        'Add a space between words and continue operating',
+        'Counter-sue them since you have sales records'
+      ],
+      correctAnswer: 'b',
+      feedback: {
+        correct: 'Correct response! Trademark disputes can be costly. A quick rebrand protects your business, and legal consultation helps assess your options. Future lesson: Always do trademark searches before launch.',
+        incorrect: 'Ignoring legal notices or making minor changes rarely works. Trademark law considers "confusingly similar" names - even minor variations can infringe. Rebranding now is cheaper than litigation later.',
+        explanation: '**Trademark Protection Strategy:**\n\n**Before Launch:**\n1. Search USPTO database (free)\n2. Search state trademark databases\n3. Google the exact name + variations\n4. Check domain availability\n5. Search social media handles\n\n**Filing Timeline:**\n- Basic search: 1 hour\n- Comprehensive search: $100-300 (attorney)\n- Trademark filing: $250-350 per class\n- Registration: 8-12 months\n\n**If You Receive a Cease & Desist:**\n1. Don\'t ignore it - document everything\n2. Consult an IP attorney (many offer free consultations)\n3. Assess: Is their trademark valid? Are you actually infringing?\n4. Options: Negotiate, rebrand, or fight (rare and expensive)\n\n**Best practice:** File trademark application as soon as you choose your name, even before launch.'
+      }
+    }
   },
   {
     stepNumber: 6,
@@ -280,7 +325,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     resources: [
       { title: 'Profit Margin Calculator (Calculator.net)', url: 'https://www.calculator.net/profit-margin-calculator.html', type: 'tool' },
       { title: 'Pricing Strategy Guide (Shopify)', url: 'https://www.shopify.com/blog/pricing-strategy', type: 'guide' }
-    ]
+    ],
+    mcq: {
+      question: 'Your product costs $15 from supplier, $5 shipping. You want 50% profit margin. Facebook ads cost $10 per acquisition (CAC). What should your selling price be?',
+      options: [
+        '$30 - Just double the product cost',
+        '$40 - Cover product + shipping + profit',
+        '$60 - Cover all costs ($15 + $5 + $10 CAC) and still hit 50% margin',
+        '$25 - Keep it affordable to sell more'
+      ],
+      correctAnswer: 'c',
+      feedback: {
+        correct: 'Perfect calculation! Total costs = $30 ($15 product + $5 shipping + $10 CAC). For 50% margin: Price = Costs ÷ (1 - 0.5) = $30 ÷ 0.5 = $60. Your profit = $30 per sale.',
+        incorrect: 'Remember: Profit margin must account for ALL costs including CAC. Formula: Selling Price = Total Costs ÷ (1 - Desired Margin). With $30 total costs and 50% margin goal: $30 ÷ 0.5 = $60.',
+        explanation: '**Dropshipping Pricing Formula:**\n\n**Step 1: Calculate Total Costs**\n- Product cost: $15\n- Shipping: $5\n- CAC (ad spend per sale): $10\n- Payment fees (3%): ~$2\n- Platform fees: ~$1\n- **Total: $33**\n\n**Step 2: Apply Margin Formula**\n- Desired margin: 50%\n- Formula: Price = Costs ÷ (1 - Margin)\n- Price = $33 ÷ 0.5 = **$66**\n\n**Step 3: Reality Check**\n- Compare to competitor prices\n- Test price elasticity (start higher, can always lower)\n- Consider perceived value\n\n**Common Mistake:** Forgetting CAC in calculations leads to thinking you\'re profitable when you\'re actually losing money on every sale.'
+      }
+    }
   },
 
   // Section D: Store Setup & Branding
@@ -329,7 +389,22 @@ const BASE_CHECKLIST: ChecklistStepBase[] = [
     resources: [
       { title: 'Branding Guide for E-commerce (Shopify)', url: 'https://www.shopify.com/blog/branding', type: 'guide' },
       { title: 'Shopify Theme Store', url: 'https://themes.shopify.com', type: 'templates' }
-    ]
+    ],
+    mcq: {
+      question: 'You\'re selling premium kitchen gadgets ($80-150 price range). Which brand design approach will increase perceived value and trust?',
+      options: [
+        'Bright neon colors, playful fonts, lots of emojis - stand out from competitors',
+        'Clean minimalist design, neutral colors, professional photography, consistent typography',
+        'Copy a successful competitor\'s exact design but change colors',
+        'Use the default theme without customization to launch faster'
+      ],
+      correctAnswer: 'b',
+      feedback: {
+        correct: 'Exactly right! Premium products need premium presentation. Clean design signals quality and professionalism. Apple-style minimalism works exceptionally well for higher-priced products.',
+        incorrect: 'For premium pricing, your design must match the perceived value. Cluttered designs or cheap-looking aesthetics create distrust. Invest in professional photos and clean layouts.',
+        explanation: '**Brand Design by Price Point:**\n\n**Premium ($80+):**\n- Clean, minimalist layout\n- Neutral colors (white, black, navy)\n- Professional product photography\n- Generous white space\n- High-quality typography\n- Trust badges prominent\n\n**Mid-range ($30-80):**\n- Balance of professionalism and warmth\n- Brand colors with accent highlights\n- Lifestyle photos + product shots\n- Clear value propositions\n\n**Budget ($0-30):**\n- Energetic, value-focused design\n- Sales badges and urgency cues\n- Comparison charts\n- Bundle offers prominent\n\n**Universal Rules:**\n- Mobile-first design (70%+ traffic is mobile)\n- Fast loading (under 3 seconds)\n- Consistent brand voice\n- Clear navigation'
+      }
+    }
   },
   {
     stepNumber: 13,
