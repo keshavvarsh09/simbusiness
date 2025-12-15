@@ -36,6 +36,8 @@ import BudgetAllocation from '@/components/BudgetAllocation';
 import ProductInventoryManager from '@/components/ProductInventoryManager';
 import MarketingHub from '@/components/MarketingHub';
 import FinancialDashboard from '@/components/FinancialDashboard';
+import SalesFunnel from '@/components/SalesFunnel';
+import LogisticsTracker from '@/components/LogisticsTracker';
 
 ChartJS.register(
   CategoryScale,
@@ -967,6 +969,23 @@ export default function Dashboard() {
           orders={businessStats.orders}
           adSpend={businessStats.marketing * 0.1}
         />
+      </div>
+
+      {/* Sales Funnel - Conversion Tracking */}
+      <div className="mt-6">
+        <SalesFunnel
+          day={day}
+          visitors={Math.floor((100 + (day / 10)) * 10)}
+          orders={businessStats.orders}
+          revenue={businessStats.revenue}
+          organicTraffic={Math.floor((100 + (day / 10)) * 6)}
+          paidTraffic={Math.floor((100 + (day / 10)) * 4)}
+        />
+      </div>
+
+      {/* Logistics Tracker - Shipping Simulation */}
+      <div className="mt-6">
+        <LogisticsTracker orders={businessStats.orders} />
       </div>
 
       {/* Ad Metrics Checker */}
