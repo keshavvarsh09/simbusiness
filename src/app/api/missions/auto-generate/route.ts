@@ -17,7 +17,7 @@ function getUserIdFromToken(request: NextRequest): number | null {
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) return null;
-    
+
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     return decoded.userId;
@@ -47,13 +47,13 @@ export async function POST(request: NextRequest) {
       console.error('Error generating event missions (will use standard missions):', error.message);
       // Continue with standard missions if event generation fails
     }
-    
+
     // Always get pre-generated time-bound missions (guaranteed to have 10+)
     const preGeneratedMissions = getPreGeneratedTimeBoundMissions();
-    
+
     // Combine missions - prioritize event missions, then pre-generated
     const allMissions = [...eventMissions, ...preGeneratedMissions];
-    
+
     // If no missions at all, something is wrong
     if (allMissions.length === 0) {
       return NextResponse.json(
@@ -61,11 +61,11 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     // Select up to 5 missions to create (prioritize event missions, then pre-generated)
     // This ensures users get multiple time-bound missions
     const missionsToCreate = allMissions.slice(0, Math.min(5, allMissions.length));
-    
+
     const client = await pool.connect();
     try {
       // Auto-initialize database if missions table doesn't exist
@@ -81,8 +81,8 @@ export async function POST(request: NextRequest) {
           } catch (initError: any) {
             console.error('Database initialization failed:', initError.message);
             return NextResponse.json(
-              { 
-                error: 'Database not initialized', 
+              {
+                error: 'Database not initialized',
                 details: 'The missions table does not exist. Please run /api/init-db first or contact support.',
                 hint: 'Visit /api/init-db to initialize the database'
               },
@@ -95,31 +95,48 @@ export async function POST(request: NextRequest) {
         }
       }
       const createdMissions = [];
-      
-      for (const template of missionsToCreate) {
+
+      // Get count of current active missions
+      const activeCount = await client.query(
+        `SELECT COUNT(*) as count FROM missions WHERE user_id = $1 AND status = 'active'`,
+        [userId]
+      );
+      const currentActiveCount = parseInt(activeCount.rows[0]?.count || '0');
+
+      // Always try to have at least 2 active missions
+      const missionsNeeded = Math.max(2, 2 - currentActiveCount);
+      let missionsCreated = 0;
+
+      // Shuffle missions to get random ones each time
+      const shuffledMissions = [...missionsToCreate].sort(() => Math.random() - 0.5);
+
+      for (const template of shuffledMissions) {
+        // Stop if we've created enough new missions
+        if (missionsCreated >= missionsNeeded) break;
+
         try {
-          // Check if similar mission already exists (avoid duplicates)
+          // Check if EXACT same title already exists active
           const existing = await client.query(
             `SELECT id FROM missions 
              WHERE user_id = $1 AND title = $2 AND status = 'active'`,
             [userId, template.title]
           );
-          
+
           if (existing.rows.length > 0) {
             console.log(`Skipping duplicate mission: ${template.title}`);
             continue; // Skip if already exists
           }
-          
+
           // Calculate deadline
           const deadline = new Date();
           deadline.setHours(deadline.getHours() + (template.durationHours || 24));
-          
+
           // Ensure all required fields are present
           if (!template.title || !template.description || !template.type) {
             console.error('Invalid mission template:', template);
             continue;
           }
-          
+
           const result = await client.query(
             `INSERT INTO missions (user_id, title, description, mission_type, deadline, status, cost_to_solve, impact_on_business, event_source, affected_location, news_url)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -138,8 +155,9 @@ export async function POST(request: NextRequest) {
               template.newsUrl || null
             ]
           );
-          
+
           createdMissions.push(result.rows[0]);
+          missionsCreated++;
           console.log(`Created mission: ${template.title}`);
         } catch (insertError: any) {
           console.error(`Error inserting mission "${template.title}":`, insertError.message);

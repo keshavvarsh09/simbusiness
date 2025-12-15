@@ -15,7 +15,7 @@ function getUserIdFromToken(request: NextRequest): number | null {
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) return null;
-    
+
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     return decoded.userId;
@@ -73,8 +73,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Convert to array if needed
-      const recsArray = Array.isArray(recommendations) 
-        ? recommendations 
+      const recsArray = Array.isArray(recommendations)
+        ? recommendations
         : (recommendations?.recommendations || recommendations || []);
 
       // Apply pagination
@@ -89,62 +89,59 @@ export async function GET(request: NextRequest) {
           if (!searchTerms || searchTerms.trim().length === 0) {
             return null; // Skip if no search terms
           }
-          
+
           const links = generateProductSearchLinks(searchTerms, rec.category);
-          
+
           // Fetch real products from web - REQUIRED, no fallback
           let scrapedProducts: any[] = [];
           let scrapedAliExpress: any[] = [];
           let realPrices: any = null;
           let productImage: string | null = null;
-          
+
           try {
             // Fetch real products from Alibaba and AliExpress in parallel (no API needed, direct fetch)
             const scrapePromises = [
               scrapeAlibaba(searchTerms, false), // false = no API, use direct fetch
               scrapeAliExpress(searchTerms, false) // false = no API, use direct fetch
             ];
-            const timeoutPromise = new Promise((_, reject) => 
+            const timeoutPromise = new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Timeout')), 8000) // Increased timeout to 8s
             );
-            
+
             const results = await Promise.race([
               Promise.all(scrapePromises),
               timeoutPromise
             ]) as any[];
-            
+
             scrapedProducts = results[0] || [];
             scrapedAliExpress = results[1] || [];
-            
+
             // Combine all scraped products (only include real products with price > 0 and real titles)
             const allScraped = [...scrapedProducts, ...scrapedAliExpress].filter(
-              p => p.price > 0 && 
-                   p.title && 
-                   p.title.trim().length > 5 &&
-                   !p.title.includes('Search ') && 
-                   !p.title.includes('Product Option') &&
-                   !p.title.includes('Product 1') &&
-                   !p.title.includes('Product 2') &&
-                   !p.title.includes('Product 3') &&
-                   !p.title.includes('Product 4') &&
-                   !p.title.includes('Product 5') &&
-                   !p.title.includes('Listing 1') &&
-                   !p.title.includes('Listing 2') &&
-                   !p.title.match(/Product \d+/i) &&
-                   !p.title.match(/Listing \d+/i)
+              p => p.price > 0 &&
+                p.title &&
+                p.title.trim().length > 5 &&
+                !p.title.includes('Search ') &&
+                !p.title.includes('Product Option') &&
+                !p.title.includes('Product 1') &&
+                !p.title.includes('Product 2') &&
+                !p.title.includes('Product 3') &&
+                !p.title.includes('Product 4') &&
+                !p.title.includes('Product 5') &&
+                !p.title.includes('Listing 1') &&
+                !p.title.includes('Listing 2') &&
+                !p.title.match(/Product \d+/i) &&
+                !p.title.match(/Listing \d+/i)
             );
-            
-            // CRITICAL: Only proceed if we have real scraped products
-            if (allScraped.length === 0) {
-              return null; // Skip this recommendation if no real products found
-            }
-            
+
+            // Note: Continue even if no scraped products - we'll provide search links
+
             // Get real prices if available (only from products with actual prices)
             if (allScraped.length > 0) {
               const prices = allScraped
                 .filter(p => p.price > 0)
                 .map(p => p.price);
-              
+
               if (prices.length > 0) {
                 const alibabaPrices = scrapedProducts
                   .filter(p => p.price > 0 && p.title && !p.title.includes('Search '))
@@ -152,7 +149,7 @@ export async function GET(request: NextRequest) {
                 const aliexpressPrices = scrapedAliExpress
                   .filter(p => p.price > 0 && p.title && !p.title.includes('Search '))
                   .map(p => p.price);
-                
+
                 realPrices = {
                   alibaba: alibabaPrices.length > 0 ? {
                     min: Math.min(...alibabaPrices),
@@ -176,44 +173,48 @@ export async function GET(request: NextRequest) {
               }
             }
           } catch (error) {
-            // Scraping failed or timed out - skip this recommendation
-            console.log(`Scraping failed for ${searchTerms}, skipping recommendation`);
-            return null; // Don't show recommendations without real data
+            // Scraping failed or timed out - continue with search links only
+            console.log(`Scraping failed for ${searchTerms}, providing search links only`);
           }
-          
+
           // Try to get product image (non-blocking)
           try {
             const imagePromise = getProductImage(rec.name, rec.category);
-            const imageTimeout = new Promise((_, reject) => 
+            const imageTimeout = new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Timeout')), 2000)
             );
             productImage = await Promise.race([imagePromise, imageTimeout]) as string | null;
           } catch (error) {
             // Image fetch failed, use placeholder
           }
-          
-          // Build suppliers list ONLY from scraped products (no fallback)
+
+          // Build suppliers list from scraped products, or provide search links
           const allScraped = [...scrapedProducts, ...scrapedAliExpress].filter(
             p => p.price > 0 && p.title && p.title.trim().length > 5
           );
-          
-          if (allScraped.length === 0) {
-            return null; // Skip if no real products
-          }
-          
-          const suppliers = allScraped.slice(0, 5).map((sp: any) => ({
-            platform: sp.platform,
-            name: sp.supplier || 'Verified Supplier',
-            url: sp.url || (sp.platform === 'alibaba' ? links.alibaba : links.aliexpress),
-            rating: sp.rating || 4.5,
-            reviews: sp.reviews || 0,
-            verified: true,
-            price: sp.price > 0 ? sp.price : undefined,
-            moq: sp.moq || 1,
-            imageUrl: sp.imageUrl,
-            title: sp.title
-          }));
-          
+
+          // If no scraped data, provide search link suppliers
+          const hasScrapedData = allScraped.length > 0;
+
+          const suppliers = hasScrapedData
+            ? allScraped.slice(0, 5).map((sp: any) => ({
+              platform: sp.platform,
+              name: sp.supplier || 'Verified Supplier',
+              url: sp.url || (sp.platform === 'alibaba' ? links.alibaba : links.aliexpress),
+              rating: sp.rating || 4.5,
+              reviews: sp.reviews || 0,
+              verified: true,
+              price: sp.price > 0 ? sp.price : undefined,
+              moq: sp.moq || 1,
+              imageUrl: sp.imageUrl,
+              title: sp.title
+            }))
+            : [
+              { platform: 'alibaba', name: 'Search on Alibaba', url: links.alibaba, verified: true, rating: 4.5 },
+              { platform: 'aliexpress', name: 'Search on AliExpress', url: links.aliexpress, verified: true, rating: 4.3 },
+              { platform: 'indiamart', name: 'Search on IndiaMART', url: links.indiamart, verified: true, rating: 4.0 }
+            ];
+
           return {
             ...rec,
             // Use real product image if available
@@ -241,15 +242,15 @@ export async function GET(request: NextRequest) {
             suppliers: suppliers,
             // Include only real scraped products (filter out fake/placeholder products)
             scrapedProducts: allScraped.slice(0, 10).filter(
-              p => p.price > 0 && 
-                   p.title && 
-                   p.title.trim().length > 5 &&
-                   !p.title.includes('Search ') && 
-                   !p.title.includes('Product Option') &&
-                   !p.title.match(/Product \d+/i) &&
-                   !p.title.match(/Listing \d+/i)
+              p => p.price > 0 &&
+                p.title &&
+                p.title.trim().length > 5 &&
+                !p.title.includes('Search ') &&
+                !p.title.includes('Product Option') &&
+                !p.title.match(/Product \d+/i) &&
+                !p.title.match(/Listing \d+/i)
             ),
-            hasRealData: allScraped.length > 0 && allScraped.some(p => p.price > 0), // Flag to show if real data was fetched
+            hasRealData: hasScrapedData && allScraped.some(p => p.price > 0), // Flag to show if real data was fetched
             searchTerms: searchTerms
           };
         })
