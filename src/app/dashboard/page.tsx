@@ -34,6 +34,8 @@ import AdMetricsChecker from '@/components/AdMetricsChecker';
 import AddProductForm from '@/components/AddProductForm';
 import BudgetAllocation from '@/components/BudgetAllocation';
 import ProductInventoryManager from '@/components/ProductInventoryManager';
+import MarketingHub from '@/components/MarketingHub';
+import FinancialDashboard from '@/components/FinancialDashboard';
 
 ChartJS.register(
   CategoryScale,
@@ -853,8 +855,8 @@ export default function Dashboard() {
                   key={speed.value}
                   onClick={() => changeSimulationSpeed(speed.value)}
                   className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all ${simulationSpeed === speed.value
-                      ? 'bg-primary-600 text-white shadow-apple'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-primary-600 text-white shadow-apple'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   {speed.label}
@@ -951,6 +953,21 @@ export default function Dashboard() {
 
       {/* Business Insights */}
       <BusinessInsights />
+
+      {/* Marketing Hub - Organic & Paid Marketing */}
+      <div className="mt-6">
+        <MarketingHub budget={businessStats.marketing} />
+      </div>
+
+      {/* Financial Dashboard - P&L Statement */}
+      <div className="mt-6">
+        <FinancialDashboard
+          revenue={businessStats.revenue}
+          expenses={businessStats.expenses}
+          orders={businessStats.orders}
+          adSpend={businessStats.marketing * 0.1}
+        />
+      </div>
 
       {/* Ad Metrics Checker */}
       <div className="mt-6">
