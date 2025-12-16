@@ -235,21 +235,21 @@ export default function LauncherPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-x-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <FiZap className="text-white text-xl" />
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                <FiZap className="text-white text-lg sm:text-xl" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Dropshipping Mastery</h1>
-                <p className="text-sm text-gray-500">Your journey to $10K/month</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Dropshipping Mastery</h1>
+                <p className="text-xs sm:text-sm text-gray-500 hidden xs:block">Your journey to $10K/month</p>
               </div>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 sm:gap-6">
               <div className="hidden md:flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2 text-gray-600">
                   <FiClock className="text-blue-500" />
@@ -262,17 +262,17 @@ export default function LauncherPage() {
               </div>
               <button
                 onClick={() => router.push('/dashboard')}
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:opacity-90 transition-all duration-300 flex items-center gap-1 sm:gap-2 text-sm sm:text-base touch-target"
               >
                 <FiPlay className="text-sm" />
-                Run Simulation
+                <span className="hidden xs:inline">Run</span> Simulation
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Quick Start Card - Michael Bernstein's Playbook */}
         <QuickStartCard />
 

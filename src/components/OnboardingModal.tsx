@@ -166,30 +166,31 @@ export function QuickStartCard() {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 text-white mb-8"
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white mb-4 sm:mb-8"
         >
-            <div className="flex items-start justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold mb-2">🚀 Michael Bernstein's Playbook</h2>
-                    <p className="text-blue-100 mb-4 max-w-md">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-lg sm:text-2xl font-bold mb-2">🚀 Michael Bernstein's Playbook</h2>
+                    <p className="text-blue-100 mb-4 text-sm sm:text-base max-w-md">
                         The strategy that built multiple 7-figure dropshipping brands.
                         Start organic, validate fast, scale with data.
                     </p>
-                    <div className="flex flex-wrap gap-3">
-                        <div className="px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-sm">
+                    <div className="flex flex-wrap gap-2 sm:gap-3">
+                        <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-xs sm:text-sm">
                             ✅ Organic First
                         </div>
-                        <div className="px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-sm">
+                        <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-xs sm:text-sm">
                             ✅ 8-14 Videos/Day
                         </div>
-                        <div className="px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-sm">
+                        <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-xs sm:text-sm">
                             ✅ $10K Before Ads
                         </div>
                     </div>
                 </div>
                 <button
                     onClick={() => router.push('/content')}
-                    className="px-4 py-2 bg-white text-purple-600 rounded-xl font-medium hover:bg-white/90 transition-colors flex items-center gap-2"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-white text-purple-600 rounded-xl font-medium hover:bg-white/90 transition-all duration-300 flex items-center justify-center gap-2 touch-target"
                 >
                     <FiVideo /> Create Content
                 </button>
