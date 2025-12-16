@@ -9,6 +9,7 @@ import {
   FiLock, FiCheck, FiPlay, FiChevronRight, FiChevronDown, FiAward,
   FiClock, FiBookOpen, FiZap, FiBarChart2
 } from 'react-icons/fi';
+import { QuickStartCard } from '@/components/OnboardingModal';
 
 // Module definitions based on our product roadmap
 const LEARNING_MODULES = [
@@ -272,6 +273,9 @@ export default function LauncherPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Start Card - Michael Bernstein's Playbook */}
+        <QuickStartCard />
+
         {/* Progress Overview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -415,8 +419,8 @@ export default function LauncherPage() {
                               transition={{ delay: lessonIndex * 0.05 }}
                               onClick={() => handleLessonClick(module.id, lesson.id, lesson.route)}
                               className={`w-full p-4 rounded-xl flex items-center gap-4 text-left transition-all ${isComplete
-                                  ? 'bg-green-50 border border-green-200'
-                                  : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                                ? 'bg-green-50 border border-green-200'
+                                : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                                 }`}
                             >
                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isComplete ? 'bg-green-500' : module.bgColor
