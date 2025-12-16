@@ -3,638 +3,492 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, getAuthHeaders } from '@/lib/auth';
-import { FiCheckCircle, FiCircle, FiClock, FiLock, FiUnlock, FiDownload, FiBook, FiExternalLink } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FiPackage, FiVideo, FiTrendingUp, FiDollarSign, FiMail, FiTarget,
+  FiLock, FiCheck, FiPlay, FiChevronRight, FiChevronDown, FiAward,
+  FiClock, FiBookOpen, FiZap, FiBarChart2
+} from 'react-icons/fi';
 
-interface ChecklistStep {
-  stepNumber: number;
-  section: string;
-  title: string;
-  description: string;
-  checklistActions: string[];
-  dependencies: number[];
-  resources: Array<{ title: string; url: string; type: string }>;
-  reflectionPrompts?: string[];
-  progress: {
-    status: 'pending' | 'in_progress' | 'completed';
-    completedAt: string | null;
-    notes: string | null;
-    checklistData: any;
-  };
-  mcq?: {
-    question: string;
-    options: string[];
-    correctAnswer: string;
-    feedback: {
-      correct: string;
-      incorrect: string;
-      explanation: string;
-    };
-  };
-  useAiMcq?: boolean; // Flag to indicate AI MCQ should be generated
-  isAiGenerated?: boolean; // Flag to indicate this MCQ is AI-generated
+// Module definitions based on our product roadmap
+const LEARNING_MODULES = [
+  {
+    id: 1,
+    title: 'Product Research & Sourcing',
+    description: 'Find viral products, validate demand, calculate margins with CAC',
+    icon: FiPackage,
+    color: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/30',
+    lessons: [
+      { id: '1.1', title: 'Find Viral Products', description: 'Discover products with 100K+ views', duration: '15 min', route: '/products' },
+      { id: '1.2', title: 'Validate Demand', description: 'Use Google Trends and competitor analysis', duration: '20 min', route: '/products' },
+      { id: '1.3', title: 'Source from Suppliers', description: 'AliExpress vs IndiaMART vs Alibaba', duration: '25 min', route: '/products' },
+      { id: '1.4', title: 'Calculate Margins', description: 'Include CAC for real profitability', duration: '15 min', route: '/dashboard' },
+    ],
+    unlockCondition: null, // Always unlocked
+  },
+  {
+    id: 2,
+    title: 'Content Creation',
+    description: 'Create hooks, scripts, and content calendars for viral videos',
+    icon: FiVideo,
+    color: 'from-purple-500 to-purple-600',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/30',
+    lessons: [
+      { id: '2.1', title: 'Hook Creation', description: 'First 3 seconds that stop the scroll', duration: '20 min', route: '/content' },
+      { id: '2.2', title: 'Video Script Templates', description: 'Copy and improve existing viral content', duration: '25 min', route: '/content' },
+      { id: '2.3', title: 'Content Calendar', description: 'Schedule 8-14 posts per day', duration: '15 min', route: '/content' },
+    ],
+    unlockCondition: { module: 1, minProgress: 50 },
+  },
+  {
+    id: 3,
+    title: 'Organic Marketing',
+    description: 'Master TikTok, Instagram, and YouTube with zero ad spend',
+    icon: FiTrendingUp,
+    color: 'from-pink-500 to-pink-600',
+    bgColor: 'bg-pink-500/10',
+    borderColor: 'border-pink-500/30',
+    lessons: [
+      { id: '3.1', title: 'TikTok Strategy', description: 'Algorithm secrets and posting times', duration: '30 min', route: '/dashboard' },
+      { id: '3.2', title: 'Instagram Reels', description: 'Repurpose TikTok content effectively', duration: '20 min', route: '/dashboard' },
+      { id: '3.3', title: 'Going Viral', description: 'Trigger controversy and engagement', duration: '25 min', route: '/dashboard' },
+      { id: '3.4', title: 'Convert Viewers', description: 'Bio links and call-to-actions', duration: '15 min', route: '/dashboard' },
+    ],
+    unlockCondition: { module: 2, minProgress: 75 },
+  },
+  {
+    id: 4,
+    title: 'Paid Advertising',
+    description: 'Scale with Facebook and TikTok ads after organic validation',
+    icon: FiDollarSign,
+    color: 'from-green-500 to-green-600',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/30',
+    lessons: [
+      { id: '4.1', title: 'When to Start Ads', description: 'Only after $10K organic profit', duration: '15 min', route: '/dashboard' },
+      { id: '4.2', title: 'Facebook Ads Setup', description: 'Targeting, creatives, and budgets', duration: '35 min', route: '/dashboard' },
+      { id: '4.3', title: 'TikTok Ads', description: 'Spark Ads and GMV Max strategies', duration: '30 min', route: '/dashboard' },
+      { id: '4.4', title: 'ROAS Optimization', description: 'Scale winners, kill losers fast', duration: '25 min', route: '/dashboard' },
+    ],
+    unlockCondition: { module: 3, minProgress: 100 },
+  },
+  {
+    id: 5,
+    title: 'Email & Funnels',
+    description: 'Abandoned carts, email sequences, and upsell funnels',
+    icon: FiMail,
+    color: 'from-orange-500 to-orange-600',
+    bgColor: 'bg-orange-500/10',
+    borderColor: 'border-orange-500/30',
+    lessons: [
+      { id: '5.1', title: 'Email Sequences', description: 'Welcome, nurture, and win-back flows', duration: '25 min', route: '/dashboard' },
+      { id: '5.2', title: 'Abandoned Cart Recovery', description: 'Recover 60-70% abandoned carts', duration: '20 min', route: '/dashboard' },
+      { id: '5.3', title: 'Upsell Funnels', description: 'Increase AOV with order bumps', duration: '20 min', route: '/dashboard' },
+    ],
+    unlockCondition: { module: 4, minProgress: 50 },
+  },
+  {
+    id: 6,
+    title: 'Scaling & Brand Building',
+    description: 'Multi-channel strategy, budget allocation, and brand value',
+    icon: FiTarget,
+    color: 'from-indigo-500 to-indigo-600',
+    bgColor: 'bg-indigo-500/10',
+    borderColor: 'border-indigo-500/30',
+    lessons: [
+      { id: '6.1', title: 'Ready to Scale?', description: 'Key metrics that signal scaling opportunity', duration: '15 min', route: '/dashboard' },
+      { id: '6.2', title: 'Budget Allocation', description: 'Organic vs Paid by revenue stage', duration: '25 min', route: '/dashboard' },
+      { id: '6.3', title: 'Multi-Channel', description: 'TikTok Shop + Facebook + Amazon', duration: '30 min', route: '/dashboard' },
+      { id: '6.4', title: 'Brand Building', description: 'From dropshipping to real brand', duration: '20 min', route: '/dashboard' },
+    ],
+    unlockCondition: { module: 5, minProgress: 75 },
+  },
+];
+
+interface ModuleProgress {
+  moduleId: number;
+  completedLessons: string[];
+  progress: number;
 }
 
-interface ChecklistSummary {
-  totalSteps: number;
-  completedSteps: number;
-  inProgressSteps: number;
-  pendingSteps: number;
-  completionPercentage: number;
-  nextSuggestedStep: number | null;
-}
-
-export default function DropshippingLauncherPage() {
+export default function LauncherPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [steps, setSteps] = useState<ChecklistStep[]>([]);
-  const [summary, setSummary] = useState<ChecklistSummary | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
-  const [selectedStep, setSelectedStep] = useState<number | null>(null);
-  const [mcqAnswer, setMcqAnswer] = useState<string>('');
-  const [mcqFeedback, setMcqFeedback] = useState<any>(null);
-  const [notesDrafts, setNotesDrafts] = useState<Record<number, string>>({});
-  const [savingReflectionStep, setSavingReflectionStep] = useState<number | null>(null);
-  const [loadingAiMcq, setLoadingAiMcq] = useState<number | null>(null);
-  const [aiMcqs, setAiMcqs] = useState<Record<number, any>>({});
+  const [moduleProgress, setModuleProgress] = useState<ModuleProgress[]>([]);
+  const [expandedModule, setExpandedModule] = useState<number | null>(1);
+  const [userStats, setUserStats] = useState({
+    totalLessons: 0,
+    completedLessons: 0,
+    currentStreak: 0,
+    simulationDay: 0,
+    revenue: 0,
+  });
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push('/auth/signin');
       return;
     }
-    fetchChecklist();
+    loadProgress();
   }, [router]);
 
-  const fetchChecklist = async () => {
+  const loadProgress = async () => {
     try {
-      const response = await fetch('/api/dropshipping/checklist', {
+      // Load user's module progress
+      const response = await fetch('/api/launcher/progress', {
         headers: getAuthHeaders(),
       });
-      const data = await response.json();
-      if (data.success) {
-        setSteps(data.steps);
-        setSummary(data.summary);
-        const initialDrafts: Record<number, string> = {};
-        data.steps.forEach((step: ChecklistStep) => {
-          initialDrafts[step.stepNumber] = step.progress.notes || '';
-        });
-        setNotesDrafts(initialDrafts);
-        // Expand first section by default
-        if (data.steps.length > 0) {
-          setExpandedSections(new Set([data.steps[0].section]));
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setModuleProgress(data.progress || []);
+          setUserStats(data.stats || userStats);
         }
       }
+
+      // Initialize with default progress if empty
+      if (moduleProgress.length === 0) {
+        const defaultProgress = LEARNING_MODULES.map(m => ({
+          moduleId: m.id,
+          completedLessons: [],
+          progress: 0,
+        }));
+        setModuleProgress(defaultProgress);
+      }
     } catch (error) {
-      console.error('Error fetching checklist:', error);
+      console.error('Error loading progress:', error);
+      // Initialize with default
+      const defaultProgress = LEARNING_MODULES.map(m => ({
+        moduleId: m.id,
+        completedLessons: [],
+        progress: 0,
+      }));
+      setModuleProgress(defaultProgress);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleNotesChange = (stepNumber: number, value: string) => {
-    setNotesDrafts(prev => ({
-      ...prev,
-      [stepNumber]: value,
-    }));
+  const isModuleUnlocked = (module: typeof LEARNING_MODULES[0]) => {
+    if (!module.unlockCondition) return true;
+    const reqModule = moduleProgress.find(p => p.moduleId === module.unlockCondition!.module);
+    return reqModule ? reqModule.progress >= module.unlockCondition.minProgress : false;
   };
 
-  const saveReflectionNotes = async (stepNumber: number) => {
-    const step = steps.find(s => s.stepNumber === stepNumber);
-    if (!step) return;
-    setSavingReflectionStep(stepNumber);
-    try {
-      await updateStepProgress(stepNumber, step.progress.status, notesDrafts[stepNumber] || '');
-    } finally {
-      setSavingReflectionStep(null);
-    }
+  const getModuleProgress = (moduleId: number) => {
+    const progress = moduleProgress.find(p => p.moduleId === moduleId);
+    return progress?.progress || 0;
   };
 
-  const updateStepProgress = async (stepNumber: number, status: 'pending' | 'in_progress' | 'completed', notes?: string) => {
-    try {
-      const response = await fetch('/api/dropshipping/progress', {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepNumber, status, notes }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        fetchChecklist();
+  const getCompletedLessons = (moduleId: number) => {
+    const progress = moduleProgress.find(p => p.moduleId === moduleId);
+    return progress?.completedLessons || [];
+  };
+
+  const handleLessonClick = async (moduleId: number, lessonId: string, route: string) => {
+    // Mark lesson as complete and save progress
+    const updatedProgress = moduleProgress.map(p => {
+      if (p.moduleId === moduleId && !p.completedLessons.includes(lessonId)) {
+        const newCompleted = [...p.completedLessons, lessonId];
+        const module = LEARNING_MODULES.find(m => m.id === moduleId);
+        const newProgress = module ? Math.round((newCompleted.length / module.lessons.length) * 100) : 0;
+        return { ...p, completedLessons: newCompleted, progress: newProgress };
       }
-    } catch (error) {
-      console.error('Error updating progress:', error);
-    }
-  };
-
-  const generateAiMcq = async (stepNumber: number) => {
-    setLoadingAiMcq(stepNumber);
-    try {
-      const response = await fetch('/api/dropshipping/generate-mcq', {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepNumber }),
-      });
-      const data = await response.json();
-      if (data.success && data.mcq) {
-        // Store the AI-generated MCQ
-        setAiMcqs(prev => ({
-          ...prev,
-          [stepNumber]: { ...data.mcq, isAiGenerated: true }
-        }));
-        // Update the step with the AI MCQ
-        setSteps(prevSteps => prevSteps.map(step => 
-          step.stepNumber === stepNumber 
-            ? { ...step, mcq: data.mcq, isAiGenerated: true }
-            : step
-        ));
-      } else {
-        console.error('Failed to generate AI MCQ:', data.error);
-        alert('Failed to generate question. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error generating AI MCQ:', error);
-      alert('Error generating question. Please try again.');
-    } finally {
-      setLoadingAiMcq(null);
-    }
-  };
-
-  const submitMcq = async (stepNumber: number, questionText: string, selectedAnswer: string, mcqData?: any) => {
-    try {
-      const step = steps.find(s => s.stepNumber === stepNumber);
-      const isAiGenerated = step?.isAiGenerated || mcqData?.isAiGenerated || false;
-      
-      const payload: any = {
-        stepNumber,
-        questionText,
-        selectedAnswer
-      };
-
-      // If AI-generated, include full context
-      if (isAiGenerated && mcqData) {
-        payload.isAiGenerated = true;
-        payload.allOptions = mcqData.options;
-        payload.correctAnswer = mcqData.correctAnswer;
-        payload.feedback = mcqData.feedback;
-        payload.explanation = mcqData.feedback.explanation;
-      }
-
-      const response = await fetch('/api/dropshipping/mcq', {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setMcqFeedback(data);
-        // Refresh checklist to update useAiMcq flags
-        fetchChecklist();
-      }
-    } catch (error) {
-      console.error('Error submitting MCQ:', error);
-    }
-  };
-
-  const areDependenciesMet = (step: ChecklistStep): boolean => {
-    if (step.dependencies.length === 0) return true;
-    return step.dependencies.every(dep => {
-      const depStep = steps.find(s => s.stepNumber === dep);
-      return depStep?.progress.status === 'completed';
+      return p;
     });
-  };
 
-  const toggleSection = (section: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(section)) {
-      newExpanded.delete(section);
-    } else {
-      newExpanded.add(section);
+    setModuleProgress(updatedProgress);
+
+    // Save to backend
+    try {
+      await fetch('/api/launcher/progress', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ progress: updatedProgress }),
+      });
+    } catch (error) {
+      console.error('Error saving progress:', error);
     }
-    setExpandedSections(newExpanded);
+
+    // Navigate to the lesson route
+    router.push(route);
   };
 
-  const toggleStep = (stepNumber: number) => {
-    const newExpanded = new Set(expandedSteps);
-    if (newExpanded.has(stepNumber)) {
-      newExpanded.delete(stepNumber);
-    } else {
-      newExpanded.add(stepNumber);
-    }
-    setExpandedSteps(newExpanded);
-  };
-
-  const getSections = () => {
-    const sections: Record<string, ChecklistStep[]> = {};
-    steps.forEach(step => {
-      if (!sections[step.section]) {
-        sections[step.section] = [];
-      }
-      sections[step.section].push(step);
-    });
-    return sections;
-  };
-
-  const exportProgress = () => {
-    const report = {
-      summary,
-      steps: steps.map(s => ({
-        stepNumber: s.stepNumber,
-        title: s.title,
-        status: s.progress.status,
-        completedAt: s.progress.completedAt,
-        notes: s.progress.notes,
-      })),
-      exportedAt: new Date().toISOString(),
-    };
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dropshipping-progress-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const totalProgress = moduleProgress.length > 0
+    ? Math.round(moduleProgress.reduce((sum, p) => sum + p.progress, 0) / LEARNING_MODULES.length)
+    : 0;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading checklist...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-600">Loading your journey...</p>
         </div>
       </div>
     );
   }
 
-  const sections = getSections();
-  const sectionNames = Object.keys(sections);
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Welcome & Progress Panel */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Kickstart Your Dropshipping Business
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Follow Each Step, Learn, and Build As You Go
-          </p>
-
-          {summary && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-600">{summary.completionPercentage}%</div>
-                <div className="text-sm text-gray-600">Complete</div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <FiZap className="text-white text-xl" />
               </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-green-600">{summary.completedSteps}</div>
-                <div className="text-sm text-gray-600">Completed</div>
-              </div>
-              <div className="bg-yellow-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-yellow-600">{summary.inProgressSteps}</div>
-                <div className="text-sm text-gray-600">In Progress</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-gray-600">{summary.pendingSteps}</div>
-                <div className="text-sm text-gray-600">Pending</div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Dropshipping Mastery</h1>
+                <p className="text-sm text-gray-500">Your journey to $10K/month</p>
               </div>
             </div>
-          )}
-
-          {/* Progress Bar */}
-          {summary && (
-            <div className="mb-4">
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${summary.completionPercentage}%` }}
-                ></div>
+            <div className="flex items-center gap-6">
+              <div className="hidden md:flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <FiClock className="text-blue-500" />
+                  <span>Day {userStats.simulationDay}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <FiBarChart2 className="text-green-500" />
+                  <span>${userStats.revenue.toLocaleString()}</span>
+                </div>
               </div>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+              >
+                <FiPlay className="text-sm" />
+                Run Simulation
+              </button>
             </div>
-          )}
-
-          {/* Next Suggested Step */}
-          {summary && summary.nextSuggestedStep && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <FiClock className="text-blue-600" />
-                <span className="font-semibold text-blue-800">Next Suggested Step:</span>
-              </div>
-              <p className="text-blue-700">
-                Step {summary.nextSuggestedStep}: {steps.find(s => s.stepNumber === summary.nextSuggestedStep)?.title}
-              </p>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={exportProgress}
-              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            >
-              <FiDownload />
-              Export Progress
-            </button>
           </div>
         </div>
+      </header>
 
-        {/* Master Checklist */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Progress Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-8"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">Your Learning Progress</h2>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${totalProgress}%` }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"
+                  />
+                </div>
+                <span className="text-lg font-bold text-gray-900">{totalProgress}%</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="p-3 bg-blue-50 rounded-xl">
+                <div className="text-2xl font-bold text-blue-600">
+                  {moduleProgress.reduce((sum, p) => sum + p.completedLessons.length, 0)}
+                </div>
+                <div className="text-xs text-gray-600">Lessons Done</div>
+              </div>
+              <div className="p-3 bg-green-50 rounded-xl">
+                <div className="text-2xl font-bold text-green-600">
+                  {moduleProgress.filter(p => p.progress === 100).length}
+                </div>
+                <div className="text-xs text-gray-600">Modules</div>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-xl">
+                <div className="text-2xl font-bold text-purple-600">{userStats.currentStreak}</div>
+                <div className="text-xs text-gray-600">Day Streak</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Learning Path */}
         <div className="space-y-4">
-          {sectionNames.map((sectionName, sectionIndex) => {
-            const sectionSteps = sections[sectionName];
-            const isExpanded = expandedSections.has(sectionName);
-            const sectionCompleted = sectionSteps.every(s => s.progress.status === 'completed');
-            const sectionInProgress = sectionSteps.some(s => s.progress.status === 'in_progress');
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <FiBookOpen className="text-blue-500" />
+            Learning Path
+          </h2>
+
+          {LEARNING_MODULES.map((module, index) => {
+            const isUnlocked = isModuleUnlocked(module);
+            const progress = getModuleProgress(module.id);
+            const completedLessons = getCompletedLessons(module.id);
+            const isExpanded = expandedModule === module.id;
+            const Icon = module.icon;
 
             return (
-              <div key={sectionName} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <motion.div
+                key={module.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`bg-white rounded-2xl border ${isUnlocked ? 'border-gray-200' : 'border-gray-100'} overflow-hidden shadow-sm`}
+              >
+                {/* Module Header */}
                 <button
-                  onClick={() => toggleSection(sectionName)}
-                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                  onClick={() => isUnlocked && setExpandedModule(isExpanded ? null : module.id)}
+                  disabled={!isUnlocked}
+                  className={`w-full p-6 flex items-center justify-between text-left transition-all ${isUnlocked ? 'hover:bg-gray-50 cursor-pointer' : 'opacity-60 cursor-not-allowed'
+                    }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`text-2xl font-bold ${sectionCompleted ? 'text-green-600' : sectionInProgress ? 'text-yellow-600' : 'text-gray-400'}`}>
-                      {String.fromCharCode(65 + sectionIndex)}
+                  <div className="flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${module.color} flex items-center justify-center shadow-lg`}>
+                      {isUnlocked ? (
+                        <Icon className="text-white text-2xl" />
+                      ) : (
+                        <FiLock className="text-white text-xl" />
+                      )}
                     </div>
-                    <div className="text-left">
-                      <h2 className="text-xl font-semibold text-gray-800">{sectionName}</h2>
-                      <p className="text-sm text-gray-500">
-                        {sectionSteps.filter(s => s.progress.status === 'completed').length} / {sectionSteps.length} steps completed
-                      </p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-gray-400 uppercase">Module {module.id}</span>
+                        {progress === 100 && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full flex items-center gap-1">
+                            <FiCheck className="text-xs" /> Complete
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900">{module.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{module.description}</p>
                     </div>
                   </div>
-                  <div className="text-gray-400">
-                    {isExpanded ? '▼' : '▶'}
+                  <div className="flex items-center gap-4">
+                    {isUnlocked && (
+                      <div className="text-right hidden md:block">
+                        <div className="text-sm font-medium text-gray-900">{progress}% Complete</div>
+                        <div className="text-xs text-gray-500">{completedLessons.length}/{module.lessons.length} lessons</div>
+                      </div>
+                    )}
+                    {isUnlocked ? (
+                      isExpanded ? <FiChevronDown className="text-gray-400 text-xl" /> : <FiChevronRight className="text-gray-400 text-xl" />
+                    ) : (
+                      <div className="text-sm text-gray-400">
+                        Complete Module {module.unlockCondition?.module} first
+                      </div>
+                    )}
                   </div>
                 </button>
 
-                {isExpanded && (
-                  <div className="border-t border-gray-200">
-                    {sectionSteps.map(step => {
-                      const isStepExpanded = expandedSteps.has(step.stepNumber);
-                      const dependenciesMet = areDependenciesMet(step);
-                      const isLocked = !dependenciesMet && step.dependencies.length > 0;
+                {/* Module Progress Bar */}
+                {isUnlocked && (
+                  <div className="px-6 pb-2">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${module.color} rounded-full transition-all duration-500`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
-                      return (
-                        <div key={step.stepNumber} className="border-b border-gray-100 last:border-b-0">
-                          <div className="px-6 py-4">
-                            <div className="flex items-start gap-4">
-                              <div className="flex-shrink-0 mt-1">
-                                {step.progress.status === 'completed' ? (
-                                  <FiCheckCircle className="text-green-600 text-2xl" />
-                                ) : step.progress.status === 'in_progress' ? (
-                                  <FiClock className="text-yellow-600 text-2xl" />
-                                ) : isLocked ? (
-                                  <FiLock className="text-gray-400 text-2xl" />
+                {/* Expanded Lessons */}
+                <AnimatePresence>
+                  {isExpanded && isUnlocked && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="border-t border-gray-100"
+                    >
+                      <div className="p-4 space-y-2">
+                        {module.lessons.map((lesson, lessonIndex) => {
+                          const isComplete = completedLessons.includes(lesson.id);
+
+                          return (
+                            <motion.button
+                              key={lesson.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: lessonIndex * 0.05 }}
+                              onClick={() => handleLessonClick(module.id, lesson.id, lesson.route)}
+                              className={`w-full p-4 rounded-xl flex items-center gap-4 text-left transition-all ${isComplete
+                                  ? 'bg-green-50 border border-green-200'
+                                  : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                                }`}
+                            >
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isComplete ? 'bg-green-500' : module.bgColor
+                                }`}>
+                                {isComplete ? (
+                                  <FiCheck className="text-white" />
                                 ) : (
-                                  <FiCircle className="text-gray-400 text-2xl" />
+                                  <span className={`text-sm font-medium ${module.color.includes('blue') ? 'text-blue-600' : 'text-gray-600'}`}>
+                                    {lesson.id}
+                                  </span>
                                 )}
                               </div>
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-sm font-semibold text-gray-500">Step {step.stepNumber}</span>
-                                  {isLocked && (
-                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Locked</span>
-                                  )}
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-800 mb-2">{step.title}</h3>
-                                <p className="text-gray-600 mb-3">{step.description}</p>
-
-                                <button
-                                  onClick={() => toggleStep(step.stepNumber)}
-                                  className="text-sm text-blue-600 hover:text-blue-800 mb-3"
-                                  disabled={isLocked}
-                                >
-                                  {isStepExpanded ? 'Hide Details' : 'Show Details'}
-                                </button>
-
-                                {isStepExpanded && (
-                                  <div className="mt-4 space-y-4">
-                                    {/* Checklist Actions */}
-                                    <div>
-                                      <h4 className="font-semibold text-gray-700 mb-2">Checklist Actions:</h4>
-                                      <ul className="list-disc list-inside space-y-1 text-gray-600">
-                                        {step.checklistActions.map((action, idx) => (
-                                          <li key={idx}>{action}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-
-                                    {/* Resources */}
-                                    {step.resources && step.resources.length > 0 && (
-                                      <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2">Resources:</h4>
-                                        <div className="space-y-2">
-                                          {step.resources.map((resource, idx) => (
-                                            <a
-                                              key={idx}
-                                              href={resource.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
-                                            >
-                                              <FiExternalLink />
-                                              {resource.title}
-                                            </a>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* MCQ */}
-                                    {step.useAiMcq && !step.mcq && (
-                                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                          <FiBook className="text-purple-600" />
-                                          AI-Powered Learning Question:
-                                        </h4>
-                                        <p className="text-gray-600 mb-4 text-sm">
-                                          Get a personalized question based on your budget, interests, and learning progress.
-                                        </p>
-                                        <button
-                                          onClick={() => generateAiMcq(step.stepNumber)}
-                                          disabled={loadingAiMcq === step.stepNumber}
-                                          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                        >
-                                          {loadingAiMcq === step.stepNumber ? (
-                                            <>
-                                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                              Generating...
-                                            </>
-                                          ) : (
-                                            'Generate Personalized Question'
-                                          )}
-                                        </button>
-                                      </div>
-                                    )}
-                                    {step.mcq && (
-                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                          <FiBook className="text-blue-600" />
-                                          {step.isAiGenerated ? 'AI-Powered ' : ''}Learning Question:
-                                        </h4>
-                                        <p className="text-gray-800 mb-4">{step.mcq.question}</p>
-                                        <div className="space-y-2 mb-4">
-                                          {step.mcq.options.map((option, idx) => {
-                                            const optionLetter = String.fromCharCode(97 + idx);
-                                            return (
-                                              <label
-                                                key={idx}
-                                                className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200 cursor-pointer hover:bg-gray-50"
-                                              >
-                                                <input
-                                                  type="radio"
-                                                  name={`mcq-${step.stepNumber}`}
-                                                  value={optionLetter}
-                                                  checked={mcqAnswer === optionLetter && selectedStep === step.stepNumber}
-                                                  onChange={() => {
-                                                    setMcqAnswer(optionLetter);
-                                                    setSelectedStep(step.stepNumber);
-                                                    setMcqFeedback(null);
-                                                  }}
-                                                  className="text-blue-600"
-                                                />
-                                                <span className="text-gray-700">{option}</span>
-                                              </label>
-                                            );
-                                          })}
-                                        </div>
-                                        {mcqAnswer && selectedStep === step.stepNumber && (
-                                          <button
-                                            onClick={() => submitMcq(step.stepNumber, step.mcq!.question, mcqAnswer, step.mcq)}
-                                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                                          >
-                                            Submit Answer
-                                          </button>
-                                        )}
-                                        {mcqFeedback && selectedStep === step.stepNumber && (
-                                          <div className={`mt-4 p-4 rounded-lg ${mcqFeedback.isCorrect ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'}`}>
-                                            <p className={`font-bold text-lg mb-3 ${mcqFeedback.isCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                                              {mcqFeedback.isCorrect ? '✓ Correct!' : '✗ Incorrect'}
-                                            </p>
-                                            <div className="text-sm mt-3 text-gray-800 whitespace-pre-line space-y-2">
-                                              {mcqFeedback.feedback?.split('\n').map((line: string, idx: number) => {
-                                                // Handle bold markdown **text**
-                                                const parts = line.split(/(\*\*.*?\*\*)/g);
-                                                return (
-                                                  <p key={idx} className="mb-2">
-                                                    {parts.map((part, pIdx) => {
-                                                      if (part.startsWith('**') && part.endsWith('**')) {
-                                                        return <strong key={pIdx} className="font-semibold">{part.slice(2, -2)}</strong>;
-                                                      }
-                                                      return <span key={pIdx}>{part}</span>;
-                                                    })}
-                                                  </p>
-                                                );
-                                              })}
-                                            </div>
-                                            {mcqFeedback.explanation && (
-                                              <div className="mt-4 pt-4 border-t border-gray-300">
-                                                <p className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Detailed Explanation:</p>
-                                                <div className="text-sm text-gray-700 whitespace-pre-line space-y-2">
-                                                  {mcqFeedback.explanation.split('\n').map((line: string, idx: number) => {
-                                                    // Handle bold markdown **text**
-                                                    const parts = line.split(/(\*\*.*?\*\*)/g);
-                                                    return (
-                                                      <p key={idx} className="mb-1">
-                                                        {parts.map((part, pIdx) => {
-                                                          if (part.startsWith('**') && part.endsWith('**')) {
-                                                            return <strong key={pIdx} className="font-semibold text-gray-800">{part.slice(2, -2)}</strong>;
-                                                          }
-                                                          return <span key={pIdx}>{part}</span>;
-                                                        })}
-                                                      </p>
-                                                    );
-                                                  })}
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-
-                                    {/* Reflection Prompts */}
-                                    {step.reflectionPrompts && step.reflectionPrompts.length > 0 && (
-                                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
-                                        <div className="flex items-center gap-2">
-                                          <FiBook className="text-amber-600" />
-                                          <h4 className="font-semibold text-gray-800">Reflect & Adjust</h4>
-                                        </div>
-                                        <ul className="list-disc list-inside text-gray-700 space-y-1">
-                                          {step.reflectionPrompts.map((prompt, idx) => (
-                                            <li key={idx}>{prompt}</li>
-                                          ))}
-                                        </ul>
-                                        <div>
-                                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Your Reflection Notes
-                                          </label>
-                                          <textarea
-                                            className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
-                                            rows={3}
-                                            value={notesDrafts[step.stepNumber] ?? ''}
-                                            onChange={(e) => handleNotesChange(step.stepNumber, e.target.value)}
-                                            placeholder="Summarize what you learned or what needs adjustment..."
-                                          />
-                                          <button
-                                            onClick={() => saveReflectionNotes(step.stepNumber)}
-                                            disabled={savingReflectionStep === step.stepNumber}
-                                            className="mt-2 bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 disabled:opacity-50"
-                                          >
-                                            {savingReflectionStep === step.stepNumber ? 'Saving...' : 'Save Reflection'}
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Progress Controls */}
-                                    <div className="flex gap-2 pt-4 border-t border-gray-200">
-                                      {step.progress.status !== 'completed' && (
-                                        <>
-                                          {step.progress.status === 'pending' && (
-                                            <button
-                                              onClick={() => updateStepProgress(step.stepNumber, 'in_progress')}
-                                              disabled={isLocked}
-                                              className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                              Start Step
-                                            </button>
-                                          )}
-                                          <button
-                                            onClick={() => updateStepProgress(step.stepNumber, 'completed')}
-                                            disabled={isLocked}
-                                            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                          >
-                                            Mark Complete
-                                          </button>
-                                        </>
-                                      )}
-                                      {step.progress.status === 'completed' && (
-                                        <button
-                                          onClick={() => updateStepProgress(step.stepNumber, 'in_progress')}
-                                          className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-                                        >
-                                          Reopen Step
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
+                                <h4 className={`font-medium ${isComplete ? 'text-green-800' : 'text-gray-900'}`}>
+                                  {lesson.title}
+                                </h4>
+                                <p className={`text-sm ${isComplete ? 'text-green-600' : 'text-gray-500'}`}>
+                                  {lesson.description}
+                                </p>
                               </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <FiClock />
+                                <span>{lesson.duration}</span>
+                              </div>
+                              <FiChevronRight className={isComplete ? 'text-green-500' : 'text-gray-400'} />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             );
           })}
         </div>
-      </div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4"
+        >
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="p-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl text-white text-left hover:opacity-90 transition-opacity"
+          >
+            <FiPlay className="text-3xl mb-3" />
+            <h3 className="text-lg font-semibold">Run Simulation</h3>
+            <p className="text-sm text-blue-100 mt-1">Continue your dropshipping business</p>
+          </button>
+
+          <button
+            onClick={() => router.push('/products')}
+            className="p-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl text-white text-left hover:opacity-90 transition-opacity"
+          >
+            <FiPackage className="text-3xl mb-3" />
+            <h3 className="text-lg font-semibold">Product Manager</h3>
+            <p className="text-sm text-purple-100 mt-1">Add and manage your products</p>
+          </button>
+
+          <button
+            onClick={() => router.push('/inventory')}
+            className="p-6 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl text-white text-left hover:opacity-90 transition-opacity"
+          >
+            <FiBarChart2 className="text-3xl mb-3" />
+            <h3 className="text-lg font-semibold">Inventory & SKU</h3>
+            <p className="text-sm text-green-100 mt-1">Track stock and manage SKUs</p>
+          </button>
+        </motion.div>
+      </main>
     </div>
   );
 }
-
