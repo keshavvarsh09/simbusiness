@@ -142,17 +142,17 @@ export default function ContentStudio() {
     };
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             {/* Header */}
-            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
-                <div className="flex items-center justify-between">
+            <div className="p-4 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                            <FiVideo className="text-white text-xl" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                            <FiVideo className="text-white text-lg sm:text-xl" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Content Studio</h2>
-                            <p className="text-sm text-gray-500">Create viral hooks, scripts, and plan your content</p>
+                            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Content Studio</h2>
+                            <p className="text-xs sm:text-sm text-gray-500">Create viral hooks, scripts, and plan content</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
@@ -164,28 +164,29 @@ export default function ContentStudio() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-gray-100 overflow-x-auto">
                 {[
-                    { id: 'hooks', label: 'Hook Generator', icon: FiZap },
-                    { id: 'scripts', label: 'Video Scripts', icon: FiEdit3 },
-                    { id: 'calendar', label: 'Content Calendar', icon: FiCalendar },
+                    { id: 'hooks', label: 'Hook Generator', shortLabel: 'Hooks', icon: FiZap },
+                    { id: 'scripts', label: 'Video Scripts', shortLabel: 'Scripts', icon: FiEdit3 },
+                    { id: 'calendar', label: 'Content Calendar', shortLabel: 'Calendar', icon: FiCalendar },
                 ].map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                        className={`flex-1 px-4 py-3 flex items-center justify-center gap-2 text-sm font-medium transition-all ${activeTab === tab.id
-                                ? 'text-purple-600 border-b-2 border-purple-500 bg-purple-50/50'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                        className={`flex-1 min-w-0 px-3 sm:px-4 py-3 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                            ? 'text-purple-600 border-b-2 border-purple-500 bg-purple-50/50'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                             }`}
                     >
-                        <tab.icon className="text-lg" />
-                        {tab.label}
+                        <tab.icon className="text-base sm:text-lg flex-shrink-0" />
+                        <span className="hidden sm:inline">{tab.label}</span>
+                        <span className="sm:hidden">{tab.shortLabel}</span>
                     </button>
                 ))}
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
                 <AnimatePresence mode="wait">
                     {/* Hook Generator Tab */}
                     {activeTab === 'hooks' && (
@@ -201,17 +202,17 @@ export default function ContentStudio() {
                                 <label className="block text-sm font-medium text-gray-700">
                                     Write Your Hook (First 3 Seconds)
                                 </label>
-                                <div className="flex gap-3">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                     <input
                                         type="text"
                                         value={newHook}
                                         onChange={(e) => setNewHook(e.target.value)}
                                         placeholder="Stop scrolling if you have this problem..."
-                                        className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                                     />
                                     <button
                                         onClick={analyzeHook}
-                                        className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                                        className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-2 touch-target"
                                     >
                                         <FiZap />
                                         Score It
@@ -293,8 +294,8 @@ export default function ContentStudio() {
                                             key={structure.name}
                                             onClick={() => setSelectedStructure(structure)}
                                             className={`p-3 rounded-xl border text-left transition-all ${selectedStructure.name === structure.name
-                                                    ? 'border-purple-500 bg-purple-50'
-                                                    : 'border-gray-200 hover:border-purple-300'
+                                                ? 'border-purple-500 bg-purple-50'
+                                                : 'border-gray-200 hover:border-purple-300'
                                                 }`}
                                         >
                                             <div className="text-sm font-medium text-gray-900">{structure.name}</div>
