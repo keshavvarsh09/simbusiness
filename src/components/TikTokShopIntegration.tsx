@@ -194,7 +194,7 @@ export default function TikTokShopIntegration() {
             <div className="p-6 bg-gray-50 border-t border-gray-100">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <FiTrendingUp className="text-cyan-500" />
-                    GMV Max Strategy (Michael Bernstein)
+                    GMV Max Strategy
                 </h3>
                 <div className="grid grid-cols-3 gap-4">
                     <div className="p-3 bg-white rounded-lg border border-gray-200">

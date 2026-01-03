@@ -171,9 +171,9 @@ export function QuickStartCard() {
         >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-lg sm:text-2xl font-bold mb-2">🚀 Michael Bernstein's Playbook</h2>
+                    <h2 className="text-lg sm:text-2xl font-bold mb-2">🚀 Dropshipping Success Playbook</h2>
                     <p className="text-blue-100 mb-4 text-sm sm:text-base max-w-md">
-                        The strategy that built multiple 7-figure dropshipping brands.
+                        The proven strategy for building profitable dropshipping brands.
                         Start organic, validate fast, scale with data.
                     </p>
                     <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -181,10 +181,10 @@ export function QuickStartCard() {
                             ✅ Organic First
                         </div>
                         <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-xs sm:text-sm">
-                            ✅ 8-14 Videos/Day
+                            ✅ Daily Content
                         </div>
                         <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-xs sm:text-sm">
-                            ✅ $10K Before Ads
+                            ✅ Profit Before Ads
                         </div>
                     </div>
                 </div>

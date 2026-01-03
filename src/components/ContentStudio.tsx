@@ -401,7 +401,7 @@ export default function ContentStudio() {
                             <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
                                 <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                                     <FiTarget className="text-purple-500" />
-                                    Michael Bernstein's Posting Strategy
+                                    Viral Content Posting Strategy
                                 </h3>
                                 <div className="grid grid-cols-3 gap-4 mt-4 text-center">
                                     <div className="p-3 bg-white rounded-lg">

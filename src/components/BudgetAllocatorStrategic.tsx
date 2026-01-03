@@ -20,7 +20,7 @@ interface BudgetAllocatorProps {
     onAllocationChange?: (allocations: Record<string, number>) => void;
 }
 
-// Budget recommendations by revenue stage (Michael Bernstein methodology)
+// Budget recommendations by revenue stage
 const REVENUE_STAGES = [
     { max: 10000, label: '$0-10K', strategy: 'ORGANIC FIRST', description: '100% organic content. No paid ads yet.' },
     { max: 50000, label: '$10K-50K', strategy: 'TEST ADS', description: '70% organic, 30% testing paid ads.' },
@@ -133,7 +133,7 @@ export default function BudgetAllocatorStrategic({ totalBudget, revenue, onAlloc
                             <div
                                 key={i}
                                 className={`h-full inline-block ${revenue >= stage.max ? 'bg-green-500' :
-                                        revenue >= (i > 0 ? REVENUE_STAGES[i - 1].max : 0) ? 'bg-blue-500' : 'bg-gray-200'
+                                    revenue >= (i > 0 ? REVENUE_STAGES[i - 1].max : 0) ? 'bg-blue-500' : 'bg-gray-200'
                                     }`}
                                 style={{ width: '33.33%' }}
                             />
@@ -200,7 +200,7 @@ export default function BudgetAllocatorStrategic({ totalBudget, revenue, onAlloc
                 <div className="flex items-start gap-3">
                     <FiInfo className="text-blue-500 mt-0.5" />
                     <div className="text-sm text-gray-600">
-                        <strong className="text-gray-900">Michael Bernstein's Rule:</strong> Start 100% organic until $10K profit.
+                        <strong className="text-gray-900">Organic First Rule:</strong> Start 100% organic until $10K profit.
                         Then test paid ads with 30% of budget. Scale to 60% paid only after consistent ROAS above 2x.
                     </div>
                 </div>
