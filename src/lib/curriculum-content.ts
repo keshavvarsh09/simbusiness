@@ -1281,13 +1281,536 @@ export const CURRICULUM: LessonContent[] = [
         },
         quizTopics: ['video metrics', 'engagement', 'viral prediction'],
         xpReward: 200
+    },
+
+    // ============ MODULE 5: PLATFORM MASTERY ============
+    {
+        id: 27,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'TikTok Algorithm Deep Dive',
+        description: 'How TikTok decides what goes viral',
+        duration: '15 min',
+        icon: '📱',
+        content: {
+            intro: 'TikTok shows your video to a small test group first. Based on their engagement, it decides whether to push to more people. Understanding this is key to going viral.',
+            sections: [
+                {
+                    title: 'The Test Group System',
+                    content: 'Every video starts with 200-500 views. TikTok measures engagement, then decides.',
+                    keyPoints: [
+                        'First 200-500 views = test group',
+                        'Watch time is #1 factor',
+                        'Shares > Comments > Likes',
+                        'Video completion rate is critical'
+                    ]
+                },
+                {
+                    title: 'The Viral Ladder',
+                    content: 'Videos climb through stages based on performance.',
+                    keyPoints: [
+                        '500 → 5K → 50K → 500K → millions',
+                        'Each stage requires maintaining engagement',
+                        'One bad tier kills momentum',
+                        'Strong hook = pass first gate'
+                    ]
+                }
+            ],
+            practiceTask: 'Track your next 10 videos. Note views at 1 hour, 6 hours, and 24 hours. Identify patterns in winners vs losers.'
+        },
+        quizTopics: ['TikTok algorithm', 'virality', 'engagement metrics'],
+        xpReward: 225
+    },
+    {
+        id: 28,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'Instagram Reels vs TikTok',
+        description: 'Key differences and what works where',
+        duration: '12 min',
+        icon: '📸',
+        content: {
+            intro: 'Instagram and TikTok look similar but have different audiences, algorithms, and content preferences. What works on one may flop on the other.',
+            sections: [
+                {
+                    title: 'Audience Differences',
+                    content: 'Demographics and behaviors differ significantly.',
+                    keyPoints: [
+                        'TikTok: Younger (16-24), discovery-focused',
+                        'Instagram: Older (25-34), follower-focused',
+                        'TikTok: Entertainment first',
+                        'Instagram: Aesthetic and lifestyle'
+                    ]
+                },
+                {
+                    title: 'Algorithm Differences',
+                    content: 'Each platform prioritizes different signals.',
+                    keyPoints: [
+                        'TikTok: Watch time, shares',
+                        'Instagram: Saves, shares, follows',
+                        'TikTok: Anyone can go viral',
+                        'Instagram: Favors existing followers'
+                    ]
+                }
+            ],
+            practiceTask: 'Post the same video on TikTok and Instagram Reels. Compare performance after 48 hours.'
+        },
+        quizTopics: ['Instagram Reels', 'platform differences', 'cross-posting'],
+        xpReward: 225
+    },
+    {
+        id: 29,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'YouTube Shorts Strategy',
+        description: 'Monetization and long-term value',
+        duration: '12 min',
+        icon: '▶️',
+        content: {
+            intro: 'YouTube Shorts has lower virality but higher long-term value. Videos stay searchable forever, unlike TikTok where content dies in days.',
+            sections: [
+                {
+                    title: 'Shorts vs TikTok',
+                    content: 'Different strengths for different goals.',
+                    keyPoints: [
+                        'Lower virality potential',
+                        'Longer content lifespan',
+                        'Better monetization',
+                        'Funnels to long-form content'
+                    ]
+                },
+                {
+                    title: 'Optimization Tips',
+                    content: 'YouTube Shorts has unique requirements.',
+                    keyPoints: [
+                        'Vertical format (9:16)',
+                        '#Shorts in title or description',
+                        'Under 60 seconds',
+                        'Loop-friendly content'
+                    ]
+                }
+            ],
+            practiceTask: 'Repurpose your best TikTok for YouTube Shorts. Optimize title and description for search.'
+        },
+        quizTopics: ['YouTube Shorts', 'monetization', 'SEO'],
+        xpReward: 225
+    },
+    {
+        id: 30,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'Multi-Platform Content Strategy',
+        description: 'Repurposing content across platforms efficiently',
+        duration: '15 min',
+        icon: '🔄',
+        content: {
+            intro: 'Create once, post everywhere—but with platform-specific tweaks. Maximize reach without multiplying workload.',
+            sections: [
+                {
+                    title: 'The Repurposing Workflow',
+                    content: 'Efficient process for multi-platform posting.',
+                    keyPoints: [
+                        'Create for TikTok first (lowest friction)',
+                        'Remove TikTok watermark for other platforms',
+                        'Adjust captions/hashtags per platform',
+                        'Post at optimal times for each'
+                    ]
+                },
+                {
+                    title: 'Platform-Specific Edits',
+                    content: 'Small tweaks that improve performance.',
+                    keyPoints: [
+                        'Instagram: Add cover image',
+                        'YouTube: Optimize title for search',
+                        'All: Platform-native captions',
+                        'Test: Same video, different hooks'
+                    ]
+                }
+            ],
+            practiceTask: 'Create a repurposing SOP: TikTok → Instagram → YouTube Shorts with specific edits for each.'
+        },
+        quizTopics: ['content repurposing', 'multi-platform', 'efficiency'],
+        xpReward: 225
+    },
+    {
+        id: 31,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'Building a Content Team',
+        description: 'When and how to delegate content creation',
+        duration: '15 min',
+        icon: '👥',
+        content: {
+            intro: 'You can\'t scale posting 5x/day alone forever. Learn when to hire and who to hire first.',
+            sections: [
+                {
+                    title: 'When to Hire',
+                    content: 'Timing matters—don\'t hire too early.',
+                    keyPoints: [
+                        'After $10K/month profit',
+                        'When content creation blocks growth',
+                        'When you have proven formulas',
+                        'Not before you understand what works'
+                    ]
+                },
+                {
+                    title: 'Who to Hire First',
+                    content: 'The ideal first hires for a content team.',
+                    keyPoints: [
+                        'Video editor (most time-saving)',
+                        'UGC creator (fresh faces)',
+                        'VA for posting/engagement',
+                        'Keep strategy in-house initially'
+                    ]
+                }
+            ],
+            practiceTask: 'Write a job description for a video editor. Include style references, output expectations, and pay rate.'
+        },
+        quizTopics: ['team building', 'delegation', 'hiring'],
+        xpReward: 225
+    },
+    {
+        id: 32,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'Leveraging Comments for Growth',
+        description: 'Turn engagement into content ideas and sales',
+        duration: '10 min',
+        icon: '💬',
+        content: {
+            intro: 'Comments are goldmines. Every question is a content idea. Every objection is something to address. Every compliment shows what\'s working.',
+            sections: [
+                {
+                    title: 'Mining Comments',
+                    content: 'Systematically extract value from comments.',
+                    keyPoints: [
+                        'Questions = new video topics',
+                        'Objections = things to address',
+                        '"Where to buy?" = buying intent',
+                        'Hate = you\'re triggering emotions'
+                    ]
+                },
+                {
+                    title: 'Comment Engagement',
+                    content: 'Strategic commenting boosts algorithm.',
+                    keyPoints: [
+                        'Reply within first hour',
+                        'Pin best comments',
+                        'Heart genuine positive comments',
+                        'Reply to haters (drives engagement)'
+                    ]
+                }
+            ],
+            practiceTask: 'Review your last 10 videos\' comments. List 5 content ideas from questions asked.'
+        },
+        quizTopics: ['engagement', 'comments', 'content ideas'],
+        xpReward: 225
+    },
+    {
+        id: 33,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'Avoiding Shadowbans',
+        description: 'Keep your account healthy and visible',
+        duration: '10 min',
+        icon: '⚠️',
+        content: {
+            intro: 'Shadowbans kill reach without warning. Learn what triggers them and how to avoid them.',
+            sections: [
+                {
+                    title: 'What Causes Shadowbans',
+                    content: 'Common triggers that reduce visibility.',
+                    keyPoints: [
+                        'Posting copyrighted music',
+                        'Uploading with watermarks from other apps',
+                        'Excessive hashtags or banned hashtags',
+                        'Spammy behavior (mass following/unfollowing)'
+                    ]
+                },
+                {
+                    title: 'Prevention Best Practices',
+                    content: 'Keep your account healthy.',
+                    keyPoints: [
+                        'Use trending sounds from the app',
+                        'Remove watermarks before cross-posting',
+                        'Use 3-5 relevant hashtags only',
+                        'Authentic engagement patterns'
+                    ]
+                }
+            ],
+            practiceTask: 'Audit your account for shadowban risks. Check recent videos for watermarks and hashtag quality.'
+        },
+        quizTopics: ['shadowban', 'account health', 'platform rules'],
+        xpReward: 225
+    },
+    {
+        id: 34,
+        moduleId: 5,
+        moduleTitle: 'Platform Mastery',
+        title: 'Going Live for Sales',
+        description: 'Using live streams to boost conversions',
+        duration: '12 min',
+        icon: '🔴',
+        content: {
+            intro: 'Live selling is massive on TikTok Shop. Even without Shop access, lives build trust and drive traffic to your store.',
+            sections: [
+                {
+                    title: 'Why Lives Work',
+                    content: 'The psychology behind live selling.',
+                    keyPoints: [
+                        'Real-time social proof',
+                        'Urgency and scarcity',
+                        'Personal connection with seller',
+                        'Algorithm boost for live content'
+                    ]
+                },
+                {
+                    title: 'Live Selling Tips',
+                    content: 'How to run effective product lives.',
+                    keyPoints: [
+                        'Demonstrate product in real-time',
+                        'Answer questions live',
+                        'Offer live-only discounts',
+                        'Pin comment with link'
+                    ]
+                }
+            ],
+            practiceTask: 'Plan a 15-minute live: outline topics, have product ready, prep 3 talking points.'
+        },
+        quizTopics: ['live selling', 'TikTok live', 'real-time engagement'],
+        xpReward: 225
+    },
+
+    // ============ MODULE 6: STORE DESIGN & CRO ============
+    {
+        id: 35,
+        moduleId: 6,
+        moduleTitle: 'Store Design & CRO',
+        title: 'High-Converting Store Design',
+        description: 'Design principles that build trust and drive sales',
+        duration: '15 min',
+        icon: '🛍️',
+        content: {
+            intro: 'Your store has 3 seconds to build trust. Bad design = lost sales. Great design = conversions without extra traffic.',
+            sections: [
+                {
+                    title: 'Trust Elements',
+                    content: 'Essential components every store needs.',
+                    keyPoints: [
+                        'Clean, professional look',
+                        'Clear contact information',
+                        'Secure checkout badges',
+                        'Mobile-first design (80%+ traffic)'
+                    ]
+                },
+                {
+                    title: 'Design Psychology',
+                    content: 'Colors and layout that convert.',
+                    keyPoints: [
+                        'CTA buttons in contrasting color',
+                        'Plenty of whitespace',
+                        'Above-fold product hero',
+                        'Social proof visible immediately'
+                    ]
+                }
+            ],
+            practiceTask: 'Audit your store on mobile. Time how long it takes to find: price, buy button, and reviews.'
+        },
+        quizTopics: ['store design', 'trust elements', 'conversion'],
+        xpReward: 250,
+        unlocksFeature: '/dashboard'
+    },
+    {
+        id: 36,
+        moduleId: 6,
+        moduleTitle: 'Store Design & CRO',
+        title: 'Product Page Optimization',
+        description: 'The page that makes or breaks sales',
+        duration: '15 min',
+        icon: '📄',
+        content: {
+            intro: 'The product page is where decisions happen. Every element should push toward the purchase.',
+            sections: [
+                {
+                    title: 'Above the Fold',
+                    content: 'What visitors see without scrolling.',
+                    keyPoints: [
+                        'High-quality product images',
+                        'Clear price (with strikethrough if discounted)',
+                        'Add to cart button visible',
+                        'Star rating and review count'
+                    ]
+                },
+                {
+                    title: 'Below the Fold',
+                    content: 'Content that addresses objections.',
+                    keyPoints: [
+                        'Feature bullets with benefits',
+                        'Customer reviews with photos',
+                        'FAQ section',
+                        'Shipping and returns info'
+                    ]
+                }
+            ],
+            practiceTask: 'Screenshot your product page. Mark every trust element and conversion element. Add what\'s missing.'
+        },
+        quizTopics: ['product page', 'CRO', 'conversion elements'],
+        xpReward: 250
+    },
+    {
+        id: 37,
+        moduleId: 6,
+        moduleTitle: 'Store Design & CRO',
+        title: 'Checkout Optimization',
+        description: 'Reduce friction and cart abandonment',
+        duration: '12 min',
+        icon: '💳',
+        content: {
+            intro: '70% of carts are abandoned. Most is preventable with proper checkout optimization.',
+            sections: [
+                {
+                    title: 'Reducing Friction',
+                    content: 'Every click loses a percentage of buyers.',
+                    keyPoints: [
+                        'One-page checkout',
+                        'Guest checkout option',
+                        'Auto-fill address',
+                        'Multiple payment options'
+                    ]
+                },
+                {
+                    title: 'Trust at Checkout',
+                    content: 'The moment of highest anxiety.',
+                    keyPoints: [
+                        'Security badges visible',
+                        'Order summary clear',
+                        'Return policy reminder',
+                        'Support contact visible'
+                    ]
+                }
+            ],
+            practiceTask: 'Do a test checkout on your own store. Count the clicks from cart to confirmation.'
+        },
+        quizTopics: ['checkout', 'cart abandonment', 'friction'],
+        xpReward: 250
+    },
+    {
+        id: 38,
+        moduleId: 6,
+        moduleTitle: 'Store Design & CRO',
+        title: 'Upsells & Cross-sells',
+        description: 'Increase average order value',
+        duration: '12 min',
+        icon: '📈',
+        content: {
+            intro: 'The easiest way to increase profit is to sell more to existing customers. AOV optimization is free money.',
+            sections: [
+                {
+                    title: 'Upsell Strategies',
+                    content: 'Get customers to spend more per order.',
+                    keyPoints: [
+                        'Bundle deals ("Buy 2, Get 1 Free")',
+                        'Volume discounts',
+                        'Premium version upsell',
+                        'Post-purchase one-click upsell'
+                    ]
+                },
+                {
+                    title: 'Cross-sell Strategies',
+                    content: 'Suggest complementary products.',
+                    keyPoints: [
+                        '"Frequently bought together"',
+                        'Accessories and add-ons',
+                        'Consumables if applicable',
+                        'Show on cart page'
+                    ]
+                }
+            ],
+            practiceTask: 'Create a bundle offer for your main product. Calculate margin vs individual sale.'
+        },
+        quizTopics: ['upsells', 'AOV', 'cross-sells'],
+        xpReward: 250
+    },
+    {
+        id: 39,
+        moduleId: 6,
+        moduleTitle: 'Store Design & CRO',
+        title: 'Abandoned Cart Recovery',
+        description: 'Win back lost sales automatically',
+        duration: '12 min',
+        icon: '🛒',
+        content: {
+            intro: 'Abandoned cart emails recover 5-15% of lost sales. Set them up once, profit forever.',
+            sections: [
+                {
+                    title: 'Email Sequence',
+                    content: 'The proven 3-email recovery flow.',
+                    keyPoints: [
+                        'Email 1: 1 hour later - Reminder',
+                        'Email 2: 24 hours - Urgency',
+                        'Email 3: 72 hours - Discount incentive',
+                        'Each email should be different'
+                    ]
+                },
+                {
+                    title: 'SMS Recovery',
+                    content: 'Higher open rates than email.',
+                    keyPoints: [
+                        'Requires consent (popup)',
+                        'Keep messages short',
+                        'Include direct link to cart',
+                        'Best for younger demographics'
+                    ]
+                }
+            ],
+            practiceTask: 'Set up a 3-email abandoned cart sequence in Klaviyo or your email platform.'
+        },
+        quizTopics: ['abandoned cart', 'email marketing', 'recovery'],
+        xpReward: 250
+    },
+    {
+        id: 40,
+        moduleId: 6,
+        moduleTitle: 'Store Design & CRO',
+        title: 'Analytics & Tracking Setup',
+        description: 'Measure what matters',
+        duration: '15 min',
+        icon: '📊',
+        content: {
+            intro: 'You can\'t improve what you don\'t measure. Proper tracking is the foundation of optimization.',
+            sections: [
+                {
+                    title: 'Essential Tracking',
+                    content: 'Tools every store needs.',
+                    keyPoints: [
+                        'Meta Pixel (Facebook/Instagram)',
+                        'TikTok Pixel',
+                        'Google Analytics 4',
+                        'Shopify Analytics'
+                    ]
+                },
+                {
+                    title: 'Key Metrics',
+                    content: 'Numbers to watch weekly.',
+                    keyPoints: [
+                        'Conversion rate (target: 2-5%)',
+                        'Average order value',
+                        'Cost per acquisition',
+                        'Return on ad spend (ROAS)'
+                    ]
+                }
+            ],
+            practiceTask: 'Verify all pixels are firing correctly using browser extensions or platform test tools.'
+        },
+        quizTopics: ['analytics', 'tracking', 'metrics'],
+        xpReward: 250
     }
 ];
 
 // Export module metadata
 export const MODULES = [
     { id: 1, title: 'Mindset & Foundation', icon: '🎯', lessonCount: 5 },
-    { id: 2, title: 'Product Research & Validation', icon: '🔍', lessonCount: 7 },
+    { id: 2, title: 'Product Research & Validation', icon: '🔍', lessonCount: 5 },
     { id: 3, title: 'Consumer Psychology', icon: '🧠', lessonCount: 6 },
     { id: 4, title: 'Content Creation Mastery', icon: '🎬', lessonCount: 10 },
     { id: 5, title: 'Platform Mastery', icon: '📱', lessonCount: 8 },
@@ -1305,3 +1828,4 @@ export function getLessonsByModule(moduleId: number): LessonContent[] {
 export function getLessonById(id: number): LessonContent | undefined {
     return CURRICULUM.find(lesson => lesson.id === id);
 }
+
