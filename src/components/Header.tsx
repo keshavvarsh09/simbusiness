@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiSearch, FiBell, FiUser, FiSettings, FiLogOut, FiHelpCircle, FiChevronDown } from 'react-icons/fi';
+import { FiSearch, FiBell, FiUser, FiSettings, FiLogOut, FiHelpCircle, FiChevronDown, FiLogIn } from 'react-icons/fi';
 
 // Navigation items for search
 const SEARCH_ITEMS = [
@@ -20,13 +20,32 @@ const SEARCH_ITEMS = [
     { label: 'Suppliers', path: '/suppliers', keywords: ['vendors', 'sourcing'] },
 ];
 
+interface User {
+    id: number;
+    email: string;
+    name: string;
+}
+
 export default function Header() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
     const searchRef = useRef<HTMLDivElement>(null);
     const profileRef = useRef<HTMLDivElement>(null);
+
+    // Load user from localStorage
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch {
+                // Invalid data
+            }
+        }
+    }, []);
 
     // Filter search results
     const searchResults = searchQuery.trim()
@@ -54,6 +73,15 @@ export default function Header() {
         router.push(path);
         setSearchQuery('');
         setShowSearchResults(false);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('learning_profile');
+        setUser(null);
+        setShowProfileMenu(false);
+        router.push('/auth/login');
     };
 
     return (
@@ -119,8 +147,12 @@ export default function Header() {
                             <FiUser size={18} />
                         </div>
                         <div className="text-left hidden sm:block">
-                            <p className="text-sm font-semibold text-gray-900 group-hover:text-primary-700">Demo User</p>
-                            <p className="text-xs text-gray-500">Learning Mode</p>
+                            <p className="text-sm font-semibold text-gray-900 group-hover:text-primary-700">
+                                {user?.name || 'Guest'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                {user ? 'Logged In' : 'Guest Mode'}
+                            </p>
                         </div>
                         <FiChevronDown className={`text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                     </button>
@@ -129,8 +161,8 @@ export default function Header() {
                     {showProfileMenu && (
                         <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
                             <div className="p-4 border-b border-gray-100 bg-gray-50">
-                                <p className="font-semibold text-gray-900">Demo User</p>
-                                <p className="text-xs text-gray-500">Learning Mode (No Login Required)</p>
+                                <p className="font-semibold text-gray-900">{user?.name || 'Guest User'}</p>
+                                <p className="text-xs text-gray-500">{user?.email || 'Not signed in'}</p>
                             </div>
                             <div className="p-2">
                                 <button
@@ -146,16 +178,22 @@ export default function Header() {
                                     <FiHelpCircle size={16} /> Learning Hub
                                 </button>
                                 <div className="h-[1px] bg-gray-100 my-2"></div>
-                                <button
-                                    onClick={() => {
-                                        localStorage.removeItem('learning_profile');
-                                        router.push('/launcher/onboarding');
-                                        setShowProfileMenu(false);
-                                    }}
-                                    className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-3 transition-colors"
-                                >
-                                    <FiLogOut size={16} /> Reset Progress
-                                </button>
+
+                                {user ? (
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-3 transition-colors"
+                                    >
+                                        <FiLogOut size={16} /> Sign Out
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => { router.push('/auth/login'); setShowProfileMenu(false); }}
+                                        className="w-full px-3 py-2 text-left text-primary-600 hover:bg-primary-50 rounded-lg flex items-center gap-3 transition-colors"
+                                    >
+                                        <FiLogIn size={16} /> Sign In
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}

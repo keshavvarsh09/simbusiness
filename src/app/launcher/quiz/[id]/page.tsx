@@ -102,7 +102,7 @@ export default function QuizPage() {
     };
 
     const handleComplete = async () => {
-        if (!quiz || !profile) return;
+        if (!quiz) return;
 
         setSaving(true);
 
@@ -112,17 +112,45 @@ export default function QuizPage() {
 
         const passed = correctCount >= Math.ceil(quiz.questions.length * 0.7);
 
-        if (passed) {
+        if (passed && lesson) {
             try {
-                // Save completion
-                await fetch('/api/launcher/complete-lesson', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(isAuthenticated() ? getAuthHeaders() : {}),
-                    },
-                    body: JSON.stringify({ lessonId }),
-                });
+                // Load current profile from localStorage
+                const storedProfile = localStorage.getItem('learning_profile');
+                let currentProfile = storedProfile ? JSON.parse(storedProfile) : {
+                    completedLessons: [],
+                    xp: 0,
+                    level: 1,
+                    onboardingComplete: true,
+                };
+
+                // Add lesson to completed if not already
+                if (!currentProfile.completedLessons.includes(lessonId)) {
+                    currentProfile.completedLessons.push(lessonId);
+                    currentProfile.xp = (currentProfile.xp || 0) + lesson.xpReward;
+                    currentProfile.currentLesson = lessonId + 1;
+                }
+
+                // Save back to localStorage
+                localStorage.setItem('learning_profile', JSON.stringify(currentProfile));
+                console.log('Progress saved to localStorage:', currentProfile);
+
+                // If logged in, also sync to database
+                const authToken = localStorage.getItem('auth_token');
+                if (authToken) {
+                    try {
+                        await fetch('/api/auth/me', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`,
+                            },
+                            body: JSON.stringify({ learningProfile: currentProfile }),
+                        });
+                        console.log('Progress synced to database');
+                    } catch (syncError) {
+                        console.warn('DB sync failed:', syncError);
+                    }
+                }
             } catch (error) {
                 console.error('Failed to save completion:', error);
             }
@@ -298,26 +326,26 @@ export default function QuizPage() {
                                         whileHover={!showExplanation ? { scale: 1.02 } : {}}
                                         whileTap={!showExplanation ? { scale: 0.98 } : {}}
                                         className={`w-full p-4 rounded-xl border-2 text-left transition-all ${showColors
-                                                ? isCorrect
-                                                    ? 'border-green-500 bg-green-500/20'
-                                                    : isSelected
-                                                        ? 'border-red-500 bg-red-500/20'
-                                                        : 'border-white/10 bg-white/5'
+                                            ? isCorrect
+                                                ? 'border-green-500 bg-green-500/20'
                                                 : isSelected
-                                                    ? 'border-purple-500 bg-purple-500/20'
-                                                    : 'border-white/10 bg-white/5 hover:border-white/30'
+                                                    ? 'border-red-500 bg-red-500/20'
+                                                    : 'border-white/10 bg-white/5'
+                                            : isSelected
+                                                ? 'border-purple-500 bg-purple-500/20'
+                                                : 'border-white/10 bg-white/5 hover:border-white/30'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${showColors
-                                                    ? isCorrect
-                                                        ? 'bg-green-500'
-                                                        : isSelected
-                                                            ? 'bg-red-500'
-                                                            : 'bg-white/10'
+                                                ? isCorrect
+                                                    ? 'bg-green-500'
                                                     : isSelected
-                                                        ? 'bg-purple-500'
+                                                        ? 'bg-red-500'
                                                         : 'bg-white/10'
+                                                : isSelected
+                                                    ? 'bg-purple-500'
+                                                    : 'bg-white/10'
                                                 }`}>
                                                 {showColors && isCorrect ? (
                                                     <FiCheck className="text-white" />
@@ -363,8 +391,8 @@ export default function QuizPage() {
                             onClick={handleSubmitAnswer}
                             disabled={selectedAnswer === null}
                             className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${selectedAnswer !== null
-                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg hover:shadow-purple-500/25'
-                                    : 'bg-white/10 text-white/30 cursor-not-allowed'
+                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg hover:shadow-purple-500/25'
+                                : 'bg-white/10 text-white/30 cursor-not-allowed'
                                 }`}
                         >
                             Check Answer

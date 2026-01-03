@@ -3,8 +3,8 @@ import { Pool } from 'pg';
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/simbusiness',
-  ssl: process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('supabase') || process.env.DATABASE_URL?.includes('neon') 
-    ? { rejectUnauthorized: false } 
+  ssl: process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('supabase') || process.env.DATABASE_URL?.includes('neon')
+    ? { rejectUnauthorized: false }
     : false,
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000,
@@ -17,7 +17,7 @@ export async function initDatabase() {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
   }
-  
+
   const client = await pool.connect();
   try {
     // Test connection first
@@ -34,10 +34,21 @@ export async function initDatabase() {
         budget DECIMAL(12, 2),
         product_genre VARCHAR(100),
         product_name VARCHAR(255),
+        learning_profile JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Add learning_profile column if it doesn't exist (for existing DBs)
+    try {
+      await client.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS learning_profile JSONB
+      `);
+    } catch (e: any) {
+      // Column might already exist
+    }
 
     // Products table
     await client.query(`
@@ -157,7 +168,7 @@ export async function initDatabase() {
         FROM information_schema.columns 
         WHERE table_name='products' AND column_name='active_in_dashboard'
       `);
-      
+
       if (columnCheck.rows.length === 0) {
         // Column doesn't exist, add it
         await client.query(`
@@ -338,24 +349,24 @@ export async function initDatabase() {
     console.error('Error initializing database:', error);
     console.error('Error message:', error?.message);
     console.error('Error stack:', error?.stack);
-    
+
     // Provide more specific error messages
     if (error?.message?.includes('connection') || error?.message?.includes('timeout') || error?.message?.includes('ECONNREFUSED')) {
       throw new Error(`Database connection failed: ${error.message}. Please check your DATABASE_URL and ensure the database server is accessible.`);
     }
-    
+
     if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
       throw new Error(`Database permission denied: ${error.message}. Please check your database user has CREATE TABLE permissions.`);
     }
-    
+
     if (error?.message?.includes('authentication') || error?.message?.includes('password')) {
       throw new Error(`Database authentication failed: ${error.message}. Please check your DATABASE_URL credentials.`);
     }
-    
+
     if (error?.message?.includes('DATABASE_URL')) {
       throw error; // Already has good message
     }
-    
+
     throw new Error(`Database initialization failed: ${error?.message || 'Unknown error'}`);
   } finally {
     client.release();

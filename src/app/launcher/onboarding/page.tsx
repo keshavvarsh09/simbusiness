@@ -110,56 +110,46 @@ export default function OnboardingPage() {
         } else {
             // Submit onboarding
             setIsSubmitting(true);
+
+            const profile = {
+                goal: answers[1],
+                experience: answers[2],
+                interests: answers[3],
+                timeCommitment: answers[4],
+                currentLesson: 1,
+                completedLessons: [] as number[],
+                xp: 0,
+                level: 1,
+                onboardingComplete: true,
+            };
+
             try {
-                const response = await fetch('/api/launcher/onboarding', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        goal: answers[1],
-                        experience: answers[2],
-                        interests: answers[3],
-                        timeCommitment: answers[4],
-                    }),
-                });
+                // Always save to localStorage first (works for guests and logged-in)
+                localStorage.setItem('learning_profile', JSON.stringify(profile));
 
-                const data = await response.json();
-
-                if (response.ok && data.profile) {
-                    // Save profile to localStorage so Launcher can read it
-                    localStorage.setItem('learning_profile', JSON.stringify(data.profile));
-                    router.push('/launcher');
-                } else {
-                    console.error('Failed to save onboarding');
-                    // Create default profile anyway for demo
-                    const defaultProfile = {
-                        goal: answers[1],
-                        experience: answers[2],
-                        interests: answers[3],
-                        timeCommitment: answers[4],
-                        currentLesson: 1,
-                        completedLessons: [],
-                        xp: 0,
-                        level: 1,
-                        onboardingComplete: true,
-                    };
-                    localStorage.setItem('learning_profile', JSON.stringify(defaultProfile));
-                    router.push('/launcher');
+                // If logged in, also sync to database
+                const authToken = localStorage.getItem('auth_token');
+                if (authToken) {
+                    try {
+                        await fetch('/api/auth/me', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`,
+                            },
+                            body: JSON.stringify({ learningProfile: profile }),
+                        });
+                        console.log('Profile synced to database');
+                    } catch (syncError) {
+                        console.warn('DB sync failed, using localStorage only:', syncError);
+                    }
                 }
+
+                router.push('/launcher');
             } catch (error) {
                 console.error('Onboarding error:', error);
-                // Create default profile anyway
-                const defaultProfile = {
-                    goal: answers[1] || 'learn_skills',
-                    experience: answers[2] || 'beginner',
-                    interests: answers[3] || [],
-                    timeCommitment: answers[4] || 'moderate',
-                    currentLesson: 1,
-                    completedLessons: [],
-                    xp: 0,
-                    level: 1,
-                    onboardingComplete: true,
-                };
-                localStorage.setItem('learning_profile', JSON.stringify(defaultProfile));
+                // Save anyway and continue
+                localStorage.setItem('learning_profile', JSON.stringify(profile));
                 router.push('/launcher');
             }
         }
