@@ -19,21 +19,27 @@ export default function LauncherPage() {
 
   const checkOnboardingStatus = async () => {
     try {
-      // Check if user has completed onboarding
-      const headers = isAuthenticated() ? getAuthHeaders() : {};
-      const response = await fetch('/api/launcher/onboarding', { headers });
-      const data = await response.json();
+      // Check localStorage first (client-side)
+      const storedProfile = localStorage.getItem('learning_profile');
 
-      if (!data.onboardingComplete) {
-        // Redirect to onboarding
-        router.push('/launcher/onboarding');
-        return;
+      if (storedProfile) {
+        try {
+          const parsed = JSON.parse(storedProfile);
+          if (parsed.onboardingComplete) {
+            setProfile(parsed);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // Invalid JSON, clear it
+          localStorage.removeItem('learning_profile');
+        }
       }
 
-      setProfile(data.profile || createDefaultProfile());
+      // No valid profile found - redirect to onboarding
+      router.push('/launcher/onboarding');
     } catch (error) {
       console.error('Failed to check onboarding:', error);
-      // Show onboarding for new users
       router.push('/launcher/onboarding');
     } finally {
       setLoading(false);

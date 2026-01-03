@@ -122,14 +122,44 @@ export default function OnboardingPage() {
                     }),
                 });
 
-                if (response.ok) {
+                const data = await response.json();
+
+                if (response.ok && data.profile) {
+                    // Save profile to localStorage so Launcher can read it
+                    localStorage.setItem('learning_profile', JSON.stringify(data.profile));
                     router.push('/launcher');
                 } else {
                     console.error('Failed to save onboarding');
+                    // Create default profile anyway for demo
+                    const defaultProfile = {
+                        goal: answers[1],
+                        experience: answers[2],
+                        interests: answers[3],
+                        timeCommitment: answers[4],
+                        currentLesson: 1,
+                        completedLessons: [],
+                        xp: 0,
+                        level: 1,
+                        onboardingComplete: true,
+                    };
+                    localStorage.setItem('learning_profile', JSON.stringify(defaultProfile));
                     router.push('/launcher');
                 }
             } catch (error) {
                 console.error('Onboarding error:', error);
+                // Create default profile anyway
+                const defaultProfile = {
+                    goal: answers[1] || 'learn_skills',
+                    experience: answers[2] || 'beginner',
+                    interests: answers[3] || [],
+                    timeCommitment: answers[4] || 'moderate',
+                    currentLesson: 1,
+                    completedLessons: [],
+                    xp: 0,
+                    level: 1,
+                    onboardingComplete: true,
+                };
+                localStorage.setItem('learning_profile', JSON.stringify(defaultProfile));
                 router.push('/launcher');
             }
         }
@@ -160,8 +190,8 @@ export default function OnboardingPage() {
                         onClick={handleBack}
                         disabled={currentStep === 0}
                         className={`p-2 rounded-lg transition-all ${currentStep === 0
-                                ? 'opacity-0 pointer-events-none'
-                                : 'text-white/60 hover:text-white hover:bg-white/10'
+                            ? 'opacity-0 pointer-events-none'
+                            : 'text-white/60 hover:text-white hover:bg-white/10'
                             }`}
                     >
                         <FiArrowLeft className="w-5 h-5" />
@@ -204,8 +234,8 @@ export default function OnboardingPage() {
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         className={`relative p-4 sm:p-5 rounded-2xl border-2 text-left transition-all ${isSelected(option.id)
-                                                ? 'border-purple-500 bg-purple-500/20'
-                                                : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                                            ? 'border-purple-500 bg-purple-500/20'
+                                            : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                                             }`}
                                     >
                                         {/* Checkmark */}
@@ -245,8 +275,8 @@ export default function OnboardingPage() {
                         whileHover={{ scale: canContinue() ? 1.02 : 1 }}
                         whileTap={{ scale: canContinue() ? 0.98 : 1 }}
                         className={`w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition-all ${canContinue()
-                                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg hover:shadow-purple-500/25'
-                                : 'bg-white/10 text-white/30 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg hover:shadow-purple-500/25'
+                            : 'bg-white/10 text-white/30 cursor-not-allowed'
                             }`}
                     >
                         {isSubmitting ? (
