@@ -135,7 +135,7 @@ export default function QuizPage() {
                 console.log('Progress saved to localStorage:', currentProfile);
 
                 // If logged in, also sync to database
-                const authToken = localStorage.getItem('auth_token');
+                const authToken = localStorage.getItem('token');
                 if (authToken) {
                     try {
                         await fetch('/api/auth/me', {

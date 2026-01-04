@@ -34,7 +34,7 @@ export default function LoginPage() {
             }
 
             // Store token and user
-            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
             // If user has learning profile, store it

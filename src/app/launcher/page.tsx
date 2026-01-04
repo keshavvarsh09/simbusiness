@@ -18,24 +18,96 @@ export default function LauncherPage() {
 
   const checkOnboardingStatus = async () => {
     try {
+      // Check if user is authenticated
+      const authToken = localStorage.getItem('token');
+      let dbProfile: LearningProfile | null = null;
+
+      // If authenticated, try to load profile from database
+      if (authToken) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user?.learningProfile) {
+              dbProfile = data.user.learningProfile as LearningProfile;
+            }
+          }
+        } catch (e) {
+          console.warn('Could not fetch profile from DB:', e);
+        }
+      }
+
+      // Load local profile
       const storedProfile = localStorage.getItem('learning_profile');
+      let localProfile: LearningProfile | null = null;
       if (storedProfile) {
         try {
-          const parsed = JSON.parse(storedProfile);
-          if (parsed.onboardingComplete) {
-            setProfile(parsed);
-            // Auto-expand module with next lesson
-            const nextLesson = getNextLesson(parsed.completedLessons || []);
-            if (nextLesson) {
-              setExpandedModule(nextLesson.moduleId);
-            }
-            setLoading(false);
-            return;
-          }
+          localProfile = JSON.parse(storedProfile);
         } catch (e) {
           localStorage.removeItem('learning_profile');
         }
       }
+
+      // Merge profiles: take the one with more progress
+      let finalProfile: LearningProfile | null = null;
+      if (dbProfile && localProfile) {
+        // Merge: take whichever has more completed lessons, or combine them
+        const dbCompleted = dbProfile.completedLessons || [];
+        const localCompleted = localProfile.completedLessons || [];
+        const mergedCompleted = Array.from(new Set([...dbCompleted, ...localCompleted]));
+
+        // Use the profile with higher XP as base, but merge completed lessons
+        finalProfile = (dbProfile.xp || 0) >= (localProfile.xp || 0) ? { ...dbProfile } : { ...localProfile };
+        finalProfile.completedLessons = mergedCompleted;
+        finalProfile.xp = Math.max(dbProfile.xp || 0, localProfile.xp || 0);
+
+        // Recalculate XP if merged lessons differ
+        if (mergedCompleted.length > Math.max(dbCompleted.length, localCompleted.length)) {
+          // More lessons completed, recalculate XP (rough estimate)
+          const LESSONS_IMPORTED = require('@/lib/learning-engine').LESSONS;
+          let totalXp = 0;
+          mergedCompleted.forEach(lessonId => {
+            const lesson = LESSONS_IMPORTED.find((l: any) => l.id === lessonId);
+            if (lesson) totalXp += lesson.xpReward;
+          });
+          finalProfile.xp = totalXp;
+        }
+      } else {
+        finalProfile = dbProfile || localProfile;
+      }
+
+      if (finalProfile?.onboardingComplete) {
+        setProfile(finalProfile);
+        // Save merged profile back to localStorage
+        localStorage.setItem('learning_profile', JSON.stringify(finalProfile));
+
+        // Sync merged profile back to DB if authenticated
+        if (authToken && (dbProfile?.completedLessons?.length || 0) < (finalProfile.completedLessons?.length || 0)) {
+          try {
+            await fetch('/api/auth/me', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({ learningProfile: finalProfile }),
+            });
+          } catch (e) {
+            console.warn('Could not sync merged profile to DB:', e);
+          }
+        }
+
+        // Auto-expand module with next lesson
+        const nextLesson = getNextLesson(finalProfile.completedLessons || []);
+        if (nextLesson) {
+          setExpandedModule(nextLesson.moduleId);
+        }
+        setLoading(false);
+        return;
+      }
+
       router.push('/launcher/onboarding');
     } catch (error) {
       console.error('Failed to check onboarding:', error);
@@ -186,19 +258,19 @@ export default function LauncherPage() {
                               onClick={() => isUnlocked && router.push(`/launcher/lesson/${lesson.id}`)}
                               disabled={!isUnlocked}
                               className={`w-full p-3 sm:p-4 rounded-lg flex items-center gap-3 transition-all text-left ${isCompleted
-                                  ? 'bg-green-500/10 hover:bg-green-500/15'
-                                  : isCurrent
-                                    ? 'bg-purple-500/20 ring-1 ring-purple-500/50'
-                                    : isUnlocked
-                                      ? 'hover:bg-white/5'
-                                      : 'opacity-40 cursor-not-allowed'
+                                ? 'bg-green-500/10 hover:bg-green-500/15'
+                                : isCurrent
+                                  ? 'bg-purple-500/20 ring-1 ring-purple-500/50'
+                                  : isUnlocked
+                                    ? 'hover:bg-white/5'
+                                    : 'opacity-40 cursor-not-allowed'
                                 }`}
                             >
                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isCompleted
-                                  ? 'bg-green-500/30 text-green-400'
-                                  : isUnlocked
-                                    ? 'bg-white/10 text-white/60'
-                                    : 'bg-white/5 text-white/30'
+                                ? 'bg-green-500/30 text-green-400'
+                                : isUnlocked
+                                  ? 'bg-white/10 text-white/60'
+                                  : 'bg-white/5 text-white/30'
                                 }`}>
                                 {isCompleted ? <FiCheck /> : isUnlocked ? <span className="text-lg">{lesson.icon}</span> : <FiLock className="text-sm" />}
                               </div>
